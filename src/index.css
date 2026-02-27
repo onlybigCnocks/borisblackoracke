@@ -114,7 +114,7 @@
 /* Glow card top border */
 .glow-card {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .glow-card::before {
