@@ -32,9 +32,9 @@ const Pricing = () => {
           <span className={`text-sm ${!yearly ? "text-foreground" : "text-muted-foreground"}`}>{t("pricing.monthly")}</span>
           <button
             onClick={() => setYearly(!yearly)}
-            className={`relative h-7 w-12 rounded-full transition-colors ${yearly ? "bg-primary" : "bg-muted"}`}
+            className={`relative inline-flex h-7 w-13 items-center rounded-full transition-colors duration-300 ${yearly ? "bg-primary" : "bg-[#1e1e1e]"}`}
           >
-            <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-foreground transition-transform ${yearly ? "translate-x-5" : "translate-x-0.5"}`} />
+            <span className={`inline-block h-5 w-5 rounded-full bg-foreground shadow-sm transition-transform duration-300 ${yearly ? "translate-x-7" : "translate-x-1"}`} />
           </button>
           <span className={`text-sm ${yearly ? "text-foreground" : "text-muted-foreground"}`}>{t("pricing.yearly")}</span>
           {yearly && <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">{t("pricing.save")}</span>}
@@ -45,8 +45,8 @@ const Pricing = () => {
         {tiers.map((tier) => {
           const isPopular = tier === "raw";
           return (
-            <RevealOnScroll key={tier}>
-              <div className={`glow-card relative rounded-xl border ${isPopular ? "border-primary" : "border-border"} bg-card p-6 transition-all duration-300 hover:border-border-hover hover:bg-accent`}>
+            <RevealOnScroll key={tier} className={isPopular ? "pt-4" : ""}>
+              <div className={`glow-card relative overflow-visible rounded-xl border ${isPopular ? "border-primary" : "border-border"} bg-card p-6 transition-all duration-300 hover:border-border-hover hover:bg-accent`}>
                 {isPopular && (
                   <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-xs font-bold text-primary-foreground">
                     {t("pricing.popular")}
