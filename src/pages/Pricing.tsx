@@ -28,15 +28,18 @@ const Pricing = () => {
         <SectionLabel>{t("pricing.label")}</SectionLabel>
         <SectionTitle>{t("pricing.title")}</SectionTitle>
 
-        <div className="mb-8 flex items-center justify-center gap-3">
-          <span className={`text-sm ${!yearly ? "text-foreground" : "text-muted-foreground"}`}>{t("pricing.monthly")}</span>
+        <div className="mb-8 flex items-center justify-center gap-4">
+          <span className={`text-sm font-medium transition-colors ${!yearly ? "text-foreground" : "text-muted-foreground"}`}>{t("pricing.monthly")}</span>
           <button
             onClick={() => setYearly(!yearly)}
-            className={`relative inline-flex h-7 w-13 items-center rounded-full transition-colors duration-300 ${yearly ? "bg-primary" : "bg-[#1e1e1e]"}`}
+            aria-label="Toggle yearly pricing"
+            className="relative h-8 w-14 rounded-full border border-border bg-background-secondary p-1 transition-colors duration-300 focus:outline-none"
           >
-            <span className={`inline-block h-5 w-5 rounded-full bg-foreground shadow-sm transition-transform duration-300 ${yearly ? "translate-x-7" : "translate-x-1"}`} />
+            <span
+              className={`block h-6 w-6 rounded-full bg-primary shadow-lg transition-transform duration-300 ease-in-out ${yearly ? "translate-x-6" : "translate-x-0"}`}
+            />
           </button>
-          <span className={`text-sm ${yearly ? "text-foreground" : "text-muted-foreground"}`}>{t("pricing.yearly")}</span>
+          <span className={`text-sm font-medium transition-colors ${yearly ? "text-foreground" : "text-muted-foreground"}`}>{t("pricing.yearly")}</span>
           {yearly && <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-semibold text-primary">{t("pricing.save")}</span>}
         </div>
       </RevealOnScroll>
@@ -45,10 +48,10 @@ const Pricing = () => {
         {tiers.map((tier) => {
           const isPopular = tier === "raw";
           return (
-            <RevealOnScroll key={tier} className={isPopular ? "pt-4" : ""}>
-              <div className={`glow-card relative overflow-visible rounded-xl border ${isPopular ? "border-primary" : "border-border"} bg-card p-6 transition-all duration-300 hover:border-border-hover hover:bg-accent`}>
+            <RevealOnScroll key={tier}>
+              <div className={`glow-card relative overflow-visible rounded-xl border ${isPopular ? "border-primary" : "border-border"} bg-card p-6 pt-8 transition-all duration-300 hover:border-border-hover hover:bg-accent`}>
                 {isPopular && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-xs font-bold text-primary-foreground">
+                  <span className="absolute -top-3.5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-4 py-1 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow-lg shadow-primary/30">
                     {t("pricing.popular")}
                   </span>
                 )}
