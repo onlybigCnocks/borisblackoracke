@@ -176,10 +176,10 @@ const Index = () => {
           {(["guest", "radar", "raw", "blackbox"] as const).map((tier) => {
             const isPopular = tier === "raw";
             return (
-              <RevealOnScroll key={tier} className={isPopular ? "pt-4" : ""}>
-                <div className={`glow-card relative overflow-visible rounded-xl border ${isPopular ? "border-primary" : "border-border"} bg-card p-6 transition-all duration-300 hover:border-border-hover hover:bg-accent`}>
+              <RevealOnScroll key={tier}>
+                <div className={`glow-card relative overflow-visible rounded-xl border ${isPopular ? "border-primary" : "border-border"} bg-card p-6 pt-8 transition-all duration-300 hover:border-border-hover hover:bg-accent`}>
                   {isPopular && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-xs font-bold text-primary-foreground">
+                    <span className="absolute -top-3.5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-4 py-1 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow-lg shadow-primary/30">
                       {t("pricing.popular")}
                     </span>
                   )}
