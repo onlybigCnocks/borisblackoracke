@@ -4,7 +4,7 @@ import Footer from "./Footer";
 
 const Layout = ({ children }: { children: ReactNode }) => (
   <div className="min-h-screen bg-background">
-    <div className="radar-scanline" />
+    
     <div className="film-grain" />
     <Header />
     <main className="pt-16">{children}</main>

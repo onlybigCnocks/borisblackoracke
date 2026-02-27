@@ -10,6 +10,7 @@ const Index = () => {
 
   return (
     <div className="bg-radial-red">
+      <div className="radar-scanline" />
       {/* Hero */}
       <section className="container mx-auto px-4 pb-20 pt-24 md:pt-32">
         <RevealOnScroll>
