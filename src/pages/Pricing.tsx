@@ -127,7 +127,6 @@ const Pricing = () => {
                 <button
                   onClick={() => {
                     window.open("https://t.me/BlackOracleBORIS_bot", "_blank");
-                    const { toast } = await import("@/hooks/use-toast");
                     toast({ title: t("pricing.paidToast") || "Confirm payment in Telegram bot" });
                   }}
                   className="w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
