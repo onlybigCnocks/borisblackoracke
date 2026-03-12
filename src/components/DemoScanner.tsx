@@ -15,7 +15,7 @@ const LS_START_TIME = "boris_demo_startTime";
 
 // --- Full API interface ---
 
-interface DemoResult {
+interface DemoScanResult {
   status: "done";
   target: string;
   project: string;
@@ -23,35 +23,25 @@ interface DemoResult {
   scan_mode: "repo" | "onchain";
   archetype: string;
   archetype_icon: string;
+  archetype_label: { en: string; ru: string };
   verdict: "SIGNIFICANT_SURFACE" | "MODERATE_SURFACE" | "MINIMAL_SURFACE" | "CLEAN";
   verdict_label: { en: string; ru: string };
-  patterns_total: number;
-  patterns_critical: number;
-  patterns_high: number;
-  patterns_medium: number;
-  patterns_low: number;
-  facts: string[];
+  intro: { en: string; ru: string };
+  scope: {
+    patterns_total: number;
+    patterns_critical: number;
+    patterns_high: number;
+    audits?: { count: number; auditors: string[]; age_days: number };
+    deploy_count?: number;
+    social?: { platforms_count: number; total_followers: number; impersonators: number };
+    liquidity?: string;
+    top10_holders_pct?: number;
+    flow_analyzed?: boolean;
+  };
+  facts: { en: string[]; ru: string[] };
   layers: Record<string, boolean>;
   more_count: number;
-  top_findings_preview: { type: string; severity: string; file: string }[];
-  social?: {
-    platforms_analyzed: number;
-    total_followers: number;
-    impersonators_count: number;
-    observations: string[];
-  };
-  audit?: {
-    exists: boolean;
-    count: number;
-    auditors: string[];
-    recency: string;
-    observations: string[];
-  };
-  onchain?: {
-    abi?: { external_functions: number; has_proxy: boolean; has_selfdestruct: boolean };
-    deployments?: number;
-    behavior_signals?: number;
-  };
+  top_findings_preview: Array<{ type: string; severity: string; file: string }>;
 }
 
 type ScanState = "idle" | "scanning" | "done" | "error";
