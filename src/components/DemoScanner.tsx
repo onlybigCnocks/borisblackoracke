@@ -80,8 +80,8 @@ const DemoScanner = () => {
       if (res.status === 429) {
         setErrorMsg(
           isRu
-            ? "Лимит демо исчерпан. Используйте Telegram: @BlackOracleBot"
-            : "Demo limit reached. Use Telegram: @BlackOracleBot"
+            ? "Лимит демо исчерпан. Используйте Telegram: @BlackOracleBORIS_bot"
+            : "Demo limit reached. Use Telegram: @BlackOracleBORIS_bot"
         );
         setState("error");
         return;
@@ -94,8 +94,8 @@ const DemoScanner = () => {
     } catch {
       setErrorMsg(
         isRu
-          ? "⚠️ Сервер анализа недоступен. Telegram: @BlackOracleBot"
-          : "⚠️ Analysis server unavailable. Telegram: @BlackOracleBot"
+           ? "⚠️ Сервер анализа недоступен. Telegram: @BlackOracleBORIS_bot"
+           : "⚠️ Analysis server unavailable. Telegram: @BlackOracleBORIS_bot"
       );
       setState("error");
     }
@@ -109,8 +109,8 @@ const DemoScanner = () => {
       if (Date.now() - scanStartTime.current > TIMEOUT_MS) {
         setErrorMsg(
           isRu
-            ? "Сканирование занимает больше времени, чем ожидалось. Проверьте результат в Telegram: @BlackOracleBot"
-            : "Scan is taking longer than expected. Check Telegram bot for results: @BlackOracleBot"
+            ? "Сканирование занимает больше времени, чем ожидалось. Проверьте результат в Telegram: @BlackOracleBORIS_bot"
+            : "Scan is taking longer than expected. Check Telegram bot for results: @BlackOracleBORIS_bot"
         );
         setState("error");
         clearInterval(interval);
@@ -123,8 +123,8 @@ const DemoScanner = () => {
         if (res.status === 429) {
           setErrorMsg(
             isRu
-              ? "Лимит демо исчерпан. Используйте Telegram: @BlackOracleBot"
-              : "Demo limit reached. Use Telegram: @BlackOracleBot"
+              ? "Лимит демо исчерпан. Используйте Telegram: @BlackOracleBORIS_bot"
+              : "Demo limit reached. Use Telegram: @BlackOracleBORIS_bot"
           );
           setState("error");
           clearInterval(interval);
@@ -266,14 +266,14 @@ const DemoScanner = () => {
       {state === "error" && (
         <div className="mt-8 rounded-xl border border-red-500/50 bg-red-500/10 p-6">
           <p className="font-mono text-sm text-red-400">{errorMsg}</p>
-          {errorMsg.includes("@BlackOracleBot") && (
+          {errorMsg.includes("@BlackOracleBORIS_bot") && (
             <a
-              href="https://t.me/BlackOracleBot"
+              href="https://t.me/BlackOracleBORIS_bot"
               target="_blank"
               rel="noopener noreferrer"
               className="mt-3 inline-flex items-center gap-2 font-mono text-sm text-primary hover:underline"
             >
-              <Send size={14} /> @BlackOracleBot
+              <Send size={14} /> @BlackOracleBORIS_bot
             </a>
           )}
         </div>
@@ -403,7 +403,7 @@ const DemoScanner = () => {
               {/* CTA */}
               <div className="text-center pt-2">
                 <a
-                  href="https://t.me/BlackOracleBot"
+                  href="https://t.me/BlackOracleBORIS_bot"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-3 rounded-xl bg-primary px-10 py-4 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow text-base"
