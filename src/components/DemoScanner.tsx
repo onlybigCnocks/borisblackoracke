@@ -94,8 +94,8 @@ const DemoScanner = () => {
     } catch {
       setErrorMsg(
         isRu
-          ? "⚠️ Сервер анализа недоступен. Telegram: @BlackOracleBot"
-          : "⚠️ Analysis server unavailable. Telegram: @BlackOracleBot"
+           ? "⚠️ Сервер анализа недоступен. Telegram: @BlackOracleBORIS_bot"
+           : "⚠️ Analysis server unavailable. Telegram: @BlackOracleBORIS_bot"
       );
       setState("error");
     }
