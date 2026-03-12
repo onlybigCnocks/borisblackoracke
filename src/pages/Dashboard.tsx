@@ -29,7 +29,7 @@ const Dashboard = () => {
               className="w-full rounded-xl border border-border bg-background-secondary py-3 pl-12 pr-4 font-mono text-sm text-foreground outline-none focus:border-primary"
             />
           </div>
-          <Link to="/scan" className="rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow">
+          <Link to="/#demo-scanner" onClick={() => { setTimeout(() => document.getElementById("demo-scanner")?.scrollIntoView({ behavior: "smooth" }), 100); }} className="rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow">
             →
           </Link>
         </div>
@@ -85,17 +85,16 @@ const Dashboard = () => {
             { target: "0x1f98...F984", risk: "MEDIUM", date: "2025-01-14" },
             { target: "aave/aave-v3-core", risk: "LOW", date: "2025-01-13" },
           ].map((s, i) => (
-            <Link
+            <div
               key={i}
-              to={`/report/demo-${i}`}
-              className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-all hover:border-border-hover hover:bg-accent"
+              className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 opacity-60 cursor-not-allowed"
             >
               <span className={`font-mono text-xs font-bold ${s.risk === "HIGH" ? "text-primary-bright" : s.risk === "MEDIUM" ? "text-yellow-400" : "text-green-400"}`}>
                 {s.risk}
               </span>
               <span className="flex-1 truncate font-mono text-sm text-foreground">{s.target}</span>
               <span className="text-xs text-muted-foreground">{s.date}</span>
-            </Link>
+            </div>
           ))}
         </div>
       </RevealOnScroll>

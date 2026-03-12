@@ -11,7 +11,7 @@ const Pricing = lazy(() => import("./pages/Pricing"));
 const About = lazy(() => import("./pages/About"));
 const Market = lazy(() => import("./pages/Market"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Admin = lazy(() => import("./pages/Admin"));
+
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -36,7 +36,7 @@ const App = () => (
               <Route path="/about" element={<About />} />
               <Route path="/market" element={<Market />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/admin" element={<Admin />} />
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

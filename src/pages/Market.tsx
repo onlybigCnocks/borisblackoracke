@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RevealOnScroll, GlowCard, SectionTitle } from "@/components/ui-boris";
-import { Search, TrendingUp } from "lucide-react";
+import { Search, TrendingUp, Lock } from "lucide-react";
 
 const mockResults = [
   { symbol: "BTC", score: 42, level: "MEDIUM", signals: ["OI divergence detected", "Funding rate elevated", "Liquidation cluster at $62k"], date: "2025-01-15" },
@@ -10,16 +10,29 @@ const mockResults = [
 ];
 
 const Market = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRu = i18n.language === "ru";
   const [input, setInput] = useState("");
-  const [results, setResults] = useState(mockResults);
 
   const levelColors: Record<string, string> = {
     CRITICAL: "text-primary", HIGH: "text-primary-bright", MEDIUM: "text-yellow-400", LOW: "text-green-400",
   };
 
   return (
-    <div className="container mx-auto min-h-screen px-4 py-12">
+    <div className="container mx-auto min-h-screen px-4 py-12 relative">
+      {/* Coming Soon Overlay */}
+      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm rounded-xl">
+        <Lock size={48} className="text-primary mb-4" />
+        <h2 className="text-2xl font-bold text-foreground mb-2">
+          {isRu ? "Скоро" : "Coming Soon"}
+        </h2>
+        <p className="text-sm text-muted-foreground max-w-md text-center">
+          {isRu
+            ? "Маркет-сканер находится в разработке. Следите за обновлениями."
+            : "Market scanner is under development. Stay tuned for updates."}
+        </p>
+      </div>
+
       <RevealOnScroll>
         <SectionTitle>{t("market.title")}</SectionTitle>
 
@@ -31,10 +44,11 @@ const Market = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={t("market.placeholder")}
-              className="w-full rounded-xl border border-border bg-background-secondary py-4 pl-12 pr-4 font-mono text-sm text-foreground outline-none focus:border-primary"
+              disabled
+              className="w-full rounded-xl border border-border bg-background-secondary py-4 pl-12 pr-4 font-mono text-sm text-foreground outline-none focus:border-primary disabled:opacity-50"
             />
           </div>
-          <button className="rounded-xl bg-primary px-8 py-4 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow">
+          <button disabled className="rounded-xl bg-primary px-8 py-4 font-semibold text-primary-foreground transition-all disabled:opacity-50">
             {t("market.scan")}
           </button>
         </div>
@@ -43,7 +57,7 @@ const Market = () => {
           <TrendingUp size={18} className="text-primary" />
           <span className="text-sm font-medium text-foreground">{t("market.trending")}:</span>
           {[5, 10, 20].map((n) => (
-            <button key={n} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:border-primary hover:text-primary">
+            <button key={n} disabled className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground disabled:opacity-50">
               {t("market.trendScan")} {n}
             </button>
           ))}
@@ -51,7 +65,7 @@ const Market = () => {
 
         <h3 className="mb-4 text-lg font-semibold text-foreground">{t("market.history")}</h3>
         <div className="space-y-3">
-          {results.map((r, i) => (
+          {mockResults.map((r, i) => (
             <GlowCard key={i}>
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
