@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Menu, X } from "lucide-react";
 import BorisLogo from "../BorisLogo";
@@ -8,17 +8,25 @@ const Header = () => {
   const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const toggleLang = () => {
     i18n.changeLanguage(i18n.language === "ru" ? "en" : "ru");
   };
 
+  const scrollToScanner = () => {
+    setOpen(false);
+    if (location.pathname !== "/") {
+      navigate("/#demo-scanner");
+    } else {
+      document.getElementById("demo-scanner")?.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   const navLinks = [
-    { to: "/scan", label: t("nav.scanner") },
-    { to: "/pricing", label: t("nav.pricing") },
-    { to: "/about", label: t("nav.about") },
-    { to: "/discoveries", label: t("nav.discoveries") },
-    { to: "/market", label: t("nav.market") },
+    { type: "action" as const, action: scrollToScanner, label: t("nav.scanner") },
+    { type: "link" as const, to: "/pricing", label: t("nav.pricing") },
+    { type: "link" as const, to: "/about", label: t("nav.about") },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -35,17 +43,27 @@ const Header = () => {
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">
-          {navLinks.map((l) => (
-            <Link
-              key={l.to}
-              to={l.to}
-              className={`text-sm font-medium transition-colors duration-200 ${
-                isActive(l.to) ? "text-primary" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {l.label}
-            </Link>
-          ))}
+          {navLinks.map((l, i) =>
+            l.type === "action" ? (
+              <button
+                key={i}
+                onClick={l.action}
+                className="text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground"
+              >
+                {l.label}
+              </button>
+            ) : (
+              <Link
+                key={l.to}
+                to={l.to!}
+                className={`text-sm font-medium transition-colors duration-200 ${
+                  isActive(l.to!) ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {l.label}
+              </Link>
+            )
+          )}
         </nav>
 
         <div className="flex items-center gap-3">
@@ -56,12 +74,12 @@ const Header = () => {
             {i18n.language === "ru" ? "EN" : "RU"}
           </button>
 
-          <Link
-            to="/scan"
+          <button
+            onClick={scrollToScanner}
             className="hidden rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary-dim btn-glow md:block"
           >
             {t("nav.launch")}
-          </Link>
+          </button>
 
           <button onClick={() => setOpen(!open)} className="text-foreground md:hidden">
             {open ? <X size={22} /> : <Menu size={22} />}
@@ -71,23 +89,32 @@ const Header = () => {
 
       {open && (
         <div className="border-t border-border bg-background p-4 md:hidden">
-          {navLinks.map((l) => (
-            <Link
-              key={l.to}
-              to={l.to}
-              onClick={() => setOpen(false)}
-              className="block py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {l.label}
-            </Link>
-          ))}
-          <Link
-            to="/scan"
-            onClick={() => setOpen(false)}
-            className="mt-3 block rounded-lg bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground"
+          {navLinks.map((l, i) =>
+            l.type === "action" ? (
+              <button
+                key={i}
+                onClick={l.action}
+                className="block w-full text-left py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {l.label}
+              </button>
+            ) : (
+              <Link
+                key={l.to}
+                to={l.to!}
+                onClick={() => setOpen(false)}
+                className="block py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {l.label}
+              </Link>
+            )
+          )}
+          <button
+            onClick={scrollToScanner}
+            className="mt-3 block w-full rounded-lg bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground"
           >
             {t("nav.launch")}
-          </Link>
+          </button>
         </div>
       )}
     </header>
