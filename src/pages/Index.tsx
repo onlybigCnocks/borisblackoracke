@@ -85,10 +85,10 @@ const Index = () => {
           <SectionTitle>{t("modules.title")}</SectionTitle>
         </RevealOnScroll>
 
-        <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))" }}>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {MODULES.map((m, i) => (
             <RevealOnScroll key={i}>
-              <GlowCard>
+              <GlowCard className="h-full">
                 <div className="mb-3 flex items-center gap-3">
                   <span className="text-2xl">{m.icon}</span>
                   <span className="font-mono text-xs text-muted-foreground">#{String(i + 1).padStart(2, "0")}</span>
