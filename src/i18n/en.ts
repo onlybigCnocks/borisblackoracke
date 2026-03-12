@@ -3,8 +3,6 @@ const en = {
     scanner: "Scanner",
     pricing: "Pricing",
     about: "About",
-    discoveries: "Discoveries",
-    market: "Market",
     dashboard: "Dashboard",
     admin: "Admin",
     launch: "Launch Scanner",

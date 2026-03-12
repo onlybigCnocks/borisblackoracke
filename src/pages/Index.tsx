@@ -3,10 +3,15 @@ import { Link } from "react-router-dom";
 import { RevealOnScroll, SectionLabel, SectionTitle, GlowCard } from "@/components/ui-boris";
 import { MODULES } from "@/lib/data";
 import BorisLogo from "@/components/BorisLogo";
+import DemoScanner from "@/components/DemoScanner";
 
 const Index = () => {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === "ru";
+
+  const scrollToScanner = () => {
+    document.getElementById("demo-scanner")?.scrollIntoView({ behavior: "smooth" });
+  };
 
   return (
     <div className="bg-radial-red">
@@ -35,12 +40,12 @@ const Index = () => {
           </p>
 
           <div className="flex flex-wrap gap-4 mb-16">
-            <Link
-              to="/scan"
+            <button
+              onClick={scrollToScanner}
               className="rounded-lg bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary-dim btn-glow"
             >
               {t("hero.cta1")}
-            </Link>
+            </button>
             <Link
               to="/about"
               className="rounded-lg border border-border px-8 py-3.5 text-base font-semibold text-foreground transition-all duration-200 hover:border-primary hover:text-primary"
@@ -76,6 +81,11 @@ const Index = () => {
             <p className="mt-2 font-mono text-xs text-muted-foreground">— {t("quote.attr")}</p>
           </div>
         </section>
+      </RevealOnScroll>
+
+      {/* Demo Scanner */}
+      <RevealOnScroll>
+        <DemoScanner />
       </RevealOnScroll>
 
       {/* 19 Analysis Modules */}
@@ -168,7 +178,7 @@ const Index = () => {
       </section>
 
       {/* Pricing */}
-      <section className="container mx-auto px-4 py-20">
+      <section id="pricing" className="container mx-auto px-4 py-20">
         <RevealOnScroll>
           <SectionLabel>{t("pricing.label")}</SectionLabel>
           <SectionTitle>{t("pricing.title")}</SectionTitle>
@@ -223,9 +233,9 @@ const Index = () => {
             <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">{t("cta.title")}</h2>
             <p className="mb-8 text-muted-foreground">{t("cta.desc")}</p>
             <div className="flex flex-wrap justify-center gap-4">
-              <Link to="/scan" className="rounded-lg bg-primary px-8 py-3.5 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow">
+              <button onClick={scrollToScanner} className="rounded-lg bg-primary px-8 py-3.5 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow">
                 {t("cta.btn1")}
-              </Link>
+              </button>
               <Link to="/about" className="rounded-lg border border-border px-8 py-3.5 font-semibold text-foreground transition-all hover:border-primary hover:text-primary">
                 {t("cta.btn2")}
               </Link>

@@ -3,8 +3,6 @@ const ru = {
     scanner: "Сканер",
     pricing: "Тарифы",
     about: "О проекте",
-    discoveries: "Находки",
-    market: "Рынок",
     dashboard: "Панель",
     admin: "Админ",
     launch: "Запустить сканер",
