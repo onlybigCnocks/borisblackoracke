@@ -80,8 +80,8 @@ const DemoScanner = () => {
       if (res.status === 429) {
         setErrorMsg(
           isRu
-            ? "Лимит демо исчерпан. Используйте Telegram: @BlackOracleBot"
-            : "Demo limit reached. Use Telegram: @BlackOracleBot"
+            ? "Лимит демо исчерпан. Используйте Telegram: @BlackOracleBORIS_bot"
+            : "Demo limit reached. Use Telegram: @BlackOracleBORIS_bot"
         );
         setState("error");
         return;
