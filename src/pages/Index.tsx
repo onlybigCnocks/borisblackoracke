@@ -49,12 +49,13 @@ const Index = () => {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
             {[
-              { val: "17", label: t("hero.stat1") },
-              { val: "200+", label: t("hero.stat2") },
+              { val: "19", label: t("hero.stat1") },
+              { val: "500+", label: t("hero.stat2") },
               { val: "12", label: t("hero.stat3") },
               { val: "<25m", label: t("hero.stat4") },
+              { val: "9", label: t("hero.stat5") },
             ].map((s) => (
               <div key={s.label} className="text-center">
                 <div className="font-mono text-3xl font-bold text-primary md:text-4xl">{s.val}</div>
