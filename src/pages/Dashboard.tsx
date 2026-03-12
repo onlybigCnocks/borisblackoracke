@@ -29,7 +29,7 @@ const Dashboard = () => {
               className="w-full rounded-xl border border-border bg-background-secondary py-3 pl-12 pr-4 font-mono text-sm text-foreground outline-none focus:border-primary"
             />
           </div>
-          <Link to="/scan" className="rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow">
+          <Link to="/#demo-scanner" onClick={() => { setTimeout(() => document.getElementById("demo-scanner")?.scrollIntoView({ behavior: "smooth" }), 100); }} className="rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow">
             →
           </Link>
         </div>
