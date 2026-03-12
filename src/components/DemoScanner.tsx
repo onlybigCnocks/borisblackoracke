@@ -491,10 +491,15 @@ const DemoScanner = () => {
                   {isRu ? "Проведённый анализ" : "Analysis Scope"}
                 </h3>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {(result.layers_scanned && result.layers_scanned.length > 0
-                    ? result.layers_scanned
-                    : ["code", "social", "holders", "liquidity"]
-                  ).map((layer, i) => (
+                {(() => {
+                    const layers = result.layers_scanned;
+                    const list: string[] = Array.isArray(layers)
+                      ? layers
+                      : layers && typeof layers === "object"
+                        ? Object.entries(layers).filter(([, v]) => v).map(([k]) => k)
+                        : ["code", "social", "holders", "liquidity"];
+                    return list;
+                  })().map((layer, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm">
                       <CheckCircle size={14} className="text-green-500 shrink-0" />
                       <span className="text-foreground/80 capitalize">{layer} — {isRu ? "проанализирован" : "analyzed"}</span>
