@@ -403,7 +403,7 @@ const DemoScanner = () => {
               {/* CTA */}
               <div className="text-center pt-2">
                 <a
-                  href="https://t.me/BlackOracleBot"
+                  href="https://t.me/BlackOracleBORIS_bot"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-3 rounded-xl bg-primary px-10 py-4 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow text-base"
