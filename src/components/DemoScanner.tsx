@@ -203,7 +203,7 @@ const DemoScanner = () => {
         if (!res.ok) throw new Error("Poll error");
         const data = await res.json();
         if (data.status === "done") {
-          setResult(data as DemoResult);
+          setResult(data as DemoScanResult);
           setState("done"); clearPersistence(); clearInterval(interval);
         } else if (data.status === "error") {
           setErrorMsg(data.message || "Unknown error");
