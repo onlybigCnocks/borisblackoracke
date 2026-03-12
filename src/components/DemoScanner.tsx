@@ -9,23 +9,25 @@ const API_BASE = import.meta.env.VITE_API_URL || "https://api.black-oracle.com";
 const POLL_INTERVAL = 5000;
 const TIMEOUT_MS = 20 * 60 * 1000;
 
-interface ScanResultData {
-  tier: string;
-  project: string;
-  scan_date: string;
-  counts: { critical: number; high: number; medium: number; low: number; total: number };
-  top_findings: { type: string; severity: string; file: string; description: string }[];
-  more_count: number;
-  social_score: number;
-  social_summary: { total_accounts: number; impersonators_found: number };
-  download_allowed: boolean;
-}
+const LS_TASK_ID = "boris_demo_taskId";
+const LS_INPUT = "boris_demo_input";
+const LS_START_TIME = "boris_demo_startTime";
 
-interface ProgressData {
-  stage: string;
-  progress: number;
-  current_file?: string;
-  tail?: string[];
+interface DemoResult {
+  target: string;
+  verdict: string;
+  patterns_total: number;
+  patterns_critical: number;
+  patterns_high: number;
+  facts: string[];
+  archetype?: string;
+  archetype_icon?: string;
+  audits_count?: number;
+  liquidity?: string;
+  social_accounts?: number;
+  impersonators?: number;
+  top10_holders_pct?: number;
+  layers_scanned?: string[];
 }
 
 type ScanState = "idle" | "scanning" | "done" | "error";
@@ -78,13 +80,6 @@ function detectNetwork(target: string): { name: string; explorer: string; icon: 
   return null;
 }
 
-function getVerdict(counts: ScanResultData["counts"]): "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" {
-  if (counts.critical >= 5) return "CRITICAL";
-  if (counts.critical >= 3) return "HIGH";
-  if (counts.critical >= 1) return "MEDIUM";
-  return "LOW";
-}
-
 const verdictConfig: Record<string, { color: string; bg: string; border: string; label: string; labelRu: string }> = {
   CRITICAL: { color: "text-red-400", bg: "bg-red-500/15", border: "border-red-500/50", label: "CRITICAL RISK", labelRu: "КРИТИЧЕСКИЙ РИСК" },
   HIGH: { color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/40", label: "HIGH RISK", labelRu: "ВЫСОКИЙ РИСК" },
@@ -92,69 +87,10 @@ const verdictConfig: Record<string, { color: string; bg: string; border: string;
   LOW: { color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/40", label: "LOW RISK", labelRu: "НИЗКИЙ РИСК" },
 };
 
-function generateNarrative(result: ScanResultData, isRu: boolean): string {
-  const { counts, top_findings } = result;
-  const severityTypes = top_findings.map(f => f.type.toLowerCase());
-  const hasReentrancy = severityTypes.some(t => t.includes("reentrancy"));
-  const hasAccessControl = severityTypes.some(t => t.includes("access") || t.includes("privilege") || t.includes("admin"));
-  const hasMinting = severityTypes.some(t => t.includes("mint") || t.includes("emission"));
-
-  if (isRu) {
-    let text = `Автоматический анализ выявил ${counts.total} паттернов, из которых ${counts.critical} классифицированы как критические и ${counts.high} как высокоприоритетные. `;
-    if (hasAccessControl) text += "Обнаружены привилегированные функции управления с централизованным контролем. ";
-    if (hasReentrancy) text += "Выявлены потенциальные уязвимости reentrancy. ";
-    if (hasMinting) text += "Присутствуют функции эмиссии с ограниченным контролем. ";
-    text += "Рекомендуется детальный анализ для оценки реальной эксплуатируемости.";
-    return text;
-  }
-  let text = `Automated analysis identified ${counts.total} patterns, of which ${counts.critical} are classified as critical and ${counts.high} as high-priority. `;
-  if (hasAccessControl) text += "Privileged management functions with centralized control were detected. ";
-  if (hasReentrancy) text += "Potential reentrancy vulnerabilities identified. ";
-  if (hasMinting) text += "Minting functions with limited access controls present. ";
-  text += "Detailed analysis is recommended to assess real exploitability.";
-  return text;
-}
-
-function generateObservations(result: ScanResultData, isRu: boolean): string[] {
-  const obs: string[] = [];
-  const types = result.top_findings.map(f => ({ type: f.type.toLowerCase(), desc: f.description, severity: f.severity }));
-
-  const seen = new Set<string>();
-  for (const f of types) {
-    if (obs.length >= 6) break;
-    let key = "";
-    let textRu = "";
-    let textEn = "";
-
-    if ((f.type.includes("access") || f.type.includes("privilege") || f.type.includes("admin")) && !seen.has("access")) {
-      key = "access"; textRu = "Обнаружены привилегированные функции управления"; textEn = "Privileged management functions detected";
-    } else if (f.type.includes("reentrancy") && !seen.has("reentrancy")) {
-      key = "reentrancy"; textRu = "Потенциальная уязвимость reentrancy"; textEn = "Potential reentrancy vulnerability";
-    } else if ((f.type.includes("mint") || f.type.includes("emission")) && !seen.has("mint")) {
-      key = "mint"; textRu = "Функции эмиссии токенов обнаружены"; textEn = "Token minting functions detected";
-    } else if (f.type.includes("oracle") && !seen.has("oracle")) {
-      key = "oracle"; textRu = "Зависимость от внешних оракулов"; textEn = "External oracle dependency";
-    } else if ((f.type.includes("upgrade") || f.type.includes("proxy")) && !seen.has("upgrade")) {
-      key = "upgrade"; textRu = "Обновляемый контракт (proxy pattern)"; textEn = "Upgradeable contract (proxy pattern)";
-    } else if (f.type.includes("freeze") && !seen.has("freeze")) {
-      key = "freeze"; textRu = "Возможность заморозки средств"; textEn = "Fund freeze capability";
-    } else if (!seen.has(f.type)) {
-      key = f.type; textRu = f.desc; textEn = f.desc;
-    }
-
-    if (key && !seen.has(key)) {
-      seen.add(key);
-      obs.push(isRu ? textRu : textEn);
-    }
-  }
-
-  if (result.social_summary.impersonators_found > 0 && obs.length < 6) {
-    obs.push(isRu
-      ? `Обнаружено ${result.social_summary.impersonators_found} аккаунтов-имперсонаторов`
-      : `${result.social_summary.impersonators_found} impersonator accounts detected`);
-  }
-
-  return obs;
+function clearPersistence() {
+  localStorage.removeItem(LS_TASK_ID);
+  localStorage.removeItem(LS_INPUT);
+  localStorage.removeItem(LS_START_TIME);
 }
 
 const DemoScanner = () => {
@@ -163,37 +99,54 @@ const DemoScanner = () => {
 
   const [input, setInput] = useState("");
   const [state, setState] = useState<ScanState>("idle");
-  const [result, setResult] = useState<ScanResultData | null>(null);
+  const [result, setResult] = useState<DemoResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [validationError, setValidationError] = useState("");
-  const [jobId, setJobId] = useState<string | null>(null);
-  const [progress, setProgress] = useState<ProgressData | null>(null);
+  const [taskId, setTaskId] = useState<string | null>(null);
+  const [progressValue, setProgressValue] = useState(0);
+  const [tail, setTail] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState("");
   const scanStartTime = useRef<number>(0);
 
-  const getStepText = useCallback((status: string, prog: ProgressData | null): string => {
-    if (status === "queued") {
-      return isRu ? "⏳ Ожидание в очереди..." : "⏳ Waiting in queue...";
+  const getStepText = useCallback((step: string): string => {
+    switch (step) {
+      case "queued":
+        return isRu ? "⏳ Ожидание в очереди..." : "⏳ Waiting in queue...";
+      case "cloning":
+        return isRu ? "📦 Загрузка исходного кода..." : "📦 Fetching source code...";
+      case "static_analysis":
+        return isRu ? "🔍 Статический анализ" : "🔍 Static analysis";
+      case "done":
+        return isRu ? "✅ Завершено" : "✅ Complete";
+      default:
+        return isRu ? "📊 Анализ..." : "📊 Analyzing...";
     }
-    if (status === "started" && prog) {
-      const stage = prog.stage;
-      if (stage === "fetch" || stage === "starting") {
-        return isRu ? "📦 Клонирование репозитория..." : "📦 Cloning repository...";
-      }
-      if (stage === "analyze" || stage === "analyzing") {
-        const file = prog.current_file ? `: ${prog.current_file}` : "";
-        return isRu ? `🔍 Статический анализ${file}` : `🔍 Static analysis${file}`;
-      }
-      return isRu ? "📊 Анализ..." : "📊 Analyzing...";
-    }
-    return isRu ? "📊 Анализ..." : "📊 Analyzing...";
   }, [isRu]);
+
+  // Restore persisted scan on mount
+  useEffect(() => {
+    const savedTaskId = localStorage.getItem(LS_TASK_ID);
+    const savedInput = localStorage.getItem(LS_INPUT);
+    const savedStartTime = localStorage.getItem(LS_START_TIME);
+
+    if (savedTaskId && savedInput) {
+      const startTime = savedStartTime ? parseInt(savedStartTime, 10) : Date.now();
+      if (Date.now() - startTime > TIMEOUT_MS) {
+        clearPersistence();
+        return;
+      }
+      setInput(savedInput);
+      setTaskId(savedTaskId);
+      setState("scanning");
+      scanStartTime.current = startTime;
+      setCurrentStep(isRu ? "⏳ Ожидание в очереди..." : "⏳ Waiting in queue...");
+    }
+  }, []);
 
   const startScan = useCallback(async () => {
     const trimmed = input.trim();
     if (!trimmed) return;
 
-    // Validate input
     if (!isValidTarget(trimmed)) {
       setValidationError(
         isRu
@@ -207,15 +160,16 @@ const DemoScanner = () => {
     setState("scanning");
     setResult(null);
     setErrorMsg("");
-    setProgress(null);
+    setProgressValue(0);
+    setTail([]);
     setCurrentStep(isRu ? "⏳ Ожидание в очереди..." : "⏳ Waiting in queue...");
     scanStartTime.current = Date.now();
 
     try {
-      const res = await fetch(`${API_BASE}/scan`, {
+      const res = await fetch(`${API_BASE}/api/demo-scan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ target: trimmed, tier: "guest", user_id: "web-demo" }),
+        body: JSON.stringify({ target: trimmed }),
       });
 
       if (res.status === 429) {
@@ -231,7 +185,13 @@ const DemoScanner = () => {
       if (!res.ok) throw new Error("API error");
 
       const data = await res.json();
-      setJobId(data.job_id);
+      const newTaskId = data.task_id;
+      setTaskId(newTaskId);
+
+      // Persist to localStorage
+      localStorage.setItem(LS_TASK_ID, newTaskId);
+      localStorage.setItem(LS_INPUT, trimmed);
+      localStorage.setItem(LS_START_TIME, String(scanStartTime.current));
     } catch {
       setErrorMsg(
         isRu
@@ -244,7 +204,7 @@ const DemoScanner = () => {
 
   // Poll for results
   useEffect(() => {
-    if (!jobId || state !== "scanning") return;
+    if (!taskId || state !== "scanning") return;
     const interval = setInterval(async () => {
       if (Date.now() - scanStartTime.current > TIMEOUT_MS) {
         setErrorMsg(
@@ -253,12 +213,13 @@ const DemoScanner = () => {
             : "Scan is taking longer than expected. Check Telegram bot for results: @BlackOracleBORIS_bot"
         );
         setState("error");
+        clearPersistence();
         clearInterval(interval);
         return;
       }
 
       try {
-        const res = await fetch(`${API_BASE}/scan/${jobId}`);
+        const res = await fetch(`${API_BASE}/api/demo-scan/status/${taskId}`);
 
         if (res.status === 429) {
           setErrorMsg(
@@ -267,6 +228,7 @@ const DemoScanner = () => {
               : "Demo limit reached. Use Telegram: @BlackOracleBORIS_bot"
           );
           setState("error");
+          clearPersistence();
           clearInterval(interval);
           return;
         }
@@ -274,26 +236,33 @@ const DemoScanner = () => {
         if (!res.ok) throw new Error("Poll error");
         const data = await res.json();
 
-        if (data.status === "finished") {
-          setResult(data.result as ScanResultData);
+        if (data.status === "done") {
+          setResult(data as DemoResult);
           setState("done");
+          clearPersistence();
           clearInterval(interval);
-        } else if (data.status === "failed") {
-          setErrorMsg(data.error || "Unknown error");
+        } else if (data.status === "error") {
+          setErrorMsg(data.message || "Unknown error");
           setState("error");
+          clearPersistence();
           clearInterval(interval);
-        } else {
-          if (data.progress) {
-            setProgress(data.progress);
+        } else if (data.status === "scanning") {
+          if (typeof data.progress === "number") {
+            setProgressValue(data.progress);
           }
-          setCurrentStep(getStepText(data.status, data.progress || null));
+          if (Array.isArray(data.tail)) {
+            setTail(data.tail);
+          }
+          if (data.step) {
+            setCurrentStep(getStepText(data.step));
+          }
         }
       } catch {
         // keep polling on network errors
       }
     }, POLL_INTERVAL);
     return () => clearInterval(interval);
-  }, [jobId, state, isRu, getStepText]);
+  }, [taskId, state, isRu, getStepText]);
 
   // Clear validation error when input changes
   useEffect(() => {
@@ -370,18 +339,18 @@ const DemoScanner = () => {
             <span className="text-muted-foreground">{currentStep}</span>
           </div>
 
-          {progress && progress.progress > 0 && (
+          {progressValue > 0 && (
             <div className="mb-3">
-              <Progress value={progress.progress * 100} className="h-2" />
+              <Progress value={progressValue * 100} className="h-2" />
               <p className="mt-1 font-mono text-xs text-muted-foreground text-right">
-                {Math.round(progress.progress * 100)}%
+                {Math.round(progressValue * 100)}%
               </p>
             </div>
           )}
 
-          {progress?.tail && progress.tail.length > 0 && (
+          {tail.length > 0 && (
             <div className="mt-3 rounded-lg border border-border bg-background p-3 max-h-32 overflow-y-auto">
-              {progress.tail.map((line, i) => (
+              {tail.map((line, i) => (
                 <p key={i} className="font-mono text-[11px] text-muted-foreground leading-relaxed">{line}</p>
               ))}
             </div>
@@ -414,10 +383,8 @@ const DemoScanner = () => {
 
       {/* Result State — Redesigned GUEST Report */}
       {state === "done" && result && (() => {
-        const verdict = getVerdict(result.counts);
-        const vc = verdictConfig[verdict];
-        const observations = generateObservations(result, isRu);
-        const narrative = generateNarrative(result, isRu);
+        const verdict = result.verdict?.toUpperCase() || "LOW";
+        const vc = verdictConfig[verdict] || verdictConfig.LOW;
 
         return (
           <div className="mt-8 rounded-xl border border-primary/30 bg-card shadow-[0_0_40px_hsl(var(--primary)/0.1)] overflow-hidden">
@@ -429,8 +396,13 @@ const DemoScanner = () => {
                   <div className="flex items-center gap-2">
                     <Eye size={16} className="text-primary shrink-0" />
                     <span className="font-mono text-lg font-bold text-foreground">
-                      {isContract ? shortenAddress(input.trim()) : result.project}
+                      {isContract ? shortenAddress(input.trim()) : (result.target || input.trim())}
                     </span>
+                    {result.archetype && (
+                      <span className="rounded border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+                        {result.archetype_icon || ""} {result.archetype}
+                      </span>
+                    )}
                   </div>
 
                   {/* Network / Source */}
@@ -456,7 +428,6 @@ const DemoScanner = () => {
                         GitHub <ExternalLink size={10} />
                       </a>
                     )}
-                    <span>{isRu ? "Дата" : "Date"}: {result.scan_date}</span>
                   </div>
                 </div>
 
@@ -469,37 +440,36 @@ const DemoScanner = () => {
             </div>
 
             <div className="p-6 space-y-6">
-              {/* === SUMMARY NARRATIVE === */}
+              {/* === SUMMARY === */}
               <div>
                 <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-2 font-mono">
                   {isRu ? "Краткое заключение" : "Summary"}
                 </h3>
                 <p className="text-sm text-foreground/90 leading-relaxed">
-                  {narrative}
+                  {isRu
+                    ? `Автоматический анализ выявил ${result.patterns_total} паттернов, из которых ${result.patterns_critical} классифицированы как критические и ${result.patterns_high} как высокоприоритетные. Рекомендуется детальный анализ для оценки реальной эксплуатируемости.`
+                    : `Automated analysis identified ${result.patterns_total} patterns, of which ${result.patterns_critical} are classified as critical and ${result.patterns_high} as high-priority. Detailed analysis is recommended to assess real exploitability.`}
                 </p>
               </div>
 
               <div className="border-t border-dashed border-primary/20" />
 
               {/* === KEY OBSERVATIONS === */}
-              <div>
-                <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-mono">
-                  {isRu ? "Ключевые наблюдения" : "Key Observations"}
-                </h3>
-                <ul className="space-y-2">
-                  {observations.map((obs, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm">
-                      <span className="text-primary mt-0.5 shrink-0">▸</span>
-                      <span className="text-foreground/80">{obs}</span>
-                    </li>
-                  ))}
-                </ul>
-                {result.more_count > 0 && (
-                  <p className="mt-3 font-mono text-xs text-muted-foreground italic">
-                    ...{isRu ? `и ещё ${result.more_count} находок в полном отчёте` : `and ${result.more_count} more findings in full report`}
-                  </p>
-                )}
-              </div>
+              {result.facts && result.facts.length > 0 && (
+                <div>
+                  <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-mono">
+                    {isRu ? "Ключевые наблюдения" : "Key Observations"}
+                  </h3>
+                  <ul className="space-y-2">
+                    {result.facts.slice(0, 8).map((fact, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm">
+                        <span className="text-primary mt-0.5 shrink-0">▸</span>
+                        <span className="text-foreground/80">{fact}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               <div className="border-t border-dashed border-primary/20" />
 
@@ -521,24 +491,43 @@ const DemoScanner = () => {
                   {isRu ? "Проведённый анализ" : "Analysis Scope"}
                 </h3>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle size={14} className="text-green-500 shrink-0" />
-                    <span className="text-foreground/80">{isRu ? "Код контракта — проанализирован" : "Contract code — analyzed"}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    {result.social_summary.total_accounts > 0
-                      ? <CheckCircle size={14} className="text-green-500 shrink-0" />
-                      : <XCircle size={14} className="text-muted-foreground/50 shrink-0" />}
-                    <span className="text-foreground/80">{isRu ? "Социальный слой" : "Social layer"} — {result.social_summary.total_accounts > 0 ? (isRu ? "проанализирован" : "analyzed") : (isRu ? "нет данных" : "no data")}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle size={14} className="text-green-500 shrink-0" />
-                    <span className="text-foreground/80">{isRu ? "Холдеры — проанализированы" : "Holders — analyzed"}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle size={14} className="text-green-500 shrink-0" />
-                    <span className="text-foreground/80">{isRu ? "Ликвидность — проанализирована" : "Liquidity — analyzed"}</span>
-                  </div>
+                  {(result.layers_scanned && result.layers_scanned.length > 0
+                    ? result.layers_scanned
+                    : ["code", "social", "holders", "liquidity"]
+                  ).map((layer, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <CheckCircle size={14} className="text-green-500 shrink-0" />
+                      <span className="text-foreground/80 capitalize">{layer} — {isRu ? "проанализирован" : "analyzed"}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Extra stats */}
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {result.social_accounts != null && (
+                    <div className="rounded-lg border border-border bg-background p-3 text-center">
+                      <p className="font-mono text-lg font-bold text-foreground">{result.social_accounts}</p>
+                      <p className="text-[10px] text-muted-foreground">{isRu ? "Соц. аккаунтов" : "Social accounts"}</p>
+                    </div>
+                  )}
+                  {result.impersonators != null && result.impersonators > 0 && (
+                    <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 text-center">
+                      <p className="font-mono text-lg font-bold text-red-400">{result.impersonators}</p>
+                      <p className="text-[10px] text-muted-foreground">{isRu ? "Имперсонаторов" : "Impersonators"}</p>
+                    </div>
+                  )}
+                  {result.top10_holders_pct != null && (
+                    <div className="rounded-lg border border-border bg-background p-3 text-center">
+                      <p className="font-mono text-lg font-bold text-foreground">{result.top10_holders_pct}%</p>
+                      <p className="text-[10px] text-muted-foreground">{isRu ? "Top-10 холдеров" : "Top-10 holders"}</p>
+                    </div>
+                  )}
+                  {result.audits_count != null && (
+                    <div className="rounded-lg border border-border bg-background p-3 text-center">
+                      <p className="font-mono text-lg font-bold text-foreground">{result.audits_count}</p>
+                      <p className="text-[10px] text-muted-foreground">{isRu ? "Аудитов" : "Audits"}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
