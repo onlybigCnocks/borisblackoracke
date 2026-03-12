@@ -268,12 +268,12 @@ const DemoScanner = () => {
           <p className="font-mono text-sm text-red-400">{errorMsg}</p>
           {errorMsg.includes("@BlackOracleBot") && (
             <a
-              href="https://t.me/BlackOracleBot"
+              href="https://t.me/BlackOracleBORIS_bot"
               target="_blank"
               rel="noopener noreferrer"
               className="mt-3 inline-flex items-center gap-2 font-mono text-sm text-primary hover:underline"
             >
-              <Send size={14} /> @BlackOracleBot
+              <Send size={14} /> @BlackOracleBORIS_bot
             </a>
           )}
         </div>
