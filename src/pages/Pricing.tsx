@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { RevealOnScroll, SectionLabel, SectionTitle, GlowCard } from "@/components/ui-boris";
 import { WALLETS } from "@/lib/data";
 import { QRCodeSVG } from "qrcode.react";
+import { toast } from "@/hooks/use-toast";
 
 type Tier = "guest" | "radar" | "raw" | "blackbox";
 type PayMethod = keyof typeof WALLETS;
