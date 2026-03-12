@@ -267,6 +267,7 @@ const DemoScanner = () => {
   // Clear validation error when input changes
   useEffect(() => {
     if (validationError) setValidationError("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [input]);
 
   const network = result ? detectNetwork(input.trim()) : null;

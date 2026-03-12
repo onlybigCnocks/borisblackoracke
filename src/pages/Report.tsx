@@ -37,7 +37,7 @@ const Report = () => {
   return (
     <div className="container mx-auto min-h-screen px-4 py-12">
       <RevealOnScroll>
-        <Link to="/scan" className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary">
+        <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary">
           <ArrowLeft size={16} /> {t("report.back")}
         </Link>
 

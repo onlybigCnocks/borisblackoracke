@@ -17,7 +17,10 @@ const Header = () => {
   const scrollToScanner = () => {
     setOpen(false);
     if (location.pathname !== "/") {
-      navigate("/#demo-scanner");
+      navigate("/");
+      setTimeout(() => {
+        document.getElementById("demo-scanner")?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
     } else {
       document.getElementById("demo-scanner")?.scrollIntoView({ behavior: "smooth" });
     }

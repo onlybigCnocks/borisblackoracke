@@ -123,7 +123,14 @@ const Pricing = () => {
                 <p className="mb-4 break-all rounded-lg border border-border bg-background-secondary p-3 font-mono text-xs text-foreground">
                   {WALLETS[payMethod]}
                 </p>
-                <button className="w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow">
+                <button
+                  onClick={() => {
+                    window.open("https://t.me/BlackOracleBORIS_bot", "_blank");
+                    const { toast } = await import("@/hooks/use-toast");
+                    toast({ title: t("pricing.paidToast") || "Confirm payment in Telegram bot" });
+                  }}
+                  className="w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
+                >
                   ✓ I paid
                 </button>
               </div>
