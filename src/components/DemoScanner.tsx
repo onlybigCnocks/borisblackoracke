@@ -266,7 +266,7 @@ const DemoScanner = () => {
       {state === "error" && (
         <div className="mt-8 rounded-xl border border-red-500/50 bg-red-500/10 p-6">
           <p className="font-mono text-sm text-red-400">{errorMsg}</p>
-          {errorMsg.includes("@BlackOracleBot") && (
+          {errorMsg.includes("@BlackOracleBORIS_bot") && (
             <a
               href="https://t.me/BlackOracleBORIS_bot"
               target="_blank"
