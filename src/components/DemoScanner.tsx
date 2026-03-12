@@ -27,7 +27,7 @@ interface DemoResult {
   social_accounts?: number;
   impersonators?: number;
   top10_holders_pct?: number;
-  layers_scanned?: string[];
+  layers_scanned?: Record<string, boolean> | string[];
 }
 
 type ScanState = "idle" | "scanning" | "done" | "error";
