@@ -78,7 +78,7 @@ const Index = () => {
         </section>
       </RevealOnScroll>
 
-      {/* 17 Analysis Modules */}
+      {/* 19 Analysis Modules */}
       <section className="container mx-auto px-4 py-20">
         <RevealOnScroll>
           <SectionLabel>{t("modules.label")}</SectionLabel>
