@@ -1,53 +1,34 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { GlowCard } from "@/components/ui-boris";
 import { ExternalLink, CheckCircle, XCircle, AlertTriangle, Send } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
-const API_BASE = import.meta.env.VITE_API_URL || "https://boris-api.example.com";
+const API_BASE = import.meta.env.VITE_API_URL || "https://api.black-oracle.com";
 
-interface ScanResult {
-  target: string;
-  source_url: string;
-  archetype: string;
-  archetype_icon: string;
-  verdict: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "SAFE";
-  patterns_total: number;
-  patterns_critical: number;
-  patterns_high: number;
-  audits_count: number;
-  audit_age_days: number;
-  liquidity: string;
-  social_accounts: number;
-  impersonators: number;
-  top10_holders_pct: number;
-  facts: string[];
-  layers_scanned: {
-    social: boolean;
-    audit: boolean;
-    fund_flow: boolean;
-    liquidity: boolean;
-  };
+const POLL_INTERVAL = 5000;
+const TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
+
+interface ScanResultData {
+  tier: string;
+  project: string;
+  scan_date: string;
+  counts: { critical: number; high: number; medium: number; low: number; total: number };
+  top_findings: { type: string; severity: string; file: string; description: string }[];
+  more_count: number;
+  social_score: number;
+  social_summary: { total_accounts: number; impersonators_found: number };
+  download_allowed: boolean;
+}
+
+interface ProgressData {
+  stage: string;
+  progress: number;
+  current_file?: string;
+  tail?: string[];
 }
 
 type ScanState = "idle" | "scanning" | "done" | "error";
-
-const SCAN_STEPS_EN = [
-  "📦 Cloning repository...",
-  "🔍 Static code analysis...",
-  "🔗 On-chain reconnaissance...",
-  "📱 Social intelligence...",
-  "🛡️ Audit verification...",
-  "📊 Data correlation...",
-];
-
-const SCAN_STEPS_RU = [
-  "📦 Клонирование репозитория...",
-  "🔍 Статический анализ кода...",
-  "🔗 On-chain разведка...",
-  "📱 Социальная разведка...",
-  "🛡️ Проверка аудитов...",
-  "📊 Корреляция данных...",
-];
 
 const DemoScanner = () => {
   const { t, i18n } = useTranslation();
@@ -55,95 +36,142 @@ const DemoScanner = () => {
 
   const [input, setInput] = useState("");
   const [state, setState] = useState<ScanState>("idle");
-  const [visibleSteps, setVisibleSteps] = useState<number[]>([]);
-  const [result, setResult] = useState<ScanResult | null>(null);
+  const [result, setResult] = useState<ScanResultData | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
-  const [taskId, setTaskId] = useState<string | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [progress, setProgress] = useState<ProgressData | null>(null);
+  const [currentStep, setCurrentStep] = useState("");
+  const scanStartTime = useRef<number>(0);
 
-  const steps = isRu ? SCAN_STEPS_RU : SCAN_STEPS_EN;
+  const getStepText = useCallback((status: string, prog: ProgressData | null): string => {
+    if (status === "queued") {
+      return isRu ? "⏳ Ожидание в очереди..." : "⏳ Waiting in queue...";
+    }
+    if (status === "started" && prog) {
+      const stage = prog.stage;
+      if (stage === "fetch" || stage === "starting") {
+        return isRu ? "📦 Клонирование репозитория..." : "📦 Cloning repository...";
+      }
+      if (stage === "analyze" || stage === "analyzing") {
+        const file = prog.current_file ? `: ${prog.current_file}` : "";
+        return isRu ? `🔍 Статический анализ${file}` : `🔍 Static analysis${file}`;
+      }
+      return isRu ? "📊 Анализ..." : "📊 Analyzing...";
+    }
+    return isRu ? "📊 Анализ..." : "📊 Analyzing...";
+  }, [isRu]);
 
   const startScan = useCallback(async () => {
     if (!input.trim()) return;
     setState("scanning");
-    setVisibleSteps([]);
     setResult(null);
     setErrorMsg("");
+    setProgress(null);
+    setCurrentStep(isRu ? "⏳ Ожидание в очереди..." : "⏳ Waiting in queue...");
+    scanStartTime.current = Date.now();
 
     try {
-      const res = await fetch(`${API_BASE}/api/demo-scan`, {
+      const res = await fetch(`${API_BASE}/scan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ target: input.trim() }),
+        body: JSON.stringify({ target: input.trim(), tier: "guest", user_id: "web-demo" }),
       });
+
+      if (res.status === 429) {
+        setErrorMsg(
+          isRu
+            ? "Лимит демо исчерпан. Используйте Telegram: @BlackOracleBot"
+            : "Demo limit reached. Use Telegram: @BlackOracleBot"
+        );
+        setState("error");
+        return;
+      }
 
       if (!res.ok) throw new Error("API error");
 
       const data = await res.json();
-      setTaskId(data.task_id);
+      setJobId(data.job_id);
     } catch {
       setErrorMsg(
         isRu
-          ? "⚠️ Сервер анализа недоступен. Используйте Telegram бот: @BlackOracleBot"
-          : "⚠️ Analysis server unavailable. Use Telegram bot: @BlackOracleBot"
+          ? "⚠️ Сервер анализа недоступен. Telegram: @BlackOracleBot"
+          : "⚠️ Analysis server unavailable. Telegram: @BlackOracleBot"
       );
       setState("error");
     }
   }, [input, isRu]);
 
-  // Animate steps appearing
-  useEffect(() => {
-    if (state !== "scanning") return;
-    let step = 0;
-    const interval = setInterval(() => {
-      if (step < steps.length) {
-        setVisibleSteps((prev) => [...prev, step]);
-        step++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 2500);
-    return () => clearInterval(interval);
-  }, [state, steps.length]);
-
   // Poll for results
   useEffect(() => {
-    if (!taskId || state !== "scanning") return;
+    if (!jobId || state !== "scanning") return;
     const interval = setInterval(async () => {
+      // Timeout check
+      if (Date.now() - scanStartTime.current > TIMEOUT_MS) {
+        setErrorMsg(
+          isRu
+            ? "Сканирование занимает больше времени, чем ожидалось. Проверьте результат в Telegram: @BlackOracleBot"
+            : "Scan is taking longer than expected. Check Telegram bot for results: @BlackOracleBot"
+        );
+        setState("error");
+        clearInterval(interval);
+        return;
+      }
+
       try {
-        const res = await fetch(`${API_BASE}/api/demo-scan/status/${taskId}`);
+        const res = await fetch(`${API_BASE}/scan/${jobId}`);
+
+        if (res.status === 429) {
+          setErrorMsg(
+            isRu
+              ? "Лимит демо исчерпан. Используйте Telegram: @BlackOracleBot"
+              : "Demo limit reached. Use Telegram: @BlackOracleBot"
+          );
+          setState("error");
+          clearInterval(interval);
+          return;
+        }
+
         if (!res.ok) throw new Error("Poll error");
         const data = await res.json();
 
-        if (data.status === "done") {
-          setResult(data as ScanResult);
+        if (data.status === "finished") {
+          setResult(data.result as ScanResultData);
           setState("done");
           clearInterval(interval);
-        } else if (data.status === "error") {
-          setErrorMsg(data.message || "Unknown error");
+        } else if (data.status === "failed") {
+          setErrorMsg(data.error || "Unknown error");
           setState("error");
           clearInterval(interval);
+        } else {
+          // queued or started
+          if (data.progress) {
+            setProgress(data.progress);
+          }
+          setCurrentStep(getStepText(data.status, data.progress || null));
         }
       } catch {
-        // keep polling
+        // keep polling on network errors
       }
-    }, 10000);
+    }, POLL_INTERVAL);
     return () => clearInterval(interval);
-  }, [taskId, state]);
+  }, [jobId, state, isRu, getStepText]);
+
+  const getVerdict = (counts: ScanResultData["counts"]) => {
+    if (counts.critical >= 3) return "HIGH";
+    if (counts.critical >= 1) return "MEDIUM";
+    return "LOW";
+  };
 
   const verdictColors: Record<string, string> = {
-    CRITICAL: "bg-red-600 text-white",
     HIGH: "bg-red-500 text-white",
     MEDIUM: "bg-yellow-500 text-black",
     LOW: "bg-green-500 text-black",
-    SAFE: "bg-green-600 text-white",
   };
 
   const verdictLabels: Record<string, string> = {
-    CRITICAL: "CRITICAL RISK",
     HIGH: "HIGH RISK",
     MEDIUM: "MEDIUM RISK",
     LOW: "LOW RISK",
-    SAFE: "SAFE",
   };
 
   return (
@@ -200,19 +228,32 @@ const DemoScanner = () => {
               {isRu ? "Анализ запущен..." : "Analysis running..."}
             </span>
           </div>
-          <div className="space-y-2">
-            {steps.map((step, i) => (
-              <div
-                key={i}
-                className={`flex items-center gap-3 font-mono text-sm transition-all duration-500 ${
-                  visibleSteps.includes(i) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 h-0 overflow-hidden"
-                }`}
-              >
-                <CheckCircle size={14} className="text-green-500 shrink-0" />
-                <span className="text-muted-foreground">{step}</span>
-              </div>
-            ))}
+
+          {/* Current step */}
+          <div className="mb-3 flex items-center gap-3 font-mono text-sm">
+            <CheckCircle size={14} className="text-green-500 shrink-0" />
+            <span className="text-muted-foreground">{currentStep}</span>
           </div>
+
+          {/* Progress bar */}
+          {progress && progress.progress > 0 && (
+            <div className="mb-3">
+              <Progress value={progress.progress * 100} className="h-2" />
+              <p className="mt-1 font-mono text-xs text-muted-foreground text-right">
+                {Math.round(progress.progress * 100)}%
+              </p>
+            </div>
+          )}
+
+          {/* Live tail output */}
+          {progress?.tail && progress.tail.length > 0 && (
+            <div className="mt-3 rounded-lg border border-border bg-background p-3 max-h-32 overflow-y-auto">
+              {progress.tail.map((line, i) => (
+                <p key={i} className="font-mono text-[11px] text-muted-foreground leading-relaxed">{line}</p>
+              ))}
+            </div>
+          )}
+
           <p className="mt-4 font-mono text-xs text-muted-foreground">
             {isRu
               ? "Это реальный анализ. Полное сканирование может занять до 15 минут."
@@ -239,171 +280,149 @@ const DemoScanner = () => {
       )}
 
       {/* Result State */}
-      {state === "done" && result && (
-        <div className="mt-8 rounded-xl border border-primary/30 bg-card shadow-[0_0_40px_hsl(var(--primary)/0.1)] overflow-hidden">
-          {/* Top bar */}
-          <div className="flex items-center justify-between border-b border-border bg-card px-6 py-3">
-            <span className="font-mono text-sm font-bold text-foreground">👁️ BORIS — PREVIEW</span>
-            <span className={`rounded px-3 py-1 font-mono text-xs font-bold ${verdictColors[result.verdict] || "bg-muted text-foreground"}`}>
-              {verdictLabels[result.verdict] || result.verdict}
-            </span>
-          </div>
+      {state === "done" && result && (() => {
+        const verdict = getVerdict(result.counts);
+        const findings = result.top_findings.slice(0, 8);
 
-          {/* Body */}
-          <div className="p-6 font-mono text-sm space-y-4">
-            {/* Target info */}
-            <div className="space-y-1">
-              <p className="text-muted-foreground">
-                {isRu ? "Цель" : "Target"}: <span className="text-foreground">{result.target}</span>
-              </p>
-              <p className="text-muted-foreground">
-                {isRu ? "Источник" : "Source"}:{" "}
-                <a href={result.source_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
-                  GitHub <ExternalLink size={12} />
+        return (
+          <div className="mt-8 rounded-xl border border-primary/30 bg-card shadow-[0_0_40px_hsl(var(--primary)/0.1)] overflow-hidden">
+            {/* Top bar */}
+            <div className="flex items-center justify-between border-b border-border bg-card px-6 py-3">
+              <span className="font-mono text-sm font-bold text-foreground">👁️ BORIS — PREVIEW</span>
+              <span className={`rounded px-3 py-1 font-mono text-xs font-bold ${verdictColors[verdict]}`}>
+                {verdictLabels[verdict]}
+              </span>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 font-mono text-sm space-y-4">
+              {/* Target info */}
+              <div className="space-y-1">
+                <p className="text-muted-foreground">
+                  {isRu ? "Цель" : "Target"}: <span className="text-foreground">{result.project}</span>
+                </p>
+                <p className="text-muted-foreground">
+                  {isRu ? "Дата" : "Date"}: <span className="text-foreground">{result.scan_date}</span>
+                </p>
+              </div>
+
+              <div className="border-t border-dashed border-primary/30" />
+
+              {/* Stats grid */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">
+                  {isRu ? "Масштаб анализа:" : "Analysis scope:"}
+                </p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="rounded-lg border border-border bg-background p-3">
+                    <p className="text-xs text-muted-foreground">📊 {isRu ? "Паттерны" : "Patterns"}</p>
+                    <p className="text-foreground font-bold">{result.counts.total} <span className="text-xs font-normal text-muted-foreground">({result.counts.critical}C / {result.counts.high}H)</span></p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-background p-3">
+                    <p className="text-xs text-muted-foreground">📨 {isRu ? "Соцсети" : "Social"}</p>
+                    <p className="text-foreground font-bold">
+                      {result.social_summary.total_accounts} {isRu ? "акк." : "acc."}
+                      <span className="text-xs font-normal text-muted-foreground ml-1">
+                        ({result.social_summary.impersonators_found} {isRu ? "имперс." : "impers."})
+                      </span>
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-background p-3">
+                    <p className="text-xs text-muted-foreground">🎯 {isRu ? "Соц. скор" : "Social score"}</p>
+                    <p className="text-foreground font-bold">{result.social_score}/100</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-dashed border-primary/30" />
+
+              {/* Findings */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">
+                  {isRu ? "Топ находки:" : "Top findings:"}
+                </p>
+                <ul className="space-y-1">
+                  {findings.map((f, i) => (
+                    <li key={i} className="text-xs text-muted-foreground">
+                      • <span className={f.severity === "CRITICAL" ? "text-red-400 font-bold" : f.severity === "HIGH" ? "text-orange-400 font-semibold" : "text-yellow-400"}>{f.severity}</span>: {f.description} <span className="text-muted-foreground/60">({f.file})</span>
+                    </li>
+                  ))}
+                </ul>
+                {result.more_count > 0 && (
+                  <p className="mt-2 text-xs text-muted-foreground italic">
+                    ...{isRu ? `и ещё ${result.more_count} находок в полном отчёте` : `and ${result.more_count} more findings in full report`}
+                  </p>
+                )}
+              </div>
+
+              <div className="border-t border-dashed border-primary/30" />
+
+              {/* Warning */}
+              <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4">
+                <p className="text-xs text-yellow-400">
+                  <AlertTriangle size={14} className="inline mr-1" />
+                  {isRu
+                    ? "Это не означает эксплуатацию. Это означает наличие поверхности риска."
+                    : "This does not mean exploitation. It means the presence of a risk surface."}
+                </p>
+              </div>
+
+              <div className="border-t-2 border-primary/50" />
+
+              {/* Upgrade cards */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="rounded-lg border-l-4 border-l-yellow-500 border border-border bg-background p-4">
+                  <p className="font-bold text-foreground mb-2">🔒 RADAR</p>
+                  <ul className="space-y-1 text-xs text-muted-foreground">
+                    <li>• {isRu ? "Карта рисков по доменам" : "Risk map by domains"}</li>
+                    <li>• {isRu ? "Governance и admin breakdown" : "Governance & admin breakdown"}</li>
+                    <li>• {isRu ? "Аудит drift и покрытие" : "Audit drift & coverage"}</li>
+                    <li>• {isRu ? "Социальный профиль" : "Social profile"}</li>
+                  </ul>
+                </div>
+                <div className="rounded-lg border-l-4 border-l-orange-500 border border-border bg-background p-4">
+                  <p className="font-bold text-foreground mb-2">📋 RAW</p>
+                  <ul className="space-y-1 text-xs text-muted-foreground">
+                    <li>• {isRu ? "Полный список находок с номерами строк" : "Full findings list with line numbers"}</li>
+                    <li>• {isRu ? "Все детекторы без фильтрации" : "All detectors unfiltered"}</li>
+                    <li>• {isRu ? "Холдеры, ликвидность, деплойменты" : "Holders, liquidity, deployments"}</li>
+                    <li>• {isRu ? "Технический дамп — только факты" : "Technical dump — facts only"}</li>
+                  </ul>
+                </div>
+                <div className="rounded-lg border-l-4 border-l-primary border border-primary/30 bg-background p-4 shadow-[0_0_20px_hsl(var(--primary)/0.15)]">
+                  <p className="font-bold text-foreground mb-2">🔥 BLACKBOX</p>
+                  <ul className="space-y-1 text-xs text-muted-foreground">
+                    <li>• {isRu ? "file:line всех уязвимостей" : "file:line of all vulnerabilities"}</li>
+                    <li>• {isRu ? "Пошаговые exploit paths" : "Step-by-step exploit paths"}</li>
+                    <li>• {isRu ? "Полный инженерный разбор" : "Full engineering breakdown"}</li>
+                    <li>• {isRu ? "Fund flow и акторы" : "Fund flow & actors"}</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* CTA */}
+              <div className="text-center pt-2">
+                <a
+                  href="https://t.me/BlackOracleBot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-3 rounded-xl bg-primary px-10 py-4 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow text-base"
+                >
+                  <Send size={18} />
+                  {isRu ? "Получить полный отчёт в Telegram" : "Get Full Report in Telegram"}
                 </a>
-              </p>
-              <p className="text-muted-foreground">
-                🏗 {isRu ? "Тип" : "Type"}: <span className="text-foreground">{result.archetype_icon} {result.archetype}</span>
-              </p>
-            </div>
-
-            <div className="border-t border-dashed border-primary/30" />
-
-            {/* Stats grid */}
-            <div>
-              <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wider">
-                {isRu ? "Масштаб анализа:" : "Analysis scope:"}
-              </p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="rounded-lg border border-border bg-background p-3">
-                  <p className="text-xs text-muted-foreground">📊 {isRu ? "Паттерны" : "Patterns"}</p>
-                  <p className="text-foreground font-bold">{result.patterns_total} <span className="text-xs font-normal text-muted-foreground">({result.patterns_critical}C / {result.patterns_high}H)</span></p>
-                </div>
-                <div className="rounded-lg border border-border bg-background p-3">
-                  <p className="text-xs text-muted-foreground">🛡️ {isRu ? "Аудиты" : "Audits"}</p>
-                  <p className="text-foreground font-bold">{result.audits_count} <span className="text-xs font-normal text-muted-foreground">({result.audit_age_days}d)</span></p>
-                </div>
-                <div className="rounded-lg border border-border bg-background p-3">
-                  <p className="text-xs text-muted-foreground">💧 {isRu ? "Ликвидность" : "Liquidity"}</p>
-                  <p className="text-foreground font-bold">{result.liquidity}</p>
-                </div>
-                <div className="rounded-lg border border-border bg-background p-3">
-                  <p className="text-xs text-muted-foreground">📨 {isRu ? "Соцсети" : "Social"}</p>
-                  <p className="text-foreground font-bold">{result.social_accounts} <span className="text-xs font-normal text-muted-foreground">{isRu ? "проанализировано" : "analyzed"}</span></p>
-                </div>
-                <div className="rounded-lg border border-border bg-background p-3">
-                  <p className="text-xs text-muted-foreground">👥 Top-10 {isRu ? "холдеров" : "holders"}</p>
-                  <p className="text-foreground font-bold">{result.top10_holders_pct}%</p>
-                </div>
               </div>
-            </div>
 
-            <div className="border-t border-dashed border-primary/30" />
-
-            {/* Facts */}
-            <div>
-              <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">
-                {isRu ? "Наблюдаемые факты:" : "Observed facts:"}
-              </p>
-              <ul className="space-y-1">
-                {result.facts.map((f, i) => (
-                  <li key={i} className="text-xs text-muted-foreground">• {f}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="border-t border-dashed border-primary/30" />
-
-            {/* Warning */}
-            <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4">
-              <p className="text-xs text-yellow-400">
-                <AlertTriangle size={14} className="inline mr-1" />
-                {isRu
-                  ? "Это не означает эксплуатацию. Это означает наличие поверхности риска."
-                  : "This does not mean exploitation. It means the presence of a risk surface."}
-              </p>
-            </div>
-
-            <div className="border-t border-dashed border-primary/30" />
-
-            {/* Layers scanned */}
-            <div>
-              <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider">
-                {isRu ? "Проведённый анализ:" : "Analysis performed:"}
-              </p>
-              <div className="space-y-1 text-xs">
-                {[
-                  { key: "social", icon: "📱", ru: "Социальный слой", en: "Social layer" },
-                  { key: "audit", icon: "🛡️", ru: "Аудит-контекст", en: "Audit context" },
-                  { key: "fund_flow", icon: "🔗", ru: "Fund flow", en: "Fund flow" },
-                  { key: "liquidity", icon: "💧", ru: "Ликвидность и биржи", en: "Liquidity & exchanges" },
-                ].map((layer) => {
-                  const done = result.layers_scanned[layer.key as keyof typeof result.layers_scanned];
-                  return (
-                    <div key={layer.key} className="flex items-center gap-2 text-muted-foreground">
-                      {done ? <CheckCircle size={12} className="text-green-500" /> : <XCircle size={12} className="text-red-500" />}
-                      {layer.icon} {isRu ? layer.ru : layer.en} — {isRu ? (done ? "проанализирован" : "нет данных") : (done ? "analyzed" : "no data")}
-                    </div>
-                  );
-                })}
+              {/* Footer */}
+              <div className="border-t border-border pt-3 text-center">
+                <p className="text-[10px] text-muted-foreground">
+                  Tier: 👁️ GUEST | BORIS — {isRu ? "автоматизированная система инспекции" : "automated inspection system"}.
+                </p>
               </div>
-            </div>
-
-            <div className="border-t-2 border-primary/50" />
-
-            {/* Upgrade cards */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <div className="rounded-lg border-l-4 border-l-yellow-500 border border-border bg-background p-4">
-                <p className="font-bold text-foreground mb-2">🔒 RADAR</p>
-                <ul className="space-y-1 text-xs text-muted-foreground">
-                  <li>• {isRu ? "Карта рисков по доменам" : "Risk map by domains"}</li>
-                  <li>• {isRu ? "Governance и admin breakdown" : "Governance & admin breakdown"}</li>
-                  <li>• {isRu ? "Аудит drift и покрытие" : "Audit drift & coverage"}</li>
-                  <li>• {isRu ? "Социальный профиль" : "Social profile"}</li>
-                </ul>
-              </div>
-              <div className="rounded-lg border-l-4 border-l-orange-500 border border-border bg-background p-4">
-                <p className="font-bold text-foreground mb-2">📋 RAW</p>
-                <ul className="space-y-1 text-xs text-muted-foreground">
-                  <li>• {isRu ? "Полный список находок с номерами строк" : "Full findings list with line numbers"}</li>
-                  <li>• {isRu ? "Все детекторы без фильтрации" : "All detectors unfiltered"}</li>
-                  <li>• {isRu ? "Холдеры, ликвидность, деплойменты" : "Holders, liquidity, deployments"}</li>
-                  <li>• {isRu ? "Технический дамп — только факты" : "Technical dump — facts only"}</li>
-                </ul>
-              </div>
-              <div className="rounded-lg border-l-4 border-l-primary border border-primary/30 bg-background p-4 shadow-[0_0_20px_hsl(var(--primary)/0.15)]">
-                <p className="font-bold text-foreground mb-2">🔥 BLACKBOX</p>
-                <ul className="space-y-1 text-xs text-muted-foreground">
-                  <li>• {isRu ? "file:line всех уязвимостей" : "file:line of all vulnerabilities"}</li>
-                  <li>• {isRu ? "Пошаговые exploit paths" : "Step-by-step exploit paths"}</li>
-                  <li>• {isRu ? "Полный инженерный разбор" : "Full engineering breakdown"}</li>
-                  <li>• {isRu ? "Fund flow и акторы" : "Fund flow & actors"}</li>
-                </ul>
-              </div>
-            </div>
-
-            {/* CTA */}
-            <div className="text-center pt-2">
-              <a
-                href="https://t.me/BlackOracleBot"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-3 rounded-xl bg-primary px-10 py-4 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow text-base"
-              >
-                <Send size={18} />
-                {isRu ? "Получить полный отчёт в Telegram" : "Get Full Report in Telegram"}
-              </a>
-            </div>
-
-            {/* Footer */}
-            <div className="border-t border-border pt-3 text-center">
-              <p className="text-[10px] text-muted-foreground">
-                Tier: 👁️ GUEST | BORIS — {isRu ? "автоматизированная система инспекции" : "automated inspection system"}.
-              </p>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </section>
   );
 };
