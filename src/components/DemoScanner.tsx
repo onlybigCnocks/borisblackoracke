@@ -109,8 +109,8 @@ const DemoScanner = () => {
       if (Date.now() - scanStartTime.current > TIMEOUT_MS) {
         setErrorMsg(
           isRu
-            ? "Сканирование занимает больше времени, чем ожидалось. Проверьте результат в Telegram: @BlackOracleBot"
-            : "Scan is taking longer than expected. Check Telegram bot for results: @BlackOracleBot"
+            ? "Сканирование занимает больше времени, чем ожидалось. Проверьте результат в Telegram: @BlackOracleBORIS_bot"
+            : "Scan is taking longer than expected. Check Telegram bot for results: @BlackOracleBORIS_bot"
         );
         setState("error");
         clearInterval(interval);
