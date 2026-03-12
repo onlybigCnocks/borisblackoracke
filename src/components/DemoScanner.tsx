@@ -315,93 +315,140 @@ const DemoScanner = () => {
 
 // --- Result Teaser Component ---
 
-function ResultTeaser({ result, isRu }: { result: DemoResult; isRu: boolean }) {
+function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean }) {
+  const lang = isRu ? "ru" : "en";
   const verdictStyle = VERDICT_STYLE[result.verdict] || VERDICT_STYLE.CLEAN;
   const activeLayers = Object.values(result.layers).filter(Boolean).length;
   const totalLayers = Object.keys(result.layers).length;
+  const facts = result.facts[lang] || result.facts.en || [];
+  const hasFindings = result.top_findings_preview.length > 0;
 
   return (
     <div className="mt-8 rounded-xl border border-border bg-card overflow-hidden">
       {/* Row 1 — Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-lg">{result.archetype_icon}</span>
-          <span className="font-mono text-sm font-bold text-foreground truncate">{result.project}</span>
-          <span className="font-mono text-xs text-muted-foreground shrink-0">{formatDate(result.scan_date)}</span>
+      <div className="border-b border-border px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-lg shrink-0">{result.archetype_icon}</span>
+            <span className="font-mono text-sm font-bold text-foreground truncate">{result.project}</span>
+            <span className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground shrink-0">
+              {result.archetype_label[lang] || result.archetype_label.en}
+            </span>
+            <span className="font-mono text-[11px] text-muted-foreground shrink-0">{formatDate(result.scan_date)}</span>
+          </div>
+          <span className={`rounded-md border px-3 py-1 font-mono text-xs font-semibold shrink-0 ${verdictStyle}`}>
+            {result.verdict_label[lang] || result.verdict_label.en}
+          </span>
         </div>
-        <span className={`rounded-md border px-3 py-1 font-mono text-xs font-semibold shrink-0 ${verdictStyle}`}>
-          {isRu ? result.verdict_label.ru : result.verdict_label.en}
-        </span>
+        {result.intro && (
+          <p className="mt-2 font-mono text-xs italic text-muted-foreground line-clamp-2">
+            {result.intro[lang] || result.intro.en}
+          </p>
+        )}
       </div>
 
       <div className="p-5 space-y-5">
-        {/* Row 2 — Stats bar */}
-        <div className="flex flex-wrap gap-3">
-          <StatCard value={String(result.patterns_total)} label="Patterns" />
-          <StatCard value={`${activeLayers}/${totalLayers}`} label="Layers" />
+        {/* Row 2 — Scope stats (horizontal scroll) */}
+        <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ flexWrap: "nowrap" }}>
+          {result.scope.patterns_total > 0 && (
+            <ScopeStat value={String(result.scope.patterns_total)} label="Patterns">
+              <span className="font-mono text-[9px]">
+                <span className="text-red-400">{result.scope.patterns_critical}C</span>
+                {" / "}
+                <span className="text-orange-400">{result.scope.patterns_high}H</span>
+              </span>
+            </ScopeStat>
+          )}
+          <ScopeStat value={`${activeLayers}/${totalLayers}`} label="Layers" />
 
-          {result.social && (
-            <StatCard value={formatFollowers(result.social.total_followers)} label="Followers" />
+          {result.scope.social && result.scope.social.total_followers > 0 && (
+            <ScopeStat value={formatFollowers(result.scope.social.total_followers)} label="Followers">
+              {result.scope.social.impersonators > 0 && (
+                <span className="font-mono text-[9px] text-red-400">{result.scope.social.impersonators} impersonators</span>
+              )}
+            </ScopeStat>
           )}
-          {result.social && result.social.impersonators_count > 0 && (
-            <StatCard value={String(result.social.impersonators_count)} label="Impersonators" />
-          )}
-          {result.audit?.exists && (
-            <div className="flex-1 min-w-[100px] rounded-lg border border-border bg-background p-3 text-center">
-              <p className="font-mono text-lg font-bold text-foreground">{result.audit.count}</p>
-              <p className="text-[10px] text-muted-foreground">Audits</p>
-              <div className="mt-1 flex flex-wrap justify-center gap-1">
-                {result.audit.auditors.map((a) => (
-                  <span key={a} className="rounded-full border border-border px-1.5 py-0 font-mono text-[9px] text-muted-foreground">{a}</span>
+
+          {result.scope.audits && result.scope.audits.count > 0 && (
+            <div className="shrink-0 min-w-[100px] rounded-lg border border-border bg-background p-2.5 text-center">
+              <p className="font-mono text-lg font-bold text-foreground leading-none">{result.scope.audits.count}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Audits</p>
+              <div className="mt-1 flex flex-wrap justify-center gap-0.5">
+                {result.scope.audits.auditors.slice(0, 3).map((a) => (
+                  <span key={a} className="rounded-full border border-border px-1.5 font-mono text-[8px] text-muted-foreground">{a}</span>
                 ))}
+                {result.scope.audits.auditors.length > 3 && (
+                  <span className="font-mono text-[8px] text-muted-foreground">+{result.scope.audits.auditors.length - 3}</span>
+                )}
               </div>
+              {result.scope.audits.age_days > 365 && (
+                <span className="font-mono text-[9px] text-amber-400">{result.scope.audits.age_days}d ago</span>
+              )}
             </div>
           )}
 
-          {/* Onchain stats (for scan_mode === "onchain") */}
-          {result.onchain?.abi && (
-            <StatCard value={String(result.onchain.abi.external_functions)} label="Ext. Functions" />
+          {result.scope.liquidity && (
+            <ScopeStat value={result.scope.liquidity} label="Liquidity" />
           )}
-          {result.onchain?.deployments != null && (
-            <StatCard value={String(result.onchain.deployments)} label="Deployments" />
+
+          {result.scope.top10_holders_pct != null && result.scope.top10_holders_pct > 0 && (
+            <ScopeStat value={`${result.scope.top10_holders_pct}%`} label="Top-10 Holders">
+              {result.scope.top10_holders_pct > 80 && (
+                <span className="font-mono text-[9px] text-amber-400">concentrated</span>
+              )}
+            </ScopeStat>
           )}
-          {result.onchain?.behavior_signals != null && (
-            <StatCard value={String(result.onchain.behavior_signals)} label="Signals" />
+
+          {result.scope.deploy_count != null && result.scope.deploy_count > 0 && (
+            <ScopeStat value={String(result.scope.deploy_count)} label="Deploys" />
           )}
         </div>
 
-        {/* Row 3 — Key observations */}
+        {/* Row 3 — Observed facts */}
         <div>
-          <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-2 font-mono">
-            {isRu ? "Ключевые наблюдения" : "Key Observations"}
+          <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2 font-mono">
+            {isRu ? "Наблюдаемые факты" : "Observed Facts"}
           </h3>
-          <ul className="space-y-1.5">
-            {result.facts.slice(0, 3).map((fact, i) => (
-              <li key={i} className="font-mono text-sm text-foreground/80">
-                <span className="text-muted-foreground mr-1.5">▸</span>{fact}
-              </li>
-            ))}
-          </ul>
+          {facts.length > 0 ? (
+            <ul className="space-y-1">
+              {facts.slice(0, 3).map((fact, i) => (
+                <li key={i} className="font-mono text-sm text-foreground/80">
+                  <span className="text-muted-foreground mr-1.5">▸</span>{fact}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="font-mono text-sm text-muted-foreground italic">
+              {isRu ? "Значимых паттернов не обнаружено" : "No significant patterns detected"}
+            </p>
+          )}
+          {facts.length > 3 && (
+            <p className="mt-1.5 font-mono text-xs italic text-muted-foreground">
+              {isRu ? `...и ещё ${facts.length - 3}` : `...and ${facts.length - 3} more`}
+            </p>
+          )}
           {result.more_count > 0 && (
-            <p className="mt-2 font-mono text-xs italic text-muted-foreground">
-              {isRu
-                ? `...и ещё ${result.more_count} находок в полном отчёте`
-                : `...and ${result.more_count} more findings in full report`}
+            <p className="mt-1 font-mono text-xs text-muted-foreground">
+              +{result.more_count} {isRu ? "находок в полном отчёте" : "findings in full report"}
             </p>
           )}
         </div>
 
         {/* Row 4 — Blurred findings preview + CTA */}
         <div className="relative">
-          <div className="space-y-1.5">
-            {result.top_findings_preview.slice(0, 2).map((f, i) => (
-              <p key={i} className="font-mono text-xs text-foreground/70">
-                {SEVERITY_DOT[f.severity] || "⚪"} {f.type} · <span className="text-muted-foreground">{f.file}</span>
-              </p>
-            ))}
-          </div>
+          {hasFindings && (
+            <div className="space-y-1">
+              {result.top_findings_preview.slice(0, 2).map((f, i) => (
+                <p key={i} className="font-mono text-xs text-foreground/70">
+                  {SEVERITY_DOT[f.severity] || "⚪"} <span className="font-semibold">{f.type}</span> · <span className="text-muted-foreground">{f.file}</span>
+                </p>
+              ))}
+            </div>
+          )}
           {/* Gradient blur overlay */}
-          <div className="absolute inset-0 top-4 bg-gradient-to-b from-transparent via-card/80 to-card pointer-events-none" />
+          {hasFindings && (
+            <div className="absolute inset-0 top-4 bg-gradient-to-b from-transparent via-card/80 to-card pointer-events-none" />
+          )}
 
           {/* CTA over blur */}
           <div className="relative z-10 mt-4 flex flex-col items-center gap-2">
@@ -412,18 +459,18 @@ function ResultTeaser({ result, isRu }: { result: DemoResult; isRu: boolean }) {
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow text-sm"
             >
               <Send size={16} />
-              {isRu ? "Открыть полный отчёт в Telegram" : "Get Full Report in Telegram"}
+              {isRu ? "Открыть полный отчёт" : "Get Full Report"}
             </a>
             <span className="font-mono text-[10px] text-muted-foreground tracking-widest">RADAR · RAW · BLACKBOX</span>
           </div>
         </div>
 
         {/* Row 5 — Footer disclaimer */}
-        <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
+        <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-4 py-2.5">
           <p className="font-mono text-[11px] text-yellow-400/80">
             {isRu
-              ? "Это не означает эксплуатацию. Это означает наличие поверхности риска."
-              : "This does not imply exploitation. It indicates risk surface."}
+              ? "⚠️ Это не означает эксплуатацию. Это означает наличие поверхности риска."
+              : "⚠️ This does not imply exploitation. It indicates risk surface."}
           </p>
         </div>
         <p className="text-center font-mono text-[10px] text-muted-foreground">
@@ -434,11 +481,12 @@ function ResultTeaser({ result, isRu }: { result: DemoResult; isRu: boolean }) {
   );
 }
 
-function StatCard({ value, label }: { value: string; label: string }) {
+function ScopeStat({ value, label, children }: { value: string; label: string; children?: React.ReactNode }) {
   return (
-    <div className="flex-1 min-w-[80px] rounded-lg border border-border bg-background p-3 text-center">
-      <p className="font-mono text-lg font-bold text-foreground">{value}</p>
-      <p className="text-[10px] text-muted-foreground">{label}</p>
+    <div className="shrink-0 min-w-[80px] rounded-lg border border-border bg-background p-2.5 text-center">
+      <p className="font-mono text-lg font-bold text-foreground leading-none">{value}</p>
+      <p className="text-[10px] text-muted-foreground mt-0.5">{label}</p>
+      {children}
     </div>
   );
 }
