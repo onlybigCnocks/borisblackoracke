@@ -110,7 +110,7 @@ const DemoScanner = () => {
 
   const [input, setInput] = useState("");
   const [state, setState] = useState<ScanState>("idle");
-  const [result, setResult] = useState<DemoResult | null>(null);
+  const [result, setResult] = useState<DemoScanResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [validationError, setValidationError] = useState("");
   const [taskId, setTaskId] = useState<string | null>(null);
