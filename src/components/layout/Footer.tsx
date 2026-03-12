@@ -11,7 +11,7 @@ const Footer = () => {
           <div className="flex items-center gap-3">
             <BorisLogo size={28} />
             <span className="font-bold tracking-wider text-foreground">BORIS</span>
-            <span className="text-sm text-muted-foreground">© 2025</span>
+            <span className="text-sm text-muted-foreground">© 2026</span>
           </div>
           <div className="flex flex-wrap gap-6">
             <a href={LINKS.enChannel} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground transition-colors hover:text-primary">{t("footer.enChannel")}</a>
