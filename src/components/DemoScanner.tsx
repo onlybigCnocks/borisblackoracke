@@ -323,8 +323,8 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
   const activeLayers = Object.values(layers).filter(Boolean).length;
   const totalLayers = Object.keys(layers).length;
   const facts = result.facts?.[lang] || result.facts?.en || (Array.isArray(result.facts) ? result.facts : []);
-  const findings = result.top_findings_preview || [];
-  const hasFindings = findings.length > 0;
+  const analyzedFiles = result.analyzed_files;
+  const analysisStatus = result.analysis_status;
 
   return (
     <div className="mt-8 rounded-xl border border-border bg-card overflow-hidden">
