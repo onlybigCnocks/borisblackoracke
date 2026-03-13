@@ -95,12 +95,6 @@ function formatDate(iso: string): string {
   }
 }
 
-const SEVERITY_DOT: Record<string, string> = {
-  CRITICAL: "🔴",
-  HIGH: "🟠",
-  MEDIUM: "🟡",
-  LOW: "⚪",
-};
 
 const VERDICT_STYLE: Record<string, string> = {
   SIGNIFICANT_SURFACE: "border-amber-500/60 bg-amber-500/15 text-amber-400",
