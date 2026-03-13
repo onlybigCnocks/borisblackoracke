@@ -318,10 +318,12 @@ const DemoScanner = () => {
 function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean }) {
   const lang = isRu ? "ru" : "en";
   const verdictStyle = VERDICT_STYLE[result.verdict] || VERDICT_STYLE.CLEAN;
-  const activeLayers = Object.values(result.layers).filter(Boolean).length;
-  const totalLayers = Object.keys(result.layers).length;
-  const facts = result.facts[lang] || result.facts.en || [];
-  const hasFindings = result.top_findings_preview.length > 0;
+  const layers = result.layers || {};
+  const activeLayers = Object.values(layers).filter(Boolean).length;
+  const totalLayers = Object.keys(layers).length;
+  const facts = result.facts?.[lang] || result.facts?.en || (Array.isArray(result.facts) ? result.facts : []);
+  const findings = result.top_findings_preview || [];
+  const hasFindings = findings.length > 0;
 
   return (
     <div className="mt-8 rounded-xl border border-border bg-card overflow-hidden">
