@@ -23,10 +23,10 @@ interface DemoScanResult {
   scan_mode: "repo" | "onchain";
   archetype: string;
   archetype_icon: string;
-  archetype_label: { en: string; ru: string };
+  archetype_label?: { en: string; ru: string };
   verdict: "SIGNIFICANT_SURFACE" | "MODERATE_SURFACE" | "MINIMAL_SURFACE" | "CLEAN";
   verdict_label: { en: string; ru: string };
-  intro: { en: string; ru: string };
+  intro?: { en: string; ru: string };
   scope: {
     patterns_total: number;
     patterns_critical: number;
@@ -41,7 +41,14 @@ interface DemoScanResult {
   facts: { en: string[]; ru: string[] };
   layers: Record<string, boolean>;
   more_count: number;
-  top_findings_preview: Array<{ type: string; severity: string; file: string }>;
+  top_findings_preview?: Array<{ type: string; severity: string; file: string }>;
+  analyzed_files?: { shown: string[]; total: number; more: number };
+  analysis_status?: Array<{
+    key: string;
+    label: { ru: string; en: string };
+    status: "done" | "none";
+    detail?: { ru: string; en: string };
+  }>;
 }
 
 type ScanState = "idle" | "scanning" | "done" | "error";
@@ -88,12 +95,6 @@ function formatDate(iso: string): string {
   }
 }
 
-const SEVERITY_DOT: Record<string, string> = {
-  CRITICAL: "🔴",
-  HIGH: "🟠",
-  MEDIUM: "🟡",
-  LOW: "⚪",
-};
 
 const VERDICT_STYLE: Record<string, string> = {
   SIGNIFICANT_SURFACE: "border-amber-500/60 bg-amber-500/15 text-amber-400",
@@ -322,8 +323,8 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
   const activeLayers = Object.values(layers).filter(Boolean).length;
   const totalLayers = Object.keys(layers).length;
   const facts = result.facts?.[lang] || result.facts?.en || (Array.isArray(result.facts) ? result.facts : []);
-  const findings = result.top_findings_preview || [];
-  const hasFindings = findings.length > 0;
+  const analyzedFiles = result.analyzed_files;
+  const analysisStatus = result.analysis_status;
 
   return (
     <div className="mt-8 rounded-xl border border-border bg-card overflow-hidden">
@@ -406,7 +407,50 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
           )}
         </div>
 
-        {/* Row 3 — Observed facts */}
+        {/* Analyzed Files */}
+        {analyzedFiles && analyzedFiles.shown?.length > 0 && (
+          <div>
+            <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2 font-mono">
+              {isRu ? "Проанализированные файлы" : "Analyzed Files"}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+              {analyzedFiles.shown.map((file, i) => (
+                <p key={i} className="font-mono text-[11px] text-muted-foreground truncate">
+                  📄 {file}
+                </p>
+              ))}
+            </div>
+            {analyzedFiles.more > 0 && (
+              <p className="mt-1.5 font-mono text-xs italic text-muted-foreground">
+                {isRu ? `...и ещё ${analyzedFiles.more} файлов` : `...and ${analyzedFiles.more} more files`}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Analysis Completed */}
+        {analysisStatus && analysisStatus.length > 0 && (
+          <div>
+            <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2 font-mono">
+              {isRu ? "Выполненный анализ" : "Analysis Completed"}
+            </h3>
+            <ul className="space-y-1">
+              {analysisStatus.map((item) => (
+                <li key={item.key} className="flex items-start gap-1.5 font-mono text-xs">
+                  <span className="shrink-0">{item.status === "done" ? "✅" : "⬜"}</span>
+                  <span>
+                    <span className="text-foreground">{item.label?.[lang] || item.label?.en || item.key}</span>
+                    {item.detail?.[lang] && (
+                      <span className="ml-1.5 text-muted-foreground">{item.detail[lang]}</span>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Observed facts */}
         <div>
           <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2 font-mono">
             {isRu ? "Наблюдаемые факты" : "Observed Facts"}
@@ -436,24 +480,10 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
           )}
         </div>
 
-        {/* Row 4 — Blurred findings preview + CTA */}
+        {/* CTA */}
         <div className="relative">
-          {hasFindings && (
-            <div className="space-y-1">
-              {findings.slice(0, 2).map((f, i) => (
-                <p key={i} className="font-mono text-xs text-foreground/70">
-                  {SEVERITY_DOT[f.severity] || "⚪"} <span className="font-semibold">{f.type}</span> · <span className="text-muted-foreground">{f.file}</span>
-                </p>
-              ))}
-            </div>
-          )}
-          {/* Gradient blur overlay */}
-          {hasFindings && (
-            <div className="absolute inset-0 top-4 bg-gradient-to-b from-transparent via-card/80 to-card pointer-events-none" />
-          )}
-
-          {/* CTA over blur */}
-          <div className="relative z-10 mt-4 flex flex-col items-center gap-2">
+          <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-b from-transparent to-card pointer-events-none" />
+          <div className="relative z-10 flex flex-col items-center gap-2 pt-2">
             <a
               href="https://t.me/BlackOracleBORIS_bot"
               target="_blank"
