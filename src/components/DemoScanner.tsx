@@ -171,7 +171,7 @@ const DemoScanner = () => {
         body: JSON.stringify({ target: trimmed }),
       });
       if (res.status === 429) {
-        setErrorMsg(isRu ? "Лимит демо исчерпан. Используйте Telegram: @BlackOracleBORIS_bot" : "Demo limit reached. Use Telegram: @BlackOracleBORIS_bot");
+        setErrorMsg(isRu ? "Лимит бесплатных сканов: 3 в час. Используйте Telegram-бот для полного доступа." : "Free scan limit: 3 per hour. Use Telegram bot for full access.");
         setState("error"); return;
       }
       if (!res.ok) throw new Error("API error");
@@ -198,7 +198,7 @@ const DemoScanner = () => {
       try {
         const res = await fetch(`${API_BASE}/api/demo-scan/status/${taskId}`);
         if (res.status === 429) {
-          setErrorMsg(isRu ? "Лимит демо исчерпан. Используйте Telegram: @BlackOracleBORIS_bot" : "Demo limit reached. Use Telegram: @BlackOracleBORIS_bot");
+          setErrorMsg(isRu ? "Лимит бесплатных сканов: 3 в час. Используйте Telegram-бот для полного доступа." : "Free scan limit: 3 per hour. Use Telegram bot for full access.");
           setState("error"); clearPersistence(); clearInterval(interval); return;
         }
         if (!res.ok) throw new Error("Poll error");
@@ -297,14 +297,12 @@ const DemoScanner = () => {
 
       {/* Error State */}
       {state === "error" && (
-        <div className="mt-8 rounded-xl border border-red-500/50 bg-red-500/10 p-6">
-          <p className="font-mono text-sm text-red-400">{errorMsg}</p>
-          {errorMsg.includes("@BlackOracleBORIS_bot") && (
-            <a href="https://t.me/BlackOracleBORIS_bot" target="_blank" rel="noopener noreferrer"
-              className="mt-3 inline-flex items-center gap-2 font-mono text-sm text-primary hover:underline">
-              <Send size={14} /> @BlackOracleBORIS_bot
-            </a>
-          )}
+        <div className="mt-8 rounded-xl border-l-[3px] p-5" style={{ borderColor: '#F59E0B', background: 'rgba(245, 158, 11, 0.08)' }}>
+          <p className="font-mono text-sm" style={{ color: '#F59E0B' }}>{errorMsg}</p>
+          <a href="https://t.me/BlackOracleBORIS_bot" target="_blank" rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-2 font-mono text-sm text-primary hover:underline">
+            <Send size={14} /> @BlackOracleBORIS_bot
+          </a>
         </div>
       )}
 
@@ -348,6 +346,14 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
             {result.intro?.[lang] || result.intro?.en || ""}
           </p>
         )}
+        {/* Prominent disclaimer */}
+        <div className="mt-3 rounded-md border-l-[3px]" style={{ borderColor: '#F59E0B', background: 'rgba(245, 158, 11, 0.08)', padding: '12px 16px' }}>
+          <p className="font-mono text-[16px]" style={{ color: '#F59E0B' }}>
+            {(result as any).disclaimer?.main?.[lang] || (isRu
+              ? "⚠️ Это не означает эксплуатацию. Это означает наличие поверхности риска."
+              : "⚠️ This does not imply exploitation. It indicates the presence of a risk surface.")}
+          </p>
+        </div>
       </div>
 
       <div className="p-5 space-y-5">
@@ -478,6 +484,11 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
               +{result.more_count} {isRu ? "находок в полном отчёте" : "findings in full report"}
             </p>
           )}
+          <p className="mt-2 font-mono italic text-muted-foreground" style={{ fontSize: '13px', color: '#6B7280' }}>
+            ℹ️ {(result as any).disclaimer?.facts_note?.[lang] || (isRu
+              ? "Некоторые факты могут быть частью архитектуры проекта или намеренных дизайн-решений."
+              : "Some facts may be part of the project architecture or intentional design decisions.")}
+          </p>
         </div>
 
         {/* CTA */}
