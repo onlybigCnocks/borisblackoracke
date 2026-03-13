@@ -297,14 +297,12 @@ const DemoScanner = () => {
 
       {/* Error State */}
       {state === "error" && (
-        <div className="mt-8 rounded-xl border border-red-500/50 bg-red-500/10 p-6">
-          <p className="font-mono text-sm text-red-400">{errorMsg}</p>
-          {errorMsg.includes("@BlackOracleBORIS_bot") && (
-            <a href="https://t.me/BlackOracleBORIS_bot" target="_blank" rel="noopener noreferrer"
-              className="mt-3 inline-flex items-center gap-2 font-mono text-sm text-primary hover:underline">
-              <Send size={14} /> @BlackOracleBORIS_bot
-            </a>
-          )}
+        <div className="mt-8 rounded-xl border-l-[3px] p-5" style={{ borderColor: '#F59E0B', background: 'rgba(245, 158, 11, 0.08)' }}>
+          <p className="font-mono text-sm" style={{ color: '#F59E0B' }}>{errorMsg}</p>
+          <a href="https://t.me/BlackOracleBORIS_bot" target="_blank" rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-2 font-mono text-sm text-primary hover:underline">
+            <Send size={14} /> @BlackOracleBORIS_bot
+          </a>
         </div>
       )}
 
