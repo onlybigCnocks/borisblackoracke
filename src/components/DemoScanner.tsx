@@ -440,7 +440,7 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
         <div className="relative">
           {hasFindings && (
             <div className="space-y-1">
-              {result.top_findings_preview.slice(0, 2).map((f, i) => (
+              {findings.slice(0, 2).map((f, i) => (
                 <p key={i} className="font-mono text-xs text-foreground/70">
                   {SEVERITY_DOT[f.severity] || "⚪"} <span className="font-semibold">{f.type}</span> · <span className="text-muted-foreground">{f.file}</span>
                 </p>
