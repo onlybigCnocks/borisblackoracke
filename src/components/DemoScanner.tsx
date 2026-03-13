@@ -344,7 +344,7 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
         </div>
         {result.intro && (
           <p className="mt-2 font-mono text-xs italic text-muted-foreground line-clamp-2">
-            {result.intro[lang] || result.intro.en}
+            {result.intro?.[lang] || result.intro?.en || ""}
           </p>
         )}
       </div>
