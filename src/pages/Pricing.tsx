@@ -1,27 +1,23 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { RevealOnScroll, SectionLabel, SectionTitle, GlowCard } from "@/components/ui-boris";
-import { WALLETS } from "@/lib/data";
-import { QRCodeSVG } from "qrcode.react";
-import { toast } from "@/hooks/use-toast";
+import { RevealOnScroll, SectionLabel, SectionTitle } from "@/components/ui-boris";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 type Tier = "guest" | "radar" | "raw" | "blackbox";
-type PayMethod = keyof typeof WALLETS;
 
 const Pricing = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language?.startsWith("ru") ? "ru" : "en";
   const [yearly, setYearly] = useState(false);
   const [selectedTier, setSelectedTier] = useState<Tier | null>(null);
-  const [payMethod, setPayMethod] = useState<PayMethod | null>(null);
 
   const tiers: Tier[] = ["guest", "radar", "raw", "blackbox"];
-  const payMethods: { key: PayMethod; label: string }[] = [
-    { key: "USDT_TRC20", label: "USDT TRC20" },
-    { key: "USDT_ERC20", label: "USDT ERC20" },
-    { key: "TON", label: "TON" },
-    { key: "BTC", label: "BTC" },
-    { key: "ETH", label: "ETH" },
-  ];
 
   return (
     <div className="container mx-auto min-h-screen px-4 py-12">
@@ -94,59 +90,120 @@ const Pricing = () => {
         })}
       </div>
 
-      {/* Payment Modal */}
-      {selectedTier && (
-        <RevealOnScroll>
-          <GlowCard className="max-w-lg mx-auto">
-            <h3 className="mb-4 font-mono text-lg font-bold text-foreground">
-              {t(`pricing.${selectedTier}.name`)} — {yearly ? t(`pricing.${selectedTier}.priceYearly`) : t(`pricing.${selectedTier}.price`)}{yearly ? "/yr" : t(`pricing.${selectedTier}.period`)}
-            </h3>
+      <p className="mb-16 text-center text-sm text-muted-foreground">{t("pricing.note")}</p>
 
-            <div className="mb-4 flex flex-wrap gap-2">
-              {payMethods.map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => setPayMethod(key)}
-                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
-                    payMethod === key ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+      {/* Payment Method Modal */}
+      <Dialog open={!!selectedTier} onOpenChange={(open) => { if (!open) setSelectedTier(null); }}>
+        <DialogContent className="border-border bg-card sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-foreground font-mono">
+              {lang === "ru" ? "Выберите способ оплаты" : "Choose payment method"}
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              {selectedTier && (
+                <span className="font-semibold text-foreground">
+                  {t(`pricing.${selectedTier}.name`)} — {yearly ? t(`pricing.${selectedTier}.priceYearly`) : t(`pricing.${selectedTier}.price`)}{yearly ? "/yr" : t(`pricing.${selectedTier}.period`)}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
 
-            {payMethod && (
-              <div className="text-center">
-                <div className="inline-block rounded-xl bg-foreground p-4 mb-4">
-                  <QRCodeSVG value={WALLETS[payMethod]} size={180} bgColor="#f0f0f0" fgColor="#080808" />
-                </div>
-                <p className="mb-4 break-all rounded-lg border border-border bg-background-secondary p-3 font-mono text-xs text-foreground">
-                  {WALLETS[payMethod]}
-                </p>
-                <button
-                  onClick={() => {
-                    window.open("https://t.me/BlackOracleBORIS_bot", "_blank");
-                    toast({ title: t("pricing.paidToast") || "Confirm payment in Telegram bot" });
-                  }}
-                  className="w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
-                >
-                  ✓ I paid
-                </button>
-              </div>
-            )}
-
-            <button
-              onClick={() => { setSelectedTier(null); setPayMethod(null); }}
-              className="mt-4 w-full text-center text-sm text-muted-foreground hover:text-foreground"
+          <div className="mt-2 space-y-3">
+            {/* Option 1: Telegram Bot */}
+            <a
+              href="https://t.me/boris_scanner_bot?start=subscribe"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-xl border border-border p-4 transition-all duration-200 hover:border-primary hover:bg-primary/5"
             >
-              {t("common.cancel")}
-            </button>
-          </GlowCard>
-        </RevealOnScroll>
-      )}
+              <div className="flex items-center gap-3 mb-1">
+                <span className="text-xl">💬</span>
+                <span className="font-semibold text-foreground">
+                  {lang === "ru" ? "Оплатить через Telegram Bot" : "Pay via Telegram Bot"}
+                </span>
+              </div>
+              <p className="ml-8 text-xs text-muted-foreground">
+                {lang === "ru"
+                  ? "Моментальная крипто-оплата через CryptoBot (USDT, TON, BTC, ETH)"
+                  : "Instant crypto payments via CryptoBot (USDT, TON, BTC, ETH)"}
+              </p>
+            </a>
 
-      <p className="mt-8 text-center text-sm text-muted-foreground">{t("pricing.note")}</p>
+            {/* Option 2: Request Invoice */}
+            <a
+              href="mailto:contact@black-oracle.com?subject=Invoice%20Request"
+              className="block rounded-xl border border-border p-4 transition-all duration-200 hover:border-primary hover:bg-primary/5"
+            >
+              <div className="flex items-center gap-3 mb-1">
+                <span className="text-xl">📧</span>
+                <span className="font-semibold text-foreground">
+                  {lang === "ru" ? "Запросить инвойс" : "Request Invoice"}
+                </span>
+              </div>
+              <p className="ml-8 text-xs text-muted-foreground">
+                {lang === "ru"
+                  ? "Для команд и компаний. Отправим крипто-инвойс в течение 24ч."
+                  : "For teams & enterprises. We'll send a crypto invoice within 24h."}
+              </p>
+            </a>
+          </div>
+
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            {lang === "ru"
+              ? "Все платежи в криптовалюте. KYC не требуется."
+              : "All payments in crypto. No KYC required."}
+          </p>
+        </DialogContent>
+      </Dialog>
+
+      {/* Partners / Affiliate Section */}
+      <RevealOnScroll>
+        <div className="mx-auto max-w-3xl rounded-xl border-2 border-primary/30 bg-gradient-to-br from-card to-background p-8 md:p-12 text-center">
+          <span className="text-4xl mb-4 block">🤝</span>
+          <h2 className="font-mono text-2xl font-bold text-foreground mb-2">
+            {lang === "ru" ? "Партнёрская программа" : "Affiliate Program"}
+          </h2>
+          <p className="text-muted-foreground mb-6">
+            {lang === "ru"
+              ? "Зарабатывай до 30% с каждого привлечённого пользователя"
+              : "Earn up to 30% from every referred user"}
+          </p>
+
+          <ul className="mb-8 space-y-3 text-left max-w-md mx-auto">
+            {(lang === "ru"
+              ? [
+                  "15-30% комиссия с покупок",
+                  "Мгновенные выплаты в крипте (USDT/USDC)",
+                  "Персональный дашборд и аналитика",
+                  "Для блогеров, аудиторов, KOL, владельцев каналов",
+                ]
+              : [
+                  "15-30% commission on all purchases",
+                  "Instant crypto payouts (USDT/USDC)",
+                  "Personal dashboard & analytics",
+                  "For crypto influencers, auditors, KOLs, channel owners",
+                ]
+            ).map((item, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <span className="text-primary mt-0.5">›</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+
+          <a
+            href="https://t.me/GenEXEC_BORIS"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block rounded-lg bg-primary px-8 py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
+          >
+            {lang === "ru" ? "Стать партнёром" : "Become a Partner"}
+          </a>
+          <p className="mt-3 text-xs text-muted-foreground">
+            {lang === "ru" ? "Напишите — обсудим условия" : "DM us to discuss terms"}
+          </p>
+        </div>
+      </RevealOnScroll>
     </div>
   );
 };
