@@ -171,7 +171,7 @@ const DemoScanner = () => {
         body: JSON.stringify({ target: trimmed }),
       });
       if (res.status === 429) {
-        setErrorMsg(isRu ? "Лимит демо исчерпан. Используйте Telegram: @BlackOracleBORIS_bot" : "Demo limit reached. Use Telegram: @BlackOracleBORIS_bot");
+        setErrorMsg(isRu ? "Лимит бесплатных сканов: 3 в час. Используйте Telegram-бот для полного доступа." : "Free scan limit: 3 per hour. Use Telegram bot for full access.");
         setState("error"); return;
       }
       if (!res.ok) throw new Error("API error");
