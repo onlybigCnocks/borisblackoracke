@@ -23,10 +23,10 @@ interface DemoScanResult {
   scan_mode: "repo" | "onchain";
   archetype: string;
   archetype_icon: string;
-  archetype_label: { en: string; ru: string };
+  archetype_label?: { en: string; ru: string };
   verdict: "SIGNIFICANT_SURFACE" | "MODERATE_SURFACE" | "MINIMAL_SURFACE" | "CLEAN";
   verdict_label: { en: string; ru: string };
-  intro: { en: string; ru: string };
+  intro?: { en: string; ru: string };
   scope: {
     patterns_total: number;
     patterns_critical: number;
@@ -41,7 +41,14 @@ interface DemoScanResult {
   facts: { en: string[]; ru: string[] };
   layers: Record<string, boolean>;
   more_count: number;
-  top_findings_preview: Array<{ type: string; severity: string; file: string }>;
+  top_findings_preview?: Array<{ type: string; severity: string; file: string }>;
+  analyzed_files?: { shown: string[]; total: number; more: number };
+  analysis_status?: Array<{
+    key: string;
+    label: { ru: string; en: string };
+    status: "done" | "none";
+    detail?: { ru: string; en: string };
+  }>;
 }
 
 type ScanState = "idle" | "scanning" | "done" | "error";
