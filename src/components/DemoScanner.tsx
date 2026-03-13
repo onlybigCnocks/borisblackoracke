@@ -171,7 +171,7 @@ const DemoScanner = () => {
         body: JSON.stringify({ target: trimmed }),
       });
       if (res.status === 429) {
-        setErrorMsg(isRu ? "Лимит бесплатных сканов: 3 в час. Используйте Telegram-бот для полного доступа." : "Free scan limit: 3 per hour. Use Telegram bot for full access.");
+        setErrorMsg(isRu ? "Лимит бесплатных сканов: 3 в сутки. Используйте Telegram-бот для полного доступа." : "Free scan limit: 3 per day. Use Telegram bot for full access.");
         setState("error"); return;
       }
       if (!res.ok) throw new Error("API error");
@@ -198,7 +198,7 @@ const DemoScanner = () => {
       try {
         const res = await fetch(`${API_BASE}/api/demo-scan/status/${taskId}`);
         if (res.status === 429) {
-          setErrorMsg(isRu ? "Лимит бесплатных сканов: 3 в час. Используйте Telegram-бот для полного доступа." : "Free scan limit: 3 per hour. Use Telegram bot for full access.");
+          setErrorMsg(isRu ? "Лимит бесплатных сканов: 3 в сутки. Используйте Telegram-бот для полного доступа." : "Free scan limit: 3 per day. Use Telegram bot for full access.");
           setState("error"); clearPersistence(); clearInterval(interval); return;
         }
         if (!res.ok) throw new Error("Poll error");
