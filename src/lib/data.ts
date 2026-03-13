@@ -409,4 +409,5 @@ export const LINKS = {
   support: "https://t.me/GenEXEC_BORIS",
   enChannel: "https://t.me/Black_Oracle_BORIS_eng",
   ruChannel: "https://t.me/Black_Oracle_BORIS_ru",
+  github: "https://github.com/BlackOracleRiskInspectorSystem/BORIS",
 };

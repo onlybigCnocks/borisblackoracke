@@ -18,6 +18,7 @@ const Footer = () => {
             <a href={LINKS.ruChannel} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground transition-colors hover:text-primary">{t("footer.ruChannel")}</a>
             <a href={LINKS.support} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground transition-colors hover:text-primary">{t("footer.support")}</a>
             <a href={LINKS.bot} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground transition-colors hover:text-primary">{t("footer.bot")}</a>
+            <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground transition-colors hover:text-primary">{t("footer.github")}</a>
           </div>
         </div>
         <p className="mt-8 max-w-3xl text-xs leading-relaxed text-muted-foreground/60">
