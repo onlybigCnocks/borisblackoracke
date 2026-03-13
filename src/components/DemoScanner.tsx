@@ -348,6 +348,14 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
             {result.intro?.[lang] || result.intro?.en || ""}
           </p>
         )}
+        {/* Prominent disclaimer */}
+        <div className="mt-3 rounded-md border-l-[3px]" style={{ borderColor: '#F59E0B', background: 'rgba(245, 158, 11, 0.08)', padding: '12px 16px' }}>
+          <p className="font-mono text-[16px]" style={{ color: '#F59E0B' }}>
+            {(result as any).disclaimer?.main?.[lang] || (isRu
+              ? "⚠️ Это не означает эксплуатацию. Это означает наличие поверхности риска."
+              : "⚠️ This does not imply exploitation. It indicates the presence of a risk surface.")}
+          </p>
+        </div>
       </div>
 
       <div className="p-5 space-y-5">
