@@ -429,7 +429,7 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
               {isRu ? `...и ещё ${facts.length - 3}` : `...and ${facts.length - 3} more`}
             </p>
           )}
-          {result.more_count > 0 && (
+          {(result.more_count ?? 0) > 0 && (
             <p className="mt-1 font-mono text-xs text-muted-foreground">
               +{result.more_count} {isRu ? "находок в полном отчёте" : "findings in full report"}
             </p>
