@@ -318,10 +318,12 @@ const DemoScanner = () => {
 function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean }) {
   const lang = isRu ? "ru" : "en";
   const verdictStyle = VERDICT_STYLE[result.verdict] || VERDICT_STYLE.CLEAN;
-  const activeLayers = Object.values(result.layers).filter(Boolean).length;
-  const totalLayers = Object.keys(result.layers).length;
-  const facts = result.facts[lang] || result.facts.en || [];
-  const hasFindings = result.top_findings_preview.length > 0;
+  const layers = result.layers || {};
+  const activeLayers = Object.values(layers).filter(Boolean).length;
+  const totalLayers = Object.keys(layers).length;
+  const facts = result.facts?.[lang] || result.facts?.en || (Array.isArray(result.facts) ? result.facts : []);
+  const findings = result.top_findings_preview || [];
+  const hasFindings = findings.length > 0;
 
   return (
     <div className="mt-8 rounded-xl border border-border bg-card overflow-hidden">
@@ -332,17 +334,17 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
             <span className="text-lg shrink-0">{result.archetype_icon}</span>
             <span className="font-mono text-sm font-bold text-foreground truncate">{result.project}</span>
             <span className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground shrink-0">
-              {result.archetype_label[lang] || result.archetype_label.en}
+              {result.archetype_label?.[lang] || result.archetype_label?.en || result.archetype}
             </span>
             <span className="font-mono text-[11px] text-muted-foreground shrink-0">{formatDate(result.scan_date)}</span>
           </div>
           <span className={`rounded-md border px-3 py-1 font-mono text-xs font-semibold shrink-0 ${verdictStyle}`}>
-            {result.verdict_label[lang] || result.verdict_label.en}
+            {result.verdict_label?.[lang] || result.verdict_label?.en || result.verdict}
           </span>
         </div>
         {result.intro && (
           <p className="mt-2 font-mono text-xs italic text-muted-foreground line-clamp-2">
-            {result.intro[lang] || result.intro.en}
+            {result.intro?.[lang] || result.intro?.en || ""}
           </p>
         )}
       </div>
@@ -350,18 +352,18 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
       <div className="p-5 space-y-5">
         {/* Row 2 — Scope stats (horizontal scroll) */}
         <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ flexWrap: "nowrap" }}>
-          {result.scope.patterns_total > 0 && (
+          {(result.scope?.patterns_total ?? 0) > 0 && (
             <ScopeStat value={String(result.scope.patterns_total)} label="Patterns">
               <span className="font-mono text-[9px]">
-                <span className="text-red-400">{result.scope.patterns_critical}C</span>
+                <span className="text-red-400">{result.scope?.patterns_critical ?? 0}C</span>
                 {" / "}
-                <span className="text-orange-400">{result.scope.patterns_high}H</span>
+                <span className="text-orange-400">{result.scope?.patterns_high ?? 0}H</span>
               </span>
             </ScopeStat>
           )}
           <ScopeStat value={`${activeLayers}/${totalLayers}`} label="Layers" />
 
-          {result.scope.social && result.scope.social.total_followers > 0 && (
+          {result.scope?.social && result.scope.social.total_followers > 0 && (
             <ScopeStat value={formatFollowers(result.scope.social.total_followers)} label="Followers">
               {result.scope.social.impersonators > 0 && (
                 <span className="font-mono text-[9px] text-red-400">{result.scope.social.impersonators} impersonators</span>
@@ -369,29 +371,29 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
             </ScopeStat>
           )}
 
-          {result.scope.audits && result.scope.audits.count > 0 && (
+          {result.scope?.audits && result.scope.audits.count > 0 && (
             <div className="shrink-0 min-w-[100px] rounded-lg border border-border bg-background p-2.5 text-center">
               <p className="font-mono text-lg font-bold text-foreground leading-none">{result.scope.audits.count}</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">Audits</p>
               <div className="mt-1 flex flex-wrap justify-center gap-0.5">
-                {result.scope.audits.auditors.slice(0, 3).map((a) => (
+                {result.scope.audits.auditors?.slice(0, 3).map((a) => (
                   <span key={a} className="rounded-full border border-border px-1.5 font-mono text-[8px] text-muted-foreground">{a}</span>
                 ))}
-                {result.scope.audits.auditors.length > 3 && (
-                  <span className="font-mono text-[8px] text-muted-foreground">+{result.scope.audits.auditors.length - 3}</span>
+                {(result.scope.audits.auditors?.length ?? 0) > 3 && (
+                  <span className="font-mono text-[8px] text-muted-foreground">+{result.scope.audits.auditors!.length - 3}</span>
                 )}
               </div>
-              {result.scope.audits.age_days > 365 && (
+              {(result.scope.audits.age_days ?? 0) > 365 && (
                 <span className="font-mono text-[9px] text-amber-400">{result.scope.audits.age_days}d ago</span>
               )}
             </div>
           )}
 
-          {result.scope.liquidity && (
+          {result.scope?.liquidity && (
             <ScopeStat value={result.scope.liquidity} label="Liquidity" />
           )}
 
-          {result.scope.top10_holders_pct != null && result.scope.top10_holders_pct > 0 && (
+          {result.scope?.top10_holders_pct != null && result.scope.top10_holders_pct > 0 && (
             <ScopeStat value={`${result.scope.top10_holders_pct}%`} label="Top-10 Holders">
               {result.scope.top10_holders_pct > 80 && (
                 <span className="font-mono text-[9px] text-amber-400">concentrated</span>
@@ -399,7 +401,7 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
             </ScopeStat>
           )}
 
-          {result.scope.deploy_count != null && result.scope.deploy_count > 0 && (
+          {result.scope?.deploy_count != null && result.scope.deploy_count > 0 && (
             <ScopeStat value={String(result.scope.deploy_count)} label="Deploys" />
           )}
         </div>
@@ -427,7 +429,7 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
               {isRu ? `...и ещё ${facts.length - 3}` : `...and ${facts.length - 3} more`}
             </p>
           )}
-          {result.more_count > 0 && (
+          {(result.more_count ?? 0) > 0 && (
             <p className="mt-1 font-mono text-xs text-muted-foreground">
               +{result.more_count} {isRu ? "находок в полном отчёте" : "findings in full report"}
             </p>
@@ -438,7 +440,7 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
         <div className="relative">
           {hasFindings && (
             <div className="space-y-1">
-              {result.top_findings_preview.slice(0, 2).map((f, i) => (
+              {findings.slice(0, 2).map((f, i) => (
                 <p key={i} className="font-mono text-xs text-foreground/70">
                   {SEVERITY_DOT[f.severity] || "⚪"} <span className="font-semibold">{f.type}</span> · <span className="text-muted-foreground">{f.file}</span>
                 </p>
