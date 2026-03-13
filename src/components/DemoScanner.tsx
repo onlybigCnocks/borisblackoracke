@@ -363,7 +363,7 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
           )}
           <ScopeStat value={`${activeLayers}/${totalLayers}`} label="Layers" />
 
-          {result.scope.social && result.scope.social.total_followers > 0 && (
+          {result.scope?.social && result.scope.social.total_followers > 0 && (
             <ScopeStat value={formatFollowers(result.scope.social.total_followers)} label="Followers">
               {result.scope.social.impersonators > 0 && (
                 <span className="font-mono text-[9px] text-red-400">{result.scope.social.impersonators} impersonators</span>
@@ -371,29 +371,29 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
             </ScopeStat>
           )}
 
-          {result.scope.audits && result.scope.audits.count > 0 && (
+          {result.scope?.audits && result.scope.audits.count > 0 && (
             <div className="shrink-0 min-w-[100px] rounded-lg border border-border bg-background p-2.5 text-center">
               <p className="font-mono text-lg font-bold text-foreground leading-none">{result.scope.audits.count}</p>
               <p className="text-[10px] text-muted-foreground mt-0.5">Audits</p>
               <div className="mt-1 flex flex-wrap justify-center gap-0.5">
-                {result.scope.audits.auditors.slice(0, 3).map((a) => (
+                {result.scope.audits.auditors?.slice(0, 3).map((a) => (
                   <span key={a} className="rounded-full border border-border px-1.5 font-mono text-[8px] text-muted-foreground">{a}</span>
                 ))}
-                {result.scope.audits.auditors.length > 3 && (
-                  <span className="font-mono text-[8px] text-muted-foreground">+{result.scope.audits.auditors.length - 3}</span>
+                {(result.scope.audits.auditors?.length ?? 0) > 3 && (
+                  <span className="font-mono text-[8px] text-muted-foreground">+{result.scope.audits.auditors!.length - 3}</span>
                 )}
               </div>
-              {result.scope.audits.age_days > 365 && (
+              {(result.scope.audits.age_days ?? 0) > 365 && (
                 <span className="font-mono text-[9px] text-amber-400">{result.scope.audits.age_days}d ago</span>
               )}
             </div>
           )}
 
-          {result.scope.liquidity && (
+          {result.scope?.liquidity && (
             <ScopeStat value={result.scope.liquidity} label="Liquidity" />
           )}
 
-          {result.scope.top10_holders_pct != null && result.scope.top10_holders_pct > 0 && (
+          {result.scope?.top10_holders_pct != null && result.scope.top10_holders_pct > 0 && (
             <ScopeStat value={`${result.scope.top10_holders_pct}%`} label="Top-10 Holders">
               {result.scope.top10_holders_pct > 80 && (
                 <span className="font-mono text-[9px] text-amber-400">concentrated</span>
@@ -401,7 +401,7 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
             </ScopeStat>
           )}
 
-          {result.scope.deploy_count != null && result.scope.deploy_count > 0 && (
+          {result.scope?.deploy_count != null && result.scope.deploy_count > 0 && (
             <ScopeStat value={String(result.scope.deploy_count)} label="Deploys" />
           )}
         </div>
