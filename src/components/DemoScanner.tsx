@@ -352,12 +352,12 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
       <div className="p-5 space-y-5">
         {/* Row 2 — Scope stats (horizontal scroll) */}
         <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ flexWrap: "nowrap" }}>
-          {result.scope.patterns_total > 0 && (
+          {(result.scope?.patterns_total ?? 0) > 0 && (
             <ScopeStat value={String(result.scope.patterns_total)} label="Patterns">
               <span className="font-mono text-[9px]">
-                <span className="text-red-400">{result.scope.patterns_critical}C</span>
+                <span className="text-red-400">{result.scope?.patterns_critical ?? 0}C</span>
                 {" / "}
-                <span className="text-orange-400">{result.scope.patterns_high}H</span>
+                <span className="text-orange-400">{result.scope?.patterns_high ?? 0}H</span>
               </span>
             </ScopeStat>
           )}
