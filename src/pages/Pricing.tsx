@@ -131,7 +131,9 @@ const Pricing = () => {
 
             {/* Option 2: Request Invoice */}
             <a
-              href="mailto:contact@black-oracle.com?subject=Invoice%20Request"
+              href="https://t.me/GenEXEC_BORIS"
+              target="_blank"
+              rel="noopener noreferrer"
               className="block rounded-xl border border-border p-4 transition-all duration-200 hover:border-primary hover:bg-primary/5"
             >
               <div className="flex items-center gap-3 mb-1">
