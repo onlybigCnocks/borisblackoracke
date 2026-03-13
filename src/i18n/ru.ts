@@ -107,6 +107,7 @@ const ru = {
     ruChannel: "RU Канал",
     support: "Поддержка",
     bot: "Telegram Бот",
+    github: "GitHub",
   },
   scanner: {
     title: "Сканер протоколов",
