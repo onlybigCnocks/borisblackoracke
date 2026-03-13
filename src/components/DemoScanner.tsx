@@ -339,7 +339,7 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
             <span className="font-mono text-[11px] text-muted-foreground shrink-0">{formatDate(result.scan_date)}</span>
           </div>
           <span className={`rounded-md border px-3 py-1 font-mono text-xs font-semibold shrink-0 ${verdictStyle}`}>
-            {result.verdict_label[lang] || result.verdict_label.en}
+            {result.verdict_label?.[lang] || result.verdict_label?.en || result.verdict}
           </span>
         </div>
         {result.intro && (
