@@ -334,7 +334,7 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
             <span className="text-lg shrink-0">{result.archetype_icon}</span>
             <span className="font-mono text-sm font-bold text-foreground truncate">{result.project}</span>
             <span className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground shrink-0">
-              {result.archetype_label[lang] || result.archetype_label.en}
+              {result.archetype_label?.[lang] || result.archetype_label?.en || result.archetype}
             </span>
             <span className="font-mono text-[11px] text-muted-foreground shrink-0">{formatDate(result.scan_date)}</span>
           </div>
