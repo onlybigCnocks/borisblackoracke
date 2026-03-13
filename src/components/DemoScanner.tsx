@@ -486,6 +486,11 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
               +{result.more_count} {isRu ? "находок в полном отчёте" : "findings in full report"}
             </p>
           )}
+          <p className="mt-2 font-mono italic text-muted-foreground" style={{ fontSize: '13px', color: '#6B7280' }}>
+            ℹ️ {(result as any).disclaimer?.facts_note?.[lang] || (isRu
+              ? "Некоторые факты могут быть частью архитектуры проекта или намеренных дизайн-решений."
+              : "Some facts may be part of the project architecture or intentional design decisions.")}
+          </p>
         </div>
 
         {/* CTA */}
