@@ -157,12 +157,12 @@
 
 /* Hero pulse — slow 10s breathing */
 @keyframes hero-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.35); }
 }
 
 .animate-hero-pulse {
-  animation: hero-pulse 10s ease-in-out infinite;
+  animation: hero-pulse 7s ease-in-out infinite;
 }
 
 /* Red button glow */
