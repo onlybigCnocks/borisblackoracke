@@ -28,9 +28,9 @@ const Index = () => {
           </div>
 
           <h1 className="mb-4 text-5xl font-black leading-tight md:text-7xl lg:text-8xl">
-            <span className="text-glow text-primary">{t("hero.title1")}</span>
+            <span className="text-glow text-primary animate-hero-pulse">{t("hero.title1")}</span>
             <br />
-            <span className="text-foreground">{t("hero.title2")}</span>
+            <span className="text-foreground animate-hero-pulse">{t("hero.title2")}</span>
           </h1>
 
           <p className="mb-6 font-mono text-lg text-muted-foreground">{t("hero.subtitle")}</p>
