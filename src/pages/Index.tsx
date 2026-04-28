@@ -4,6 +4,7 @@ import { RevealOnScroll, SectionLabel, SectionTitle, GlowCard } from "@/componen
 import { MODULES } from "@/lib/data";
 import BorisLogo from "@/components/BorisLogo";
 import DemoScanner from "@/components/DemoScanner";
+import ContactCTA from "@/components/ContactCTA";
 
 const Index = () => {
   const { t, i18n } = useTranslation();
@@ -86,6 +87,11 @@ const Index = () => {
       {/* Demo Scanner */}
       <RevealOnScroll>
         <DemoScanner />
+      </RevealOnScroll>
+
+      {/* Contact CTA */}
+      <RevealOnScroll>
+        <ContactCTA />
       </RevealOnScroll>
 
       {/* 19 Analysis Modules */}
