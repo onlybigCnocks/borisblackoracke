@@ -2,7 +2,6 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { RevealOnScroll, SectionLabel, SectionTitle, GlowCard } from "@/components/ui-boris";
 import { MODULES } from "@/lib/data";
-import BorisLogo from "@/components/BorisLogo";
 import DemoScanner from "@/components/DemoScanner";
 import ContactCTA from "@/components/ContactCTA";
 
