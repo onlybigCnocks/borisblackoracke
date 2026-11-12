@@ -55,6 +55,11 @@ export function getSavedToken(): string | null {
   return localStorage.getItem(LS_AUTH_TOKEN);
 }
 
+export function authHeaders(): Record<string, string> {
+  const tk = getSavedToken();
+  return tk ? { Authorization: `Bearer ${tk}` } : {};
+}
+
 export function getSavedUser(): BorisUser | null {
   try {
     const raw = localStorage.getItem(LS_AUTH_USER);

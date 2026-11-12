@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { RevealOnScroll, GlowCard } from "@/components/ui-boris";
 import DemoScanner from "@/components/DemoScanner";
+import ToolsPanel from "@/components/ToolsPanel";
 import {
   ArrowUpRight,
   Key,
@@ -19,6 +20,7 @@ import {
   Trash2,
   Activity,
   Lock,
+  Wrench,
 } from "lucide-react";
 import {
   apiGetMe,
@@ -56,7 +58,7 @@ const Dashboard = () => {
   const [scans, setScans] = useState<BorisScanRecord[]>([]);
   const [watchlist, setWatchlist] = useState<BorisWatchlistItem[]>([]);
   const [radarAudits, setRadarAudits] = useState<BorisRadarAudit[]>([]);
-  const [activeTab, setActiveTab] = useState<"history" | "watchlist" | "radar">("history");
+  const [activeTab, setActiveTab] = useState<"history" | "tools" | "watchlist" | "radar">("history");
 
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -334,6 +336,17 @@ const Dashboard = () => {
               <span>{isRu ? `История сканов (${scans.length})` : `Scan History (${scans.length})`}</span>
             </button>
             <button
+              onClick={() => setActiveTab("tools")}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-mono text-xs font-semibold transition-all ${
+                activeTab === "tools"
+                  ? "bg-primary text-primary-foreground shadow"
+                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Wrench size={14} />
+              <span>{isRu ? "Инструменты разведки" : "Intelligence Tools"}</span>
+            </button>
+            <button
               onClick={() => setActiveTab("watchlist")}
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-mono text-xs font-semibold transition-all ${
                 activeTab === "watchlist"
@@ -370,6 +383,8 @@ const Dashboard = () => {
         </div>
 
         {/* TAB 1: User Scan History */}
+        {activeTab === "tools" && <ToolsPanel />}
+
         {activeTab === "history" && (
           <div>
             {scans.length === 0 ? (
