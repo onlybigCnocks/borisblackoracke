@@ -18,6 +18,7 @@ import {
   Plus,
   Trash2,
   Activity,
+  Lock,
 } from "lucide-react";
 import {
   apiGetMe,
@@ -343,7 +344,10 @@ const Dashboard = () => {
               }`}
             >
               <Radar size={14} />
-              <span>{isRu ? "24/7 Live Radar Feed (Skynet)" : "24/7 Live Radar Feed (Skynet)"}</span>
+              <span>24/7 Live Radar Feed</span>
+              <span className="rounded border border-primary/40 bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold text-primary">
+                SOON
+              </span>
             </button>
           </div>
 
@@ -419,15 +423,25 @@ const Dashboard = () => {
                           </span>
                         </button>
 
-                        <a
-                          href={getScanExportUrl(s.task_id)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
-                        >
-                          <Download size={13} />
-                          <span>JSON</span>
-                        </a>
+                        {user?.tier && user.tier.toUpperCase() !== "GUEST" ? (
+                          <a
+                            href={getScanExportUrl(s.task_id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+                          >
+                            <Download size={13} />
+                            <span>JSON</span>
+                          </a>
+                        ) : (
+                          <Link
+                            to="/pricing"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                          >
+                            <Lock size={12} className="text-primary" />
+                            <span>JSON [RADAR+]</span>
+                          </Link>
+                        )}
                       </div>
                     </div>
                   );
@@ -512,47 +526,34 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* TAB 3: 24/7 Live Autonomous Radar Feed (CertiK Skynet style) */}
+        {/* TAB 3: 24/7 Live Autonomous Radar Feed — SOON Stub */}
         {activeTab === "radar" && (
-          <div className="space-y-3">
-            <p className="font-mono text-xs text-muted-foreground mb-2">
+          <div className="rounded-2xl border border-primary/30 bg-card p-10 text-center bg-radial-red">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/40 bg-primary/15 text-primary">
+              <Radar size={28} />
+            </div>
+            <span className="rounded-full border border-primary/40 bg-primary/15 px-3 py-1 font-mono text-xs font-bold uppercase tracking-widest text-primary">
+              COMING SOON // BORIS SKYNET STREAM
+            </span>
+            <h4 className="mt-4 text-xl font-bold text-foreground">
               {isRu
-                ? "Живая лента находок автономных радаров BORIS (из базы radar_discoveries.db на сервере):"
-                : "Live stream of autonomous BORIS radar discoveries (from server radar_discoveries.db):"}
+                ? "Прямой эфир 5 автономных радаров (GitHub · DeFiLlama · Verified Contracts · Soroban · ZK)"
+                : "24/7 Autonomous Radar Stream (GitHub · DeFiLlama · Verified Contracts · Soroban · ZK)"}
+            </h4>
+            <p className="mx-auto mt-2 max-w-xl font-mono text-xs text-muted-foreground leading-relaxed">
+              {isRu
+                ? "Модуль синхронизации фоновых радаров с веб-терминалом находится в закрытом тестировании для подписчиков RADAR / RAW / BLACKBOX. Сейчас поток находок в реальном времени доступен через Telegram-контур."
+                : "Direct web synchronization of BORIS autonomous radars is in closed testing for RADAR / RAW / BLACKBOX tiers. Live discovery alerts are currently streamed via the Telegram terminal."}
             </p>
-            {radarAudits.map((a, idx) => {
-              const badge = VERDICT_BADGE[a.risk_level] || VERDICT_BADGE.LOW;
-              return (
-                <div
-                  key={idx}
-                  className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2.5">
-                      <span className={`rounded border px-2 py-0.5 font-mono text-[10px] font-bold ${badge}`}>
-                        {a.risk_level} (Score: {a.risk_score})
-                      </span>
-                      <span className="rounded bg-background px-2 py-0.5 font-mono text-[10px] uppercase text-primary">
-                        {a.chain}
-                      </span>
-                      <span className="font-mono text-sm font-semibold text-foreground truncate">{a.address}</span>
-                    </div>
-                    <p className="mt-1 font-mono text-xs text-muted-foreground">
-                      Archetype: {a.name} · Scanned: {a.scan_date?.slice(0, 19).replace("T", " ")}
-                    </p>
-                  </div>
-                  <div className="font-mono text-xs">
-                    <span className="text-muted-foreground">Findings: </span>
-                    <strong className="text-foreground">{a.findings_total}</strong>
-                    {" ("}
-                    <span className="text-red-400">{a.findings_critical}C</span>
-                    {" / "}
-                    <span className="text-orange-400">{a.findings_high}H</span>
-                    {")"}
-                  </div>
-                </div>
-              );
-            })}
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Link
+                to="/pricing"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
+              >
+                <span>{isRu ? "Тарифы доступа (RADAR / RAW / BLACKBOX)" : "View Access Tiers"}</span>
+                <ArrowUpRight size={14} />
+              </Link>
+            </div>
           </div>
         )}
       </RevealOnScroll>

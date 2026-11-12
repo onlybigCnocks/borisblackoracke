@@ -103,6 +103,8 @@ interface DemoScanResult {
     detail?: { ru: string; en: string };
   }>;
   deep_dossier?: {
+    viewer_tier?: string;
+    download_allowed?: boolean;
     archetype?: string;
     archetype_confidence?: number;
     detected_chain?: string;
@@ -117,7 +119,9 @@ interface DemoScanResult {
       view_pure: number;
       payable: number;
       events: number;
+      privileged_count?: number;
       privileged_functions: string[];
+      locked?: boolean;
     }>;
     exploit_chains?: Array<{
       title: string;
@@ -130,8 +134,10 @@ interface DemoScanResult {
       score: number;
       confidence: number;
       patch: string;
+      locked?: boolean;
     }>;
     holders?: {
+      locked?: boolean;
       total_holders: number;
       top10_pct: number;
       real_top10_pct: number;
@@ -328,7 +334,10 @@ const DemoScanner = () => {
         setState("error"); clearPersistence(); clearInterval(interval); return;
       }
       try {
-        const res = await fetch(`${API_BASE}/api/demo-scan/status/${taskId}`);
+        const authToken = getSavedToken();
+        const pollHeaders: Record<string, string> = {};
+        if (authToken) pollHeaders["Authorization"] = `Bearer ${authToken}`;
+        const res = await fetch(`${API_BASE}/api/demo-scan/status/${taskId}`, { headers: pollHeaders });
         if (res.status === 429) {
           setErrorMsg(isRu ? "Лимит бесплатных сканов: 3 в час. Используйте Telegram-бот для полного доступа." : "Free scan limit: 3 per hour. Use Telegram bot for full access.");
           setState("error"); clearPersistence(); clearInterval(interval); return;
@@ -769,7 +778,7 @@ export function ResultTeaser({ result, isRu, taskId }: { result: DemoScanResult;
                     : "Engineering Surface Decomposition (8 Layers)"}
                 </span>
               </div>
-              {taskId && (
+              {taskId && result.deep_dossier.download_allowed ? (
                 <a
                   href={getScanExportUrl(taskId)}
                   target="_blank"
@@ -778,6 +787,14 @@ export function ResultTeaser({ result, isRu, taskId }: { result: DemoScanResult;
                 >
                   <Download size={13} />
                   <span>{isRu ? "Скачать JSON-досье" : "Export JSON Dossier"}</span>
+                </a>
+              ) : (
+                <a
+                  href="/pricing"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 font-mono text-xs text-muted-foreground transition-all hover:border-primary hover:text-primary"
+                >
+                  <Lock size={12} className="text-primary" />
+                  <span>{isRu ? "JSON-экспорт [с тарифа RADAR]" : "JSON Export [RADAR+ Tier]"}</span>
                 </a>
               )}
             </div>
