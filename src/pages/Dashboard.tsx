@@ -33,11 +33,14 @@ import {
   clearAuthSession,
   getSavedToken,
   getSavedUser,
+  authHeaders,
   type BorisUser,
   type BorisScanRecord,
   type BorisWatchlistItem,
   type BorisRadarAudit,
 } from "@/lib/auth";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://api.black-oracle.com";
 
 const VERDICT_BADGE: Record<string, string> = {
   SIGNIFICANT_SURFACE: "border-red-500/50 bg-red-500/15 text-red-400",
@@ -68,6 +71,46 @@ const Dashboard = () => {
   const [watchTarget, setWatchTarget] = useState("");
   const [watchLabel, setWatchLabel] = useState("");
   const [addingWatch, setAddingWatch] = useState(false);
+  const [driftBusy, setDriftBusy] = useState<string | null>(null);
+  const [driftInfo, setDriftInfo] = useState<any>(null);
+
+  const handleRescanDrift = async (s: BorisScanRecord) => {
+    setDriftBusy(s.task_id);
+    setDriftInfo(null);
+    try {
+      const r = await fetch(`${API_BASE_URL}/api/demo-scan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ target: s.target }),
+      });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error(d.detail || `HTTP ${r.status}`);
+      }
+      const { task_id } = await r.json();
+
+      let finished = false;
+      for (let i = 0; i < 90 && !finished; i++) {
+        await new Promise((res) => setTimeout(res, 2000));
+        const pr = await fetch(`${API_BASE_URL}/api/demo-scan/status/${task_id}`, { headers: authHeaders() });
+        const pj = await pr.json().catch(() => ({}));
+        if (pj.status === "finished" || pj.status === "failed") finished = true;
+      }
+
+      const dr = await fetch(`${API_BASE_URL}/api/tools/drift-compare`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ old_task_id: s.task_id, new_task_id: task_id }),
+      });
+      const dj = await dr.json().catch(() => ({}));
+      if (!dr.ok) throw new Error(dj.detail || `HTTP ${dr.status}`);
+      setDriftInfo({ ...dj, target_label: s.project || s.target });
+    } catch (e: any) {
+      setDriftInfo({ error: e.message || "Drift comparison failed" });
+    } finally {
+      setDriftBusy(null);
+    }
+  };
 
   useEffect(() => {
     const token = getSavedToken();
@@ -383,6 +426,53 @@ const Dashboard = () => {
         </div>
 
         {/* TAB 1: User Scan History */}
+        {driftInfo && (
+          <div className="mb-6 rounded-xl border border-primary/40 bg-card p-5">
+            <div className="flex items-start justify-between gap-3">
+              <p className="font-mono text-xs font-bold uppercase tracking-wider text-primary">
+                {isRu ? "Audit Drift — сравнение сканов" : "Audit Drift — scan comparison"}
+              </p>
+              <button
+                onClick={() => setDriftInfo(null)}
+                className="font-mono text-[11px] text-muted-foreground hover:text-foreground"
+              >
+                ✕
+              </button>
+            </div>
+            {driftInfo.error ? (
+              <p className="mt-2 font-mono text-xs text-destructive">{driftInfo.error}</p>
+            ) : (
+              <>
+                <p className="mt-2 truncate font-mono text-xs text-foreground">{driftInfo.target_label}</p>
+                <div className="mt-3 flex flex-wrap gap-4 font-mono text-xs">
+                  <span className="text-muted-foreground">
+                    {driftInfo.old_verdict} → <b className="text-foreground">{driftInfo.new_verdict}</b>
+                  </span>
+                  <span className={Number(driftInfo.delta_total) > 0 ? "text-destructive" : "text-primary"}>
+                    ΔTotal {Number(driftInfo.delta_total) > 0 ? "+" : ""}{driftInfo.delta_total}
+                  </span>
+                  <span className={Number(driftInfo.delta_critical) > 0 ? "text-destructive" : "text-primary"}>
+                    ΔCritical {Number(driftInfo.delta_critical) > 0 ? "+" : ""}{driftInfo.delta_critical}
+                  </span>
+                  <span className={Number(driftInfo.delta_high) > 0 ? "text-destructive" : "text-primary"}>
+                    ΔHigh {Number(driftInfo.delta_high) > 0 ? "+" : ""}{driftInfo.delta_high}
+                  </span>
+                </div>
+                {driftInfo.added_patterns?.length > 0 && (
+                  <p className="mt-2 font-mono text-[11px] text-destructive">
+                    + {driftInfo.added_patterns.map((a: any) => `${a.type}×${a.count}`).join(", ")}
+                  </p>
+                )}
+                {driftInfo.resolved_patterns?.length > 0 && (
+                  <p className="mt-1 font-mono text-[11px] text-primary">
+                    − {driftInfo.resolved_patterns.map((a: any) => `${a.type}×${a.count}`).join(", ")}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
         {activeTab === "tools" && <ToolsPanel />}
 
         {activeTab === "history" && (
@@ -446,6 +536,21 @@ const Dashboard = () => {
                               : isRu ? "Открыть досье" : "Open Dossier"}
                           </span>
                         </button>
+
+                        {user?.tier && user.tier.toUpperCase() !== "GUEST" ? (
+                          <button
+                            onClick={() => handleRescanDrift(s)}
+                            disabled={driftBusy === s.task_id}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-foreground disabled:opacity-50"
+                          >
+                            <RefreshCw size={13} className={driftBusy === s.task_id ? "animate-spin" : ""} />
+                            <span>
+                              {driftBusy === s.task_id
+                                ? isRu ? "Рескан…" : "Rescan…"
+                                : isRu ? "Rescan и Drift" : "Rescan & Drift"}
+                            </span>
+                          </button>
+                        ) : null}
 
                         {user?.tier && user.tier.toUpperCase() !== "GUEST" ? (
                           <a
