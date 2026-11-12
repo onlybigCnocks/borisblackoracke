@@ -11,6 +11,8 @@ export interface BorisUser {
   tier: "GUEST" | "RADAR" | "RAW" | "BLACKBOX" | string;
   api_key: string;
   scans_total: number;
+  scans_today?: number;
+  daily_limit?: number;
   auth_provider: "email" | "google";
   created_at: number;
 }

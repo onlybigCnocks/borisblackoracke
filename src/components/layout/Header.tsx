@@ -1,17 +1,42 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Menu, X, User } from "lucide-react";
+import { Menu, X, User, Palette } from "lucide-react";
 import BorisLogo from "../BorisLogo";
 import { getSavedUser, type BorisUser } from "@/lib/auth";
+
+export type BorisTheme = "crimson" | "mono" | "emerald" | "light";
+
+const THEMES: Array<{ id: BorisTheme; label: string; dot: string }> = [
+  { id: "crimson", label: "Crimson", dot: "#dc2626" },
+  { id: "mono", label: "Mono B&W", dot: "#f5f5f5" },
+  { id: "emerald", label: "Terminal", dot: "#10b981" },
+  { id: "light", label: "Light", dot: "#cbd5e1" },
+];
+
+const LS_THEME = "boris_ui_theme";
 
 const Header = () => {
   const { t, i18n } = useTranslation();
   const isRu = i18n.language === "ru";
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<BorisUser | null>(getSavedUser());
+  const [theme, setTheme] = useState<BorisTheme>(() => {
+    return (localStorage.getItem(LS_THEME) as BorisTheme) || "crimson";
+  });
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem(LS_THEME, theme);
+  }, [theme]);
+
+  const cycleTheme = () => {
+    const idx = THEMES.findIndex((x) => x.id === theme);
+    const next = THEMES[(idx + 1) % THEMES.length].id;
+    setTheme(next);
+  };
 
   useEffect(() => {
     const sync = () => setUser(getSavedUser());
@@ -82,7 +107,43 @@ const Header = () => {
           )}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          {/* Theme Switcher Pills (Desktop) */}
+          <div className="hidden sm:flex items-center gap-1 rounded-lg border border-border bg-card/80 p-1">
+            {THEMES.map((th) => {
+              const active = theme === th.id;
+              return (
+                <button
+                  key={th.id}
+                  type="button"
+                  onClick={() => setTheme(th.id)}
+                  title={`Theme: ${th.label}`}
+                  className={`flex items-center gap-1.5 rounded px-2 py-1 font-mono text-[10px] font-semibold transition-all ${
+                    active
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span
+                    className="h-2 w-2 rounded-full border border-black/30"
+                    style={{ backgroundColor: th.dot }}
+                  />
+                  <span className="hidden lg:inline">{th.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Mobile quick theme cycle button */}
+          <button
+            type="button"
+            onClick={cycleTheme}
+            title="Switch Theme"
+            className="sm:hidden rounded border border-border p-1.5 text-muted-foreground hover:border-primary hover:text-primary"
+          >
+            <Palette size={15} />
+          </button>
+
           <button
             onClick={toggleLang}
             className="rounded border border-border px-2.5 py-1 font-mono text-xs font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
@@ -143,6 +204,21 @@ const Header = () => {
               </Link>
             )
           )}
+          <div className="my-2 flex flex-wrap gap-1.5 py-2 border-y border-border">
+            {THEMES.map((th) => (
+              <button
+                key={th.id}
+                type="button"
+                onClick={() => setTheme(th.id)}
+                className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 font-mono text-xs ${
+                  theme === th.id ? "border-primary bg-primary/15 text-primary font-bold" : "border-border text-muted-foreground"
+                }`}
+              >
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: th.dot }} />
+                <span>{th.label}</span>
+              </button>
+            ))}
+          </div>
           <Link
             to={user ? "/dashboard" : "/auth"}
             onClick={() => setOpen(false)}

@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  :root,
+  [data-theme="crimson"] {
     --background: 0 0% 3.1%;
     --background-secondary: 0 0% 5.5%;
     --foreground: 0 0% 94.1%;
@@ -23,7 +24,7 @@
     --secondary-foreground: 0 0% 94.1%;
 
     --muted: 0 0% 11.8%;
-    --muted-foreground: 0 0% 33.3%;
+    --muted-foreground: 0 0% 55%;
 
     --accent: 0 0% 8.6%;
     --accent-foreground: 0 0% 94.1%;
@@ -31,27 +32,117 @@
     --destructive: 0 72.2% 50.6%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 11.8%;
-    --border-hover: 0 40% 12.5%;
+    --border: 0 0% 12.8%;
+    --border-hover: 0 40% 22%;
     --input: 0 0% 11.8%;
     --ring: 0 72.2% 50.6%;
 
     --radius: 0.75rem;
+  }
 
-    --text-primary: 0 0% 94.1%;
-    --text-secondary: 0 0% 60%;
-    --text-muted: 0 0% 33.3%;
+  /* Monochrome Black & White Theme */
+  [data-theme="mono"] {
+    --background: 0 0% 2.5%;
+    --background-secondary: 0 0% 5%;
+    --foreground: 0 0% 96%;
 
-    --red-glow: 0 72% 50% / 0.15;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 96%;
 
-    --sidebar-background: 0 0% 3.1%;
-    --sidebar-foreground: 0 0% 94.1%;
-    --sidebar-primary: 0 72.2% 50.6%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 6.7%;
-    --sidebar-accent-foreground: 0 0% 94.1%;
-    --sidebar-border: 0 0% 11.8%;
-    --sidebar-ring: 0 72.2% 50.6%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 96%;
+
+    --primary: 0 0% 93%;
+    --primary-foreground: 0 0% 5%;
+    --primary-bright: 0 0% 100%;
+    --primary-dim: 0 0% 76%;
+
+    --secondary: 0 0% 8%;
+    --secondary-foreground: 0 0% 96%;
+
+    --muted: 0 0% 13%;
+    --muted-foreground: 0 0% 58%;
+
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 96%;
+
+    --destructive: 0 0% 85%;
+    --destructive-foreground: 0 0% 6%;
+
+    --border: 0 0% 16%;
+    --border-hover: 0 0% 35%;
+    --input: 0 0% 14%;
+    --ring: 0 0% 90%;
+  }
+
+  /* Matrix Emerald Cyber Theme */
+  [data-theme="emerald"] {
+    --background: 155 25% 3%;
+    --background-secondary: 155 20% 5.5%;
+    --foreground: 150 15% 94%;
+
+    --card: 155 20% 6.5%;
+    --card-foreground: 150 15% 94%;
+
+    --popover: 155 20% 5.5%;
+    --popover-foreground: 150 15% 94%;
+
+    --primary: 152 76% 44%;
+    --primary-foreground: 155 30% 4%;
+    --primary-bright: 152 85% 54%;
+    --primary-dim: 152 70% 34%;
+
+    --secondary: 155 15% 8%;
+    --secondary-foreground: 150 15% 94%;
+
+    --muted: 155 15% 12%;
+    --muted-foreground: 150 10% 55%;
+
+    --accent: 155 18% 9.5%;
+    --accent-foreground: 150 15% 94%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 155 18% 14%;
+    --border-hover: 152 45% 26%;
+    --input: 155 18% 13%;
+    --ring: 152 76% 44%;
+  }
+
+  /* Clean Light Institutional Theme */
+  [data-theme="light"] {
+    --background: 210 20% 97.5%;
+    --background-secondary: 210 18% 94%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 0 72.2% 46%;
+    --primary-foreground: 0 0% 100%;
+    --primary-bright: 0 80% 52%;
+    --primary-dim: 0 72% 38%;
+
+    --secondary: 210 16% 93%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 16% 92%;
+    --muted-foreground: 215 16% 40%;
+
+    --accent: 210 20% 94%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 72% 46%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 20% 85%;
+    --border-hover: 0 50% 60%;
+    --input: 214 20% 85%;
+    --ring: 0 72.2% 46%;
   }
 }
 
@@ -61,7 +152,7 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased transition-colors duration-200;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -94,8 +185,8 @@
   height: 2px;
   z-index: 10000;
   pointer-events: none;
-  background: linear-gradient(90deg, transparent 0%, #dc2626 30%, #dc2626 70%, transparent 100%);
-  box-shadow: 0 0 12px 2px rgba(220, 38, 38, 0.4), 0 0 4px 1px rgba(220, 38, 38, 0.6);
+  background: linear-gradient(90deg, transparent 0%, hsl(var(--primary)) 30%, hsl(var(--primary)) 70%, transparent 100%);
+  box-shadow: 0 0 12px 2px hsl(var(--primary) / 0.35), 0 0 4px 1px hsl(var(--primary) / 0.55);
   animation: radar-sweep 6s linear infinite;
 }
 
@@ -124,7 +215,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, #dc2626, transparent);
+  background: linear-gradient(90deg, transparent, hsl(var(--primary)), transparent);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -150,24 +241,24 @@
   animation: reveal-up 0.6s ease forwards;
 }
 
-/* Red text glow */
+/* Dynamic text glow */
 .text-glow {
-  text-shadow: 0 0 40px rgba(220, 38, 38, 0.5), 0 0 80px rgba(220, 38, 38, 0.2);
+  text-shadow: 0 0 40px hsl(var(--primary) / 0.45), 0 0 80px hsl(var(--primary) / 0.2);
 }
 
-/* Hero pulse — slow 10s breathing */
+/* Hero pulse — slow breathing */
 @keyframes hero-pulse {
   0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(1.5); }
+  50% { filter: brightness(1.35); }
 }
 
 .animate-hero-pulse {
   animation: hero-pulse 5s ease-in-out infinite;
 }
 
-/* Red button glow */
+/* Dynamic button glow */
 .btn-glow {
-  box-shadow: 0 0 20px rgba(220, 38, 38, 0.3), 0 0 40px rgba(220, 38, 38, 0.1);
+  box-shadow: 0 0 20px hsl(var(--primary) / 0.28), 0 0 40px hsl(var(--primary) / 0.1);
 }
 
 /* Pulsing dot */
@@ -182,7 +273,7 @@
 
 /* Radial background */
 .bg-radial-red {
-  background: radial-gradient(ellipse at 50% 0%, rgba(220, 38, 38, 0.06) 0%, transparent 60%);
+  background: radial-gradient(ellipse at 50% 0%, hsl(var(--primary) / 0.06) 0%, transparent 60%);
 }
 
 /* Progress bar animation */
@@ -192,7 +283,7 @@
 }
 
 .progress-animated {
-  background: linear-gradient(90deg, #b91c1c, #dc2626, #ef4444, #dc2626, #b91c1c);
+  background: linear-gradient(90deg, hsl(var(--primary-dim)), hsl(var(--primary)), hsl(var(--primary-bright)), hsl(var(--primary)), hsl(var(--primary-dim)));
   background-size: 200% 100%;
   animation: progress-glow 2s linear infinite;
 }

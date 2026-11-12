@@ -252,10 +252,19 @@ const Dashboard = () => {
           </GlowCard>
           <GlowCard>
             <p className="font-mono text-xs text-muted-foreground">
-              {isRu ? "Лимит в веб-песочнице" : "Web Sandbox Quota"}
+              {isRu ? "Суточная квота (24ч)" : "Daily Quota (24h)"}
             </p>
             <p className="mt-1 font-mono text-2xl font-bold text-foreground">
-              10 / {isRu ? "час" : "hr"}
+              {user?.daily_limit === -1 || user?.tier?.toUpperCase() === "BLACKBOX"
+                ? `${user?.scans_today ?? 0} / ∞`
+                : `${user?.scans_today ?? 0} / ${
+                    user?.daily_limit ??
+                    (user?.tier?.toUpperCase() === "RAW"
+                      ? 50
+                      : user?.tier?.toUpperCase() === "RADAR"
+                      ? 25
+                      : 3)
+                  }`}
             </p>
           </GlowCard>
           <GlowCard>

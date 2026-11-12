@@ -308,7 +308,13 @@ const DemoScanner = () => {
         body: JSON.stringify({ target: trimmed }),
       });
       if (res.status === 429) {
-        setErrorMsg(isRu ? "Лимит бесплатных сканов: 3 в час. Используйте Telegram-бот для полного доступа." : "Free scan limit: 3 per hour. Use Telegram bot for full access.");
+        const errData = await res.json().catch(() => ({}));
+        setErrorMsg(
+          errData.detail ||
+            (isRu
+              ? "Суточный лимит сканов исчерпан (GUEST: 3 в сутки). Повысьте тариф для расширения квоты."
+              : "Daily scan quota reached (GUEST: 3 per 24h). Upgrade tier for more scans.")
+        );
         setState("error"); return;
       }
       if (!res.ok) throw new Error("API error");
