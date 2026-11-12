@@ -131,7 +131,7 @@ const Pricing = () => {
 
             {/* Option 2: Request Invoice */}
             <a
-              href="https://t.me/GenEXEC_BORIS"
+              href="https://t.me/V_swarm"
               target="_blank"
               rel="noopener noreferrer"
               className="block rounded-xl border border-border p-4 transition-all duration-200 hover:border-primary hover:bg-primary/5"
@@ -194,7 +194,7 @@ const Pricing = () => {
           </ul>
 
           <a
-            href="https://t.me/GenEXEC_BORIS"
+            href="https://t.me/V_swarm"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block rounded-lg bg-primary px-8 py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"

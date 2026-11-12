@@ -406,8 +406,6 @@ export const TIER_PRICES = {
 
 export const LINKS = {
   bot: "https://t.me/BlackOracleBORIS_bot",
-  support: "https://t.me/GenEXEC_BORIS",
-  enChannel: "https://t.me/Black_Oracle_BORIS_eng",
-  ruChannel: "https://t.me/Black_Oracle_BORIS_ru",
+  support: "https://t.me/V_swarm",
   github: "https://github.com/BlackOracleRiskInspectorSystem/BORIS",
 };

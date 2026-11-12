@@ -14,8 +14,6 @@ const Footer = () => {
             <span className="text-sm text-muted-foreground">© 2026</span>
           </div>
           <div className="flex flex-wrap gap-6">
-            <a href={LINKS.enChannel} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground transition-colors hover:text-primary">{t("footer.enChannel")}</a>
-            <a href={LINKS.ruChannel} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground transition-colors hover:text-primary">{t("footer.ruChannel")}</a>
             <a href={LINKS.support} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground transition-colors hover:text-primary">{t("footer.support")}</a>
             <a href={LINKS.bot} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground transition-colors hover:text-primary">{t("footer.bot")}</a>
             <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground transition-colors hover:text-primary">{t("footer.github")}</a>
