@@ -1,101 +1,314 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { RevealOnScroll, GlowCard, SectionTitle } from "@/components/ui-boris";
-import { Link } from "react-router-dom";
-import { Search, ArrowUpRight } from "lucide-react";
-import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { RevealOnScroll, GlowCard } from "@/components/ui-boris";
+import {
+  Search,
+  ArrowUpRight,
+  Key,
+  Copy,
+  Check,
+  RefreshCw,
+  LogOut,
+  Shield,
+  Terminal,
+} from "lucide-react";
+import {
+  apiGetMe,
+  apiRotateKey,
+  clearAuthSession,
+  getSavedToken,
+  getSavedUser,
+  type BorisUser,
+  type BorisScanRecord,
+} from "@/lib/auth";
 
-const mockUsage = [12, 8, 15, 6, 20, 10, 14];
-const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const VERDICT_BADGE: Record<string, string> = {
+  SIGNIFICANT_SURFACE: "border-red-500/50 bg-red-500/15 text-red-400",
+  MODERATE_SURFACE: "border-amber-500/50 bg-amber-500/15 text-amber-400",
+  MINIMAL_SURFACE: "border-green-500/50 bg-green-500/15 text-green-400",
+  CLEAN: "border-green-500/50 bg-green-500/15 text-green-400",
+  SCANNING: "border-primary/50 bg-primary/15 text-primary",
+};
 
 const Dashboard = () => {
-  const { t } = useTranslation();
+  const { i18n } = useTranslation();
+  const isRu = i18n.language === "ru";
+  const navigate = useNavigate();
+
+  const [user, setUser] = useState<BorisUser | null>(getSavedUser());
+  const [scans, setScans] = useState<BorisScanRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [quickInput, setQuickInput] = useState("");
-  const maxUsage = Math.max(...mockUsage);
+  const [copied, setCopied] = useState(false);
+  const [rotating, setRotating] = useState(false);
+
+  useEffect(() => {
+    const token = getSavedToken();
+    if (!token) {
+      navigate("/auth");
+      return;
+    }
+    apiGetMe()
+      .then((data) => {
+        setUser(data.user);
+        setScans(data.scans || []);
+      })
+      .catch(() => {
+        navigate("/auth");
+      })
+      .finally(() => setLoading(false));
+  }, [navigate]);
+
+  const handleCopyKey = () => {
+    if (!user?.api_key) return;
+    navigator.clipboard.writeText(user.api_key);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleRotateKey = async () => {
+    setRotating(true);
+    try {
+      const newKey = await apiRotateKey();
+      setUser((prev) => (prev ? { ...prev, api_key: newKey } : prev));
+    } catch {
+      // ignore
+    } finally {
+      setRotating(false);
+    }
+  };
+
+  const handleLogout = () => {
+    clearAuthSession();
+    navigate("/auth");
+  };
+
+  const handleQuickScan = () => {
+    const target = quickInput.trim();
+    if (target) {
+      localStorage.setItem("boris_prefill_target", target);
+    }
+    navigate("/");
+    setTimeout(() => {
+      document.getElementById("demo-scanner")?.scrollIntoView({ behavior: "smooth" });
+    }, 150);
+  };
+
+  if (loading && !user) {
+    return (
+      <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4">
+        <span className="font-mono text-sm text-muted-foreground">
+          {isRu ? "Загрузка терминала оператора..." : "Loading operator terminal..."}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto min-h-screen px-4 py-12">
       <RevealOnScroll>
-        <SectionTitle>{t("dashboard.title")}</SectionTitle>
-
-        {/* Quick Scan */}
-        <div className="mb-8 flex gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-            <input
-              type="text"
-              value={quickInput}
-              onChange={(e) => setQuickInput(e.target.value)}
-              placeholder={t("dashboard.quickScan")}
-              className="w-full rounded-xl border border-border bg-background-secondary py-3 pl-12 pr-4 font-mono text-sm text-foreground outline-none focus:border-primary"
-            />
-          </div>
-          <Link to="/#demo-scanner" onClick={() => { setTimeout(() => document.getElementById("demo-scanner")?.scrollIntoView({ behavior: "smooth" }), 100); }} className="rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow">
-            →
-          </Link>
-        </div>
-
-        {/* Stats */}
-        <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-          {[
-            { label: t("dashboard.totalScans"), value: "47" },
-            { label: t("dashboard.scansToday"), value: "3" },
-            { label: t("dashboard.tier"), value: "GUEST" },
-            { label: t("dashboard.remaining"), value: "0/3" },
-          ].map((s) => (
-            <GlowCard key={s.label}>
-              <p className="text-xs text-muted-foreground">{s.label}</p>
-              <p className="mt-1 font-mono text-2xl font-bold text-foreground">{s.value}</p>
-            </GlowCard>
-          ))}
-        </div>
-
-        {/* Usage Chart */}
-        <GlowCard className="mb-8">
-          <h3 className="mb-4 text-sm font-semibold text-foreground">{t("dashboard.usage")}</h3>
-          <div className="flex items-end gap-2 h-32">
-            {mockUsage.map((val, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <div
-                  className="w-full rounded-t bg-primary/80 transition-all hover:bg-primary"
-                  style={{ height: `${(val / maxUsage) * 100}%` }}
-                />
-                <span className="text-[10px] text-muted-foreground">{days[i]}</span>
+        {/* Top Profile Header */}
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-primary/30 bg-card p-6 bg-radial-red">
+          <div className="flex items-center gap-4">
+            {user?.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt={user.name}
+                className="h-14 w-14 rounded-full border border-primary/50 object-cover"
+              />
+            ) : (
+              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-primary/40 bg-primary/15 font-mono text-xl font-bold text-primary">
+                {(user?.name || user?.email || "B")[0].toUpperCase()}
               </div>
-            ))}
+            )}
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h1 className="font-mono text-xl font-bold text-foreground md:text-2xl">
+                  {user?.name || "Operator"}
+                </h1>
+                <span className="rounded border border-primary/40 bg-primary/15 px-2.5 py-0.5 font-mono text-xs font-bold text-primary">
+                  {user?.tier || "GUEST"}
+                </span>
+              </div>
+              <p className="font-mono text-xs text-muted-foreground">{user?.email}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Link
+              to="/pricing"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
+            >
+              <span>{isRu ? "Повысить тариф" : "Upgrade Tier"}</span>
+              <ArrowUpRight size={14} />
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-4 py-2.5 font-mono text-xs font-semibold text-muted-foreground transition-all hover:border-primary hover:text-foreground"
+            >
+              <LogOut size={14} />
+              <span>{isRu ? "Выйти" : "Sign Out"}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+          <GlowCard>
+            <p className="font-mono text-xs text-muted-foreground">
+              {isRu ? "Всего сканов" : "Total Scans"}
+            </p>
+            <p className="mt-1 font-mono text-2xl font-bold text-foreground">
+              {Math.max(user?.scans_total || 0, scans.length)}
+            </p>
+          </GlowCard>
+          <GlowCard>
+            <p className="font-mono text-xs text-muted-foreground">
+              {isRu ? "Текущий уровень" : "Active Tier"}
+            </p>
+            <p className="mt-1 font-mono text-2xl font-bold text-primary">
+              {user?.tier || "GUEST"}
+            </p>
+          </GlowCard>
+          <GlowCard>
+            <p className="font-mono text-xs text-muted-foreground">
+              {isRu ? "Лимит в веб-песочнице" : "Web Sandbox Quota"}
+            </p>
+            <p className="mt-1 font-mono text-2xl font-bold text-foreground">
+              10 / {isRu ? "час" : "hr"}
+            </p>
+          </GlowCard>
+          <GlowCard>
+            <p className="font-mono text-xs text-muted-foreground">
+              {isRu ? "Хранилище" : "Vault Mode"}
+            </p>
+            <p className="mt-1 font-mono text-lg font-bold text-green-400">
+              LOCAL SQLite WAL
+            </p>
+          </GlowCard>
+        </div>
+
+        {/* API Key Management Card */}
+        <GlowCard className="mb-8 border-primary/30">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-primary">
+                <Key size={14} />
+                <span>{isRu ? "Персональный API-ключ оператора" : "Personal Operator API Key"}</span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {isRu
+                  ? "Используйте заголовок X-Boris-Api-Key для автоматизации запросов к api.black-oracle.com"
+                  : "Pass in X-Boris-Api-Key header to authenticate direct calls to api.black-oracle.com"}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCopyKey}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground transition-colors hover:border-primary"
+              >
+                {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                <span>{copied ? (isRu ? "Скопировано" : "Copied") : (isRu ? "Копировать" : "Copy")}</span>
+              </button>
+              <button
+                onClick={handleRotateKey}
+                disabled={rotating}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground disabled:opacity-50"
+              >
+                <RefreshCw size={14} className={rotating ? "animate-spin" : ""} />
+                <span>{isRu ? "Перевыпустить" : "Rotate"}</span>
+              </button>
+            </div>
+          </div>
+          <div className="mt-3 rounded-lg border border-border bg-background px-4 py-3 font-mono text-xs text-foreground select-all overflow-x-auto">
+            {user?.api_key || "boris_live_••••••••••••••••••••••••••••••••"}
           </div>
         </GlowCard>
 
-        {/* Upgrade */}
-        <GlowCard className="mb-8 border-primary/30">
-          <h3 className="text-lg font-semibold text-foreground">{t("dashboard.upgrade")}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.upgradeDesc")}</p>
-          <Link
-            to="/pricing"
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
-          >
-            {t("nav.pricing")} <ArrowUpRight size={16} />
-          </Link>
-        </GlowCard>
-
-        {/* Recent Scans */}
-        <h3 className="mb-4 text-lg font-semibold text-foreground">{t("dashboard.recentScans")}</h3>
-        <div className="space-y-2">
-          {[
-            { target: "compound-finance/compound-protocol", risk: "HIGH", date: "2025-01-15" },
-            { target: "0x1f98...F984", risk: "MEDIUM", date: "2025-01-14" },
-            { target: "aave/aave-v3-core", risk: "LOW", date: "2025-01-13" },
-          ].map((s, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 opacity-60 cursor-not-allowed"
-            >
-              <span className={`font-mono text-xs font-bold ${s.risk === "HIGH" ? "text-primary-bright" : s.risk === "MEDIUM" ? "text-yellow-400" : "text-green-400"}`}>
-                {s.risk}
-              </span>
-              <span className="flex-1 truncate font-mono text-sm text-foreground">{s.target}</span>
-              <span className="text-xs text-muted-foreground">{s.date}</span>
+        {/* Quick Scan Bar */}
+        <div className="mb-8">
+          <h3 className="mb-3 flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            <Terminal size={14} className="text-primary" />
+            <span>{isRu ? "Запустить новый скан" : "Launch New Inspection"}</span>
+          </h3>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+              <input
+                type="text"
+                value={quickInput}
+                onChange={(e) => setQuickInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleQuickScan()}
+                placeholder={isRu ? "github.com/protocol/repo или 0x1234...abcd" : "github.com/protocol/repo or 0x1234...abcd"}
+                className="w-full rounded-xl border border-border bg-card py-3.5 pl-12 pr-4 font-mono text-sm text-foreground outline-none focus:border-primary"
+              />
             </div>
-          ))}
+            <button
+              onClick={handleQuickScan}
+              className="rounded-xl bg-primary px-8 py-3.5 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
+            >
+              {isRu ? "Сканировать →" : "Run Scan →"}
+            </button>
+          </div>
+        </div>
+
+        {/* User Scan History */}
+        <div>
+          <h3 className="mb-4 text-lg font-semibold text-foreground">
+            {isRu ? "История ваших сканирований" : "Your Inspection History"}
+          </h3>
+          {scans.length === 0 ? (
+            <div className="rounded-xl border border-border bg-card p-8 text-center">
+              <Shield className="mx-auto mb-2 text-muted-foreground" size={28} />
+              <p className="font-mono text-sm text-foreground">
+                {isRu ? "У вас пока нет сохранённых сканов" : "No saved scans in your history yet"}
+              </p>
+              <p className="mt-1 font-mono text-xs text-muted-foreground">
+                {isRu
+                  ? "Все сканы, запущенные вами после входа в аккаунт, автоматически сохраняются здесь."
+                  : "Every scan you run while signed in is automatically recorded here."}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {scans.map((s) => {
+                const badge = VERDICT_BADGE[s.verdict || "SCANNING"] || VERDICT_BADGE.SCANNING;
+                const dateStr = new Date(s.created_at * 1000).toLocaleString();
+                return (
+                  <div
+                    key={s.task_id}
+                    className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2.5">
+                        <span className={`rounded border px-2 py-0.5 font-mono text-[10px] font-bold ${badge}`}>
+                          {s.verdict || "SCANNING"}
+                        </span>
+                        <span className="truncate font-mono text-sm font-semibold text-foreground">
+                          {s.project || s.target}
+                        </span>
+                      </div>
+                      <p className="mt-1 font-mono text-xs text-muted-foreground truncate">
+                        Target: {s.target} · {dateStr}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-4 font-mono text-xs">
+                      <div>
+                        <span className="text-muted-foreground">Patterns: </span>
+                        <span className="font-bold text-foreground">{s.patterns_total}</span>
+                        {" ("}
+                        <span className="text-red-400">{s.patterns_critical}C</span>
+                        {" / "}
+                        <span className="text-orange-400">{s.patterns_high}H</span>
+                        {")"}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </RevealOnScroll>
     </div>

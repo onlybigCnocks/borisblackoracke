@@ -1,14 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
 import BorisLogo from "../BorisLogo";
+import { getSavedUser, type BorisUser } from "@/lib/auth";
 
 const Header = () => {
   const { t, i18n } = useTranslation();
+  const isRu = i18n.language === "ru";
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState<BorisUser | null>(getSavedUser());
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const sync = () => setUser(getSavedUser());
+    window.addEventListener("boris-auth-change", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("boris-auth-change", sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
 
   const toggleLang = () => {
     i18n.changeLanguage(i18n.language === "ru" ? "en" : "ru");
@@ -77,6 +90,24 @@ const Header = () => {
             {i18n.language === "ru" ? "EN" : "RU"}
           </button>
 
+          {user ? (
+            <Link
+              to="/dashboard"
+              className="hidden items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3.5 py-1.5 font-mono text-xs font-semibold text-primary transition-all hover:bg-primary/20 md:inline-flex"
+            >
+              <User size={14} />
+              <span className="max-w-[120px] truncate">{user.name || user.email}</span>
+            </Link>
+          ) : (
+            <Link
+              to="/auth"
+              className="hidden items-center gap-1.5 rounded-lg border border-border px-3.5 py-1.5 font-mono text-xs font-semibold text-foreground transition-all hover:border-primary hover:text-primary md:inline-flex"
+            >
+              <User size={14} />
+              <span>{isRu ? "Кабинет" : "Sign In"}</span>
+            </Link>
+          )}
+
           <button
             onClick={scrollToScanner}
             className="hidden rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary-dim btn-glow md:block"
@@ -112,6 +143,13 @@ const Header = () => {
               </Link>
             )
           )}
+          <Link
+            to={user ? "/dashboard" : "/auth"}
+            onClick={() => setOpen(false)}
+            className="block py-3 font-mono text-sm font-semibold text-primary"
+          >
+            {user ? `⚡ ${user.name || user.email}` : isRu ? "→ Вход / Регистрация" : "→ Sign In / Register"}
+          </Link>
           <button
             onClick={scrollToScanner}
             className="mt-3 block w-full rounded-lg bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground"

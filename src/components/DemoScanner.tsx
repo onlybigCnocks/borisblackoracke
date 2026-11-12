@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { CheckCircle, Send, ShieldAlert, Lock, Sparkles, Terminal } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { getSavedToken } from "@/lib/auth";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://api.black-oracle.com";
 
@@ -188,8 +189,13 @@ const DemoScanner = () => {
     }
   }, [isRu]);
 
-  // Restore persisted scan on mount
+  // Restore persisted scan or prefilled target on mount
   useEffect(() => {
+    const prefill = localStorage.getItem("boris_prefill_target");
+    if (prefill) {
+      localStorage.removeItem("boris_prefill_target");
+      setInput(prefill);
+    }
     const savedTaskId = localStorage.getItem(LS_TASK_ID);
     const savedInput = localStorage.getItem(LS_INPUT);
     const savedStartTime = localStorage.getItem(LS_START_TIME);
@@ -227,9 +233,14 @@ const DemoScanner = () => {
     scanStartTime.current = Date.now();
 
     try {
+      const authToken = getSavedToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (authToken) {
+        headers["Authorization"] = `Bearer ${authToken}`;
+      }
       const res = await fetch(`${API_BASE}/api/demo-scan`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ target: trimmed }),
       });
       if (res.status === 429) {
