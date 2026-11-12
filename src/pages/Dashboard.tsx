@@ -33,6 +33,7 @@ import {
   apiGetReferral,
   apiBindReferral,
   apiSyncTelegram,
+  apiInitTelegramDeeplink,
   getScanExportUrl,
   clearAuthSession,
   getSavedToken,
@@ -82,7 +83,44 @@ const Dashboard = () => {
   const [refMsg, setRefMsg] = useState<string | null>(null);
   const [tgInput, setTgInput] = useState("");
   const [tgSyncing, setTgSyncing] = useState(false);
+  const [tgWaitingApp, setTgWaitingApp] = useState(false);
   const [tgMsg, setTgMsg] = useState<string | null>(null);
+
+  const handleLaunchTelegramAppSync = async () => {
+    setTgWaitingApp(true);
+    setTgMsg(
+      isRu
+        ? "Открываем приложение Telegram… Нажмите «Запустить / Start» в боте @BlackOracleBORIS_bot."
+        : "Launching Telegram app… Press 'Start' in @BlackOracleBORIS_bot."
+    );
+    try {
+      const dl = await apiInitTelegramDeeplink();
+      // Trigger native tg:// protocol to open Telegram Desktop / Mobile app directly
+      window.location.href = dl.tg_app_url;
+
+      // Poll /api/auth/me every 2.5s for up to 60s to detect instant completion
+      const prevTg = user?.tg_id || "";
+      const prevTier = user?.tier || "GUEST";
+      for (let i = 0; i < 24; i++) {
+        await new Promise((r) => setTimeout(r, 2500));
+        const me = await apiGetMe().catch(() => null);
+        if (me?.user && (me.user.tg_id && (me.user.tg_id !== prevTg || me.user.tier !== prevTier || i >= 1))) {
+          setUser(me.user);
+          setTgMsg(
+            isRu
+              ? `✅ Синхронизировано через Telegram App: @${me.user.tg_username || me.user.tg_id} · Тариф: ${me.user.tier}`
+              : `✅ Synced via Telegram App: @${me.user.tg_username || me.user.tg_id} · Tier: ${me.user.tier}`
+          );
+          setTgWaitingApp(false);
+          return;
+        }
+      }
+    } catch (err: any) {
+      setTgMsg(`⚠️ ${err.message}`);
+    } finally {
+      setTgWaitingApp(false);
+    }
+  };
 
   const handleSyncTelegram = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -391,7 +429,7 @@ const Dashboard = () => {
           </div>
         </GlowCard>
 
-        {/* Telegram Account Sync Card (TG <-> Web Tier Synchronization) */}
+        {/* Telegram Account Sync Card (Native App Launch + Fallback) */}
         <GlowCard className="mb-8 border-primary/30">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -401,30 +439,46 @@ const Dashboard = () => {
               <p className="mt-1 text-xs text-muted-foreground">
                 {user?.tg_id
                   ? isRu
-                    ? `Синхронизировано с Telegram: @${user.tg_username || user.tg_id} (ID: ${user.tg_id}) · Тариф ${user.tier}`
-                    : `Synced with Telegram: @${user.tg_username || user.tg_id} (ID: ${user.tg_id}) · Tier ${user.tier}`
+                    ? `Синхронизировано с Telegram: @${user.tg_username || user.tg_id} (ID: ${user.tg_id}) · Тариф ${user.tier} · Сканов: ${user.scans_total}`
+                    : `Synced with Telegram: @${user.tg_username || user.tg_id} (ID: ${user.tg_id}) · Tier ${user.tier} · Scans: ${user.scans_total}`
                   : isRu
-                  ? "Введите ваш @username или числовой ID из Telegram-бота, чтобы мгновенно перенести купленный тариф (RADAR / RAW / BLACKBOX) и счётчик сканов на сайт."
-                  : "Enter your Telegram @username or numeric ID to sync your @BlackOracleBORIS_bot subscription tier and scan count."}
+                  ? "Нажмите кнопку ниже — откроется приложение Telegram, нажмите «Start», и ваш тариф (RADAR / RAW / BLACKBOX) + история сканов автоматически синхронизируются."
+                  : "Click below to launch the Telegram app natively, press 'Start', and your tier + scan count will sync automatically."}
               </p>
             </div>
-            <form onSubmit={handleSyncTelegram} className="flex flex-wrap items-center gap-2">
-              <input
-                type="text"
-                value={tgInput}
-                onChange={(e) => setTgInput(e.target.value)}
-                placeholder={user?.tg_username ? `@${user.tg_username}` : "@username or TG ID"}
-                className="rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-primary"
-              />
+            <div className="flex flex-wrap items-center gap-2.5">
               <button
-                type="submit"
-                disabled={tgSyncing || !tgInput.trim()}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-50"
+                type="button"
+                onClick={handleLaunchTelegramAppSync}
+                disabled={tgWaitingApp}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow disabled:opacity-50"
               >
-                <RefreshCw size={13} className={tgSyncing ? "animate-spin" : ""} />
-                <span>{user?.tg_id ? (isRu ? "Обновить синк" : "Re-sync") : isRu ? "Синхронизировать" : "Sync TG"}</span>
+                <ArrowUpRight size={14} />
+                <span>
+                  {tgWaitingApp
+                    ? isRu ? "Ожидание подтверждения в Telegram…" : "Waiting for Telegram App…"
+                    : isRu ? "Открыть Telegram App и синхронизировать" : "Sync via Telegram App"}
+                </span>
               </button>
-            </form>
+
+              <form onSubmit={handleSyncTelegram} className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  value={tgInput}
+                  onChange={(e) => setTgInput(e.target.value)}
+                  placeholder={user?.tg_username ? `@${user.tg_username}` : isRu ? "или @username / ID" : "or @username / ID"}
+                  className="w-36 rounded-lg border border-border bg-background px-2.5 py-2 font-mono text-xs text-foreground outline-none focus:border-primary"
+                />
+                <button
+                  type="submit"
+                  disabled={tgSyncing || !tgInput.trim()}
+                  className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground disabled:opacity-40"
+                >
+                  <RefreshCw size={12} className={tgSyncing ? "animate-spin" : ""} />
+                  <span>{isRu ? "По ID" : "By ID"}</span>
+                </button>
+              </form>
+            </div>
           </div>
           {tgMsg && <p className="mt-2 font-mono text-xs text-primary">{tgMsg}</p>}
         </GlowCard>

@@ -265,6 +265,22 @@ export async function apiSyncTelegram(identifier: string) {
   return data;
 }
 
+export async function apiInitTelegramDeeplink(): Promise<{
+  code: string;
+  tg_app_url: string;
+  tg_web_url: string;
+}> {
+  const token = getSavedToken();
+  if (!token) throw new Error("Not authenticated");
+  const res = await fetch(`${API_BASE}/api/auth/telegram/deeplink`, {
+    method: "POST",
+    headers: { Authorization: "Bearer " + token },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Failed to generate Telegram deep link");
+  return data;
+}
+
 export async function apiGetToolHistory(tool?: string): Promise<BorisToolHistoryItem[]> {
   const token = getSavedToken();
   if (!token) return [];

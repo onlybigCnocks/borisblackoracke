@@ -50,6 +50,11 @@ const ToolsPanel = () => {
   const [historyFilter, setHistoryFilter] = useState<string>("all");
   const [loadingHistoryId, setLoadingHistoryId] = useState<number | null>(null);
 
+  // OSPEC Telegram-style filter states
+  const [ospecSeverity, setOspecSeverity] = useState<string>("");
+  const [ospecOnlyReal, setOspecOnlyReal] = useState<boolean>(false);
+  const [ospecOnlyLive, setOspecOnlyLive] = useState<boolean>(false);
+
   const loadHistory = (filter?: string) => {
     const f = filter ?? historyFilter;
     apiGetToolHistory(f === "all" ? undefined : f).then(setHistoryItems);
@@ -58,6 +63,48 @@ const ToolsPanel = () => {
   useEffect(() => {
     loadHistory(historyFilter);
   }, [historyFilter]);
+
+  const runOspecWithFilters = async (opts?: {
+    q?: string;
+    sev?: string;
+    real?: boolean;
+    live?: boolean;
+  }) => {
+    if (rank < 1) return;
+    const qVal = opts?.q !== undefined ? opts.q : input1.trim();
+    const sevVal = opts?.sev !== undefined ? opts.sev : ospecSeverity;
+    const realVal = opts?.real !== undefined ? opts.real : ospecOnlyReal;
+    const liveVal = opts?.live !== undefined ? opts.live : ospecOnlyLive;
+
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/tools/ospec`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({
+          query: qVal,
+          severity: sevVal,
+          only_real: realVal,
+          only_live: liveVal,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+      setResult(data);
+      loadHistory(historyFilter);
+    } catch (e: any) {
+      setError(e.message || "OSPEC error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tool === "ospec" && rank >= 1 && !result) {
+      runOspecWithFilters({ q: "", sev: "", real: false, live: false });
+    }
+  }, [tool]);
 
   const TOOLS: Array<{
     id: ToolId;
@@ -72,12 +119,16 @@ const ToolsPanel = () => {
     { id: "funds", labelRu: "Потоки средств 14д", labelEn: "Funds Flow 14d", icon: ArrowLeftRight, minRank: 1, placeholder: "0xA0b86991...B48" },
     { id: "social", labelRu: "Social & OSINT", labelEn: "Social & OSINT", icon: Globe, minRank: 0, placeholder: "@handle, org/repo, t.me/..., x.com/..." },
     { id: "soroban", labelRu: "Soroban / Stellar", labelEn: "Soroban / Stellar", icon: Compass, minRank: 0, placeholder: "USDC, AQUA, CODE:ISSUER, C..." },
-    { id: "ospec", labelRu: "OSPEC (Утечки 1.1M)", labelEn: "OSPEC (1.1M Secrets)", icon: KeyRound, minRank: 1, placeholder: "uniswap / org/repo / AWS / PRIVATE_KEY" },
-    { id: "drift", labelRu: "Audit Drift (2 скана)", labelEn: "Audit Drift Compare", icon: GitCompare, minRank: 1, placeholder: "old task_id" },
+    { id: "ospec", labelRu: "OSPEC (Утечки 1.1M)", labelEn: "OSPEC (1.1M Secrets)", icon: KeyRound, minRank: 1, placeholder: "Фильтр по типу секрета или org/repo (пусто = последние находки)" },
+    { id: "drift", labelRu: "Audit Drift (Репозиторий)", labelEn: "Audit Drift (Repo Audits)", icon: GitCompare, minRank: 1, placeholder: "https://github.com/Uniswap/v4-core или org/repo" },
     { id: "zk", labelRu: "ZK / Groth16 аудит", labelEn: "ZK Groth16 Audit", icon: ShieldCheck, minRank: 2, placeholder: "0x... verifier" },
   ];
 
   const run = async () => {
+    if (tool === "ospec") {
+      await runOspecWithFilters();
+      return;
+    }
     setError(null);
     setResult(null);
     setLoading(true);
@@ -99,15 +150,12 @@ const ToolsPanel = () => {
       } else if (tool === "soroban") {
         path = "/api/tools/soroban";
         body = { target: input1.trim() };
-      } else if (tool === "ospec") {
-        path = "/api/tools/ospec";
-        body = { query: input1.trim() };
       } else if (tool === "zk") {
         path = "/api/tools/zk-audit";
         body = { address: input1.trim(), chain };
       } else {
         path = "/api/tools/drift-compare";
-        body = { old_task_id: input1.trim(), new_task_id: input2.trim() };
+        body = { repo_url: input1.trim() };
       }
 
       const res = await fetch(`${API_BASE}${path}`, {
@@ -211,28 +259,16 @@ const ToolsPanel = () => {
           </p>
         </div>
       ) : (
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="rounded-xl border border-border bg-card p-5 space-y-3">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
             <input
               value={input1}
               onChange={(e) => setInput1(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && (tool === "ospec" || input1) && run()}
               placeholder={active.placeholder}
-              className={`rounded-xl border border-border bg-background px-4 py-3 font-mono text-xs text-foreground outline-none focus:border-primary ${
-                tool === "drift" ? "sm:col-span-2" : "sm:col-span-2"
-              }`}
+              className="rounded-xl border border-border bg-background px-4 py-3 font-mono text-xs text-foreground outline-none focus:border-primary sm:col-span-2"
             />
-            {tool === "drift" ? (
-              <input
-                value={input2}
-                onChange={(e) => setInput2(e.target.value)}
-                placeholder="new task_id"
-                className="rounded-xl border border-border bg-background px-4 py-3 font-mono text-xs text-foreground outline-none focus:border-primary"
-              />
-            ) : tool === "market" ? (
-              <div className="rounded-xl border border-border bg-background/60 px-4 py-3 font-mono text-xs text-muted-foreground">
-                {isRu ? "Тикер монеты" : "Coin ticker"}
-              </div>
-            ) : (tool === "holders" || tool === "funds" || tool === "zk") ? (
+            {(tool === "holders" || tool === "funds" || tool === "zk") ? (
               <select
                 value={chain}
                 onChange={(e) => setChain(e.target.value)}
@@ -246,22 +282,154 @@ const ToolsPanel = () => {
               </select>
             ) : (
               <div className="flex items-center rounded-xl border border-border bg-background/60 px-4 py-3 font-mono text-xs text-muted-foreground">
-                {tool === "social"
+                {tool === "market"
+                  ? isRu ? "Тикер монеты" : "Coin ticker"
+                  : tool === "social"
                   ? "X / TG / Discord / GitHub"
                   : tool === "soroban"
                   ? "Stellar / Soroban SIM"
+                  : tool === "drift"
+                  ? isRu ? "Папки audits/ + Git Drift" : "audits/ PDFs + Git Drift"
                   : "OSPEC Harvester DB (RADAR+)"}
               </div>
             )}
             <button
               onClick={run}
-              disabled={loading || !input1}
+              disabled={loading || (tool !== "ospec" && !input1)}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-40 btn-glow"
             >
               {loading ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
               <span>{loading ? (isRu ? "Считаю…" : "Running…") : isRu ? "Запустить" : "Run"}</span>
             </button>
           </div>
+
+          {/* Quick presets for Audit Drift (GitHub repos with audits/ folders) */}
+          {tool === "drift" && (
+            <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[11px]">
+              <span className="text-muted-foreground">{isRu ? "Быстрые репо с аудитами:" : "Quick audited repos:"}</span>
+              {[
+                "https://github.com/Uniswap/v4-core",
+                "https://github.com/aave/aave-v3-core",
+                "https://github.com/OpenZeppelin/openzeppelin-contracts",
+              ].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setInput1(preset)}
+                  className="rounded-lg border border-border bg-background px-2.5 py-1 text-muted-foreground hover:border-primary hover:text-primary"
+                >
+                  {preset.replace("https://github.com/", "")}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Telegram-style quick filters for OSPEC */}
+          {tool === "ospec" && (
+            <div className="space-y-2 pt-1">
+              <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInput1("");
+                    setOspecSeverity("");
+                    setOspecOnlyReal(false);
+                    setOspecOnlyLive(false);
+                    runOspecWithFilters({ q: "", sev: "", real: false, live: false });
+                  }}
+                  className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
+                    !ospecSeverity && !ospecOnlyReal && !ospecOnlyLive && !input1
+                      ? "border-primary bg-primary/15 text-primary"
+                      : "border-border bg-background text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  🔍 {isRu ? "Последние находки" : "Recent Findings"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = ospecSeverity === "CRITICAL" ? "" : "CRITICAL";
+                    setOspecSeverity(next);
+                    runOspecWithFilters({ sev: next });
+                  }}
+                  className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
+                    ospecSeverity === "CRITICAL"
+                      ? "border-destructive bg-destructive/20 text-destructive"
+                      : "border-border bg-background text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  🔴 Critical
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = ospecSeverity === "HIGH" ? "" : "HIGH";
+                    setOspecSeverity(next);
+                    runOspecWithFilters({ sev: next });
+                  }}
+                  className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
+                    ospecSeverity === "HIGH"
+                      ? "border-primary bg-primary/20 text-primary"
+                      : "border-border bg-background text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  🟠 High
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !ospecOnlyReal;
+                    setOspecOnlyReal(next);
+                    runOspecWithFilters({ real: next });
+                  }}
+                  className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
+                    ospecOnlyReal
+                      ? "border-green-500/60 bg-green-500/15 text-green-400"
+                      : "border-border bg-background text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  🟢 {isRu ? "Только REAL" : "Only REAL"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !ospecOnlyLive;
+                    setOspecOnlyLive(next);
+                    runOspecWithFilters({ live: next });
+                  }}
+                  className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
+                    ospecOnlyLive
+                      ? "border-amber-500/60 bg-amber-500/15 text-amber-400"
+                      : "border-border bg-background text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  🔥 {isRu ? "LIVE / С балансом" : "LIVE / Funded"}
+                </button>
+              </div>
+
+              {result?.kind_stats?.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 font-mono text-[10px]">
+                  <span className="text-muted-foreground">{isRu ? "Типы секретов:" : "Secret kinds:"}</span>
+                  {result.kind_stats.slice(0, 8).map((ks: any) => {
+                    const shortKind = String(ks.kind || "").replace("secret:", "");
+                    return (
+                      <button
+                        key={ks.kind}
+                        type="button"
+                        onClick={() => {
+                          setInput1(shortKind);
+                          runOspecWithFilters({ q: shortKind });
+                        }}
+                        className="rounded border border-border bg-background px-2 py-0.5 text-muted-foreground hover:border-primary hover:text-primary"
+                      >
+                        {shortKind} <span className="text-primary">({ks.real})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -426,30 +594,160 @@ const ToolsPanel = () => {
 
       {result && tool === "drift" && (
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { k: "Δ Total", v: result.delta_total },
-              { k: "Δ Critical", v: result.delta_critical },
-              { k: "Δ High", v: result.delta_high },
-            ].map((c, i) => (
-              <div key={i} className="rounded-xl border border-border bg-card p-4 text-center">
-                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{c.k}</p>
-                <p className={`mt-1 font-mono text-xl font-bold ${Number(c.v) > 0 ? "text-destructive" : Number(c.v) < 0 ? "text-primary" : "text-foreground"}`}>
-                  {Number(c.v) > 0 ? `+${c.v}` : c.v}
-                </p>
+          {result.mode === "repo_audit_drift" ? (
+            <>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {[
+                  {
+                    k: isRu ? "Найдено PDF аудитов" : "Audit PDFs Found",
+                    v: result.audits_exist ? `${result.audit_count} PDF` : isRu ? "0 (Нет аудитов)" : "0 (None)",
+                  },
+                  {
+                    k: isRu ? "Последний аудит" : "Last Audit Date",
+                    v: result.last_audit_date
+                      ? `${result.last_audit_date} (${result.audit_age_days}d · ${result.audit_recency})`
+                      : "—",
+                  },
+                  {
+                    k: "Drift Score",
+                    v: `${result.drift_score ?? 0}/100`,
+                  },
+                  {
+                    k: isRu ? "Общий риск дрифта" : "Overall Drift Risk",
+                    v: result.overall_risk || "UNKNOWN",
+                  },
+                ].map((c, i) => (
+                  <div key={i} className="rounded-xl border border-border bg-card p-4">
+                    <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{c.k}</p>
+                    <p className="mt-1 font-mono text-base font-bold text-foreground">{c.v}</p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="rounded-xl border border-border bg-card p-5 font-mono text-xs">
-            <p className="text-muted-foreground">{result.target}</p>
-            <p className="mt-1 text-foreground">{result.old_verdict} → {result.new_verdict}</p>
-            {result.added_patterns?.length > 0 && (
-              <p className="mt-2 text-destructive">+ {result.added_patterns.map((a: any) => `${a.type}×${a.count}`).join(", ")}</p>
-            )}
-            {result.resolved_patterns?.length > 0 && (
-              <p className="mt-1 text-primary">− {result.resolved_patterns.map((a: any) => `${a.type}×${a.count}`).join(", ")}</p>
-            )}
-          </div>
+
+              <div className="rounded-xl border border-border bg-card p-5 font-mono text-xs space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <a
+                      href={result.repo_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-bold text-primary hover:underline"
+                    >
+                      📦 {result.repo}
+                    </a>
+                    {result.auditors?.length > 0 && (
+                      <p className="mt-1 text-muted-foreground">
+                        {isRu ? "Аудиторы:" : "Auditors:"}{" "}
+                        <b className="text-foreground">{result.auditors.join(", ")}</b> ·{" "}
+                        {isRu ? "Всего находок в отчётах:" : "Total findings in PDFs:"}{" "}
+                        <b className="text-primary">{result.total_audit_findings}</b>
+                      </p>
+                    )}
+                  </div>
+                  <span className="rounded border border-border bg-background px-2.5 py-1 text-[11px] text-muted-foreground">
+                    Contracts: <b className="text-foreground">{result.repo_surface?.contracts_count ?? 0}</b> · Mocks/Tests:{" "}
+                    <b className="text-foreground">{result.repo_surface?.mocks_and_tests_count ?? 0}</b>
+                  </span>
+                </div>
+
+                {result.key_concerns?.length > 0 && (
+                  <div className="space-y-1 rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+                    {result.key_concerns.map((kc: string, idx: number) => (
+                      <p key={idx} className="text-destructive font-semibold">{kc}</p>
+                    ))}
+                  </div>
+                )}
+
+                {result.parsed_audits?.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-[10px] uppercase tracking-wider text-primary font-semibold">
+                      {isRu ? "Разобранные аудиторские отчёты в репозитории" : "Parsed Audit Reports in Repository"}
+                    </p>
+                    <div className="space-y-1.5">
+                      {result.parsed_audits.map((pa: any, idx: number) => (
+                        <div key={idx} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2">
+                          <div>
+                            <span className="font-bold text-foreground">{pa.auditor}</span>
+                            <span className="ml-2 text-muted-foreground">({pa.file})</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-[11px]">
+                            <span className="text-muted-foreground">{pa.date}</span>
+                            <span>
+                              C:<b className="text-destructive">{pa.critical}</b> H:<b className="text-primary">{pa.high}</b> M:{pa.medium} L:{pa.low}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {result.drift && (
+                  <div className="rounded-lg border border-border bg-background p-3.5 space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-bold text-primary uppercase text-[11px]">
+                        🔄 Git Drift ({result.drift.audit_commit || "audit"} → {result.drift.current_commit})
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">
+                        +{result.drift.files_added} added · ~{result.drift.files_modified} modified · -{result.drift.files_removed} removed
+                        {result.drift.requires_reaudit ? " · ⚠️ RE-AUDIT RECOMMENDED" : ""}
+                      </span>
+                    </div>
+                    {result.drift.new_contracts?.length > 0 && (
+                      <p className="text-[11px] text-destructive">
+                        <b>{isRu ? "Новые контракты после аудита:" : "New contracts since audit:"}</b>{" "}
+                        {result.drift.new_contracts.slice(0, 10).join(", ")}
+                      </p>
+                    )}
+                    {result.drift.modified_contracts?.length > 0 && (
+                      <p className="text-[11px] text-muted-foreground">
+                        <b className="text-foreground">{isRu ? "Изменённые контракты:" : "Modified contracts:"}</b>{" "}
+                        {result.drift.modified_contracts
+                          .slice(0, 8)
+                          .map((mc: any) => (typeof mc === "string" ? mc : mc.file || mc.path || JSON.stringify(mc)))
+                          .join(", ")}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {!result.audits_exist && (
+                  <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-amber-300">
+                    {isRu
+                      ? "В репозитории не обнаружено PDF-отчётов аудита в папках audits/ или security/. Весь смарт-контрактный код является неаудированной поверхностью."
+                      : "No PDF audit reports found in audits/ or security/ directories. All smart contracts in this repository represent unaudited surface."}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { k: "Δ Total", v: result.delta_total },
+                  { k: "Δ Critical", v: result.delta_critical },
+                  { k: "Δ High", v: result.delta_high },
+                ].map((c, i) => (
+                  <div key={i} className="rounded-xl border border-border bg-card p-4 text-center">
+                    <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{c.k}</p>
+                    <p className={`mt-1 font-mono text-xl font-bold ${Number(c.v) > 0 ? "text-destructive" : Number(c.v) < 0 ? "text-primary" : "text-foreground"}`}>
+                      {Number(c.v) > 0 ? `+${c.v}` : c.v}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-xl border border-border bg-card p-5 font-mono text-xs">
+                <p className="text-muted-foreground">{result.target}</p>
+                <p className="mt-1 text-foreground">{result.old_verdict} → {result.new_verdict}</p>
+                {result.added_patterns?.length > 0 && (
+                  <p className="mt-2 text-destructive">+ {result.added_patterns.map((a: any) => `${a.type}×${a.count}`).join(", ")}</p>
+                )}
+                {result.resolved_patterns?.length > 0 && (
+                  <p className="mt-1 text-primary">− {result.resolved_patterns.map((a: any) => `${a.type}×${a.count}`).join(", ")}</p>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -541,12 +839,13 @@ const ToolsPanel = () => {
 
       {result && tool === "ospec" && (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             {[
-              { k: isRu ? "База репо OSPEC" : "OSPEC Indexed Repos", v: fmt(result.db_stats?.indexed_repos, 0) },
-              { k: isRu ? "Всего секретов в БД" : "Total Indexed Secrets", v: fmt(result.db_stats?.indexed_findings, 0) },
-              { k: isRu ? "Найдено репо" : "Matched Repos", v: result.matched_repos_count },
-              { k: isRu ? "Найдено утечек" : "Matched Findings", v: result.findings_returned },
+              { k: isRu ? "Всего секретов" : "Total Secrets", v: fmt(result.db_stats?.indexed_findings, 0) },
+              { k: isRu ? "Репо с утечками" : "Repos w/ Leaks", v: fmt(result.db_stats?.indexed_repos, 0) },
+              { k: "🔴 Critical", v: fmt(result.db_stats?.by_severity?.CRITICAL ?? 0, 0) },
+              { k: "🟠 High", v: fmt(result.db_stats?.by_severity?.HIGH ?? 0, 0) },
+              { k: isRu ? "Радар репо" : "Radar Repos", v: fmt(result.db_stats?.radar_total ?? 0, 0) },
             ].map((c, i) => (
               <div key={i} className="rounded-xl border border-border bg-card p-4">
                 <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{c.k}</p>
@@ -555,41 +854,116 @@ const ToolsPanel = () => {
             ))}
           </div>
 
-          {result.matched_repos?.length > 0 && (
-            <div className="rounded-xl border border-border bg-card p-5">
-              <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-primary">
-                {isRu ? "Репозитории с утечками" : "Matched Repositories"}
+          <div className="rounded-xl border border-border bg-card p-5">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="font-mono text-[11px] uppercase tracking-wider text-primary font-bold">
+                🔐 {isRu ? "OSPEC — Сгруппированные находки по репозиториям (как в ТГ)" : "OSPEC — Grouped Secret Findings by Repository"}
               </p>
-              <div className="space-y-1.5">
-                {result.matched_repos.slice(0, 10).map((r: any, i: number) => (
-                  <div key={i} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs">
-                    <span className="truncate text-foreground font-semibold">{r.ticker || r.repo_url}</span>
-                    <span className="text-muted-foreground">
-                      Crit: <b className="text-destructive">{r.n_crit}</b> · High: <b className="text-primary">{r.n_high}</b> · Med: {r.n_med}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              <span className="font-mono text-[11px] text-muted-foreground">
+                Mode: <b className="text-foreground">{result.filter_mode}</b> · {result.findings_returned} groups
+              </span>
             </div>
-          )}
 
-          {result.findings?.length > 0 && (
-            <div className="rounded-xl border border-border bg-card p-5">
-              <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-primary">
-                {isRu ? "Обнаруженные ключи и секреты (OSPEC)" : "Detected Leaked Keys & Secrets (OSPEC)"}
+            {!result.findings || result.findings.length === 0 ? (
+              <p className="font-mono text-xs text-muted-foreground py-4 text-center">
+                {isRu ? "📭 Нет находок по выбранному фильтру" : "📭 No findings match the current filter"}
               </p>
-              <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
-                {result.findings.map((f: any) => (
-                  <div key={f.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 font-mono text-[11px]">
-                    <span className="rounded bg-primary/15 px-2 py-0.5 font-bold text-primary">{f.kind}</span>
-                    <span className="flex-1 truncate text-foreground">{f.ticker || f.repo_url}</span>
-                    <span className="truncate text-muted-foreground">{f.path}:{f.line}</span>
-                    <span className="text-destructive font-bold">{f.severity}</span>
-                  </div>
-                ))}
+            ) : (
+              <div className="space-y-2.5 max-h-[540px] overflow-y-auto pr-1">
+                {result.findings.map((f: any) => {
+                  const isReal = f.cls === "REAL";
+                  return (
+                    <div
+                      key={f.id}
+                      className="rounded-xl border border-border bg-background p-3.5 font-mono text-xs transition-colors hover:border-primary/40"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            className={`rounded px-2 py-0.5 text-[10px] font-bold ${
+                              f.severity === "CRITICAL"
+                                ? "bg-destructive/20 text-destructive border border-destructive/40"
+                                : "bg-primary/15 text-primary border border-primary/40"
+                            }`}
+                          >
+                            {f.severity === "CRITICAL" ? "🔴 CRITICAL" : `🟠 ${f.severity}`}
+                          </span>
+                          <span
+                            className={`rounded px-2 py-0.5 text-[10px] font-bold ${
+                              isReal
+                                ? "bg-green-500/15 text-green-400 border border-green-500/40"
+                                : "bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            {isReal ? "🟢 REAL" : `🧪 ${f.cls || "TEST"}`}
+                          </span>
+                          <span className="font-bold text-foreground">
+                            {f.kind} <span className="text-primary">×{f.hits}</span>
+                          </span>
+                          {f.is_live && (
+                            <span className="rounded bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-400">
+                              🔥 LIVE
+                            </span>
+                          )}
+                          {f.balance_eth ? (
+                            <span className="rounded bg-green-500/20 px-2 py-0.5 text-[10px] font-bold text-green-400">
+                              💰 {f.balance_eth} ETH
+                            </span>
+                          ) : null}
+                        </div>
+                        {f.found_at && (
+                          <span className="text-[10px] text-muted-foreground">{f.found_at}</span>
+                        )}
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                        <a
+                          href={f.repo_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold text-primary hover:underline truncate"
+                        >
+                          📦 {f.ticker || f.repo_url}
+                        </a>
+                        {f.gh_url ? (
+                          <a
+                            href={f.gh_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-muted-foreground hover:text-foreground truncate"
+                          >
+                            📄 {f.path}{f.line ? `:${f.line}` : ""} ↗
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground truncate">
+                            📄 {f.path}
+                          </span>
+                        )}
+                      </div>
+
+                      {(f.derived_addr || f.secret_masked) && (
+                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2 text-[11px] text-muted-foreground">
+                          {f.derived_addr ? (
+                            <span>
+                              🔑 <code className="text-foreground">{f.derived_addr}</code>{" "}
+                              {f.derived_chain ? `(${f.derived_chain})` : ""}
+                            </span>
+                          ) : (
+                            <span />
+                          )}
+                          {f.secret_masked && (
+                            <span>
+                              Preview: <code className="text-primary">{f.secret_masked}</code>
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
