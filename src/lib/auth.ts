@@ -13,7 +13,19 @@ export interface BorisUser {
   scans_total: number;
   scans_today?: number;
   daily_limit?: number;
+  ref_code?: string;
+  tg_id?: string;
+  tg_username?: string;
   auth_provider: "email" | "google";
+  created_at: number;
+}
+
+export interface BorisToolHistoryItem {
+  id: number;
+  tool: string;
+  target: string;
+  chain: string;
+  summary: string;
   created_at: number;
 }
 
@@ -234,4 +246,43 @@ export async function apiBindReferral(code: string) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.detail || "Failed to bind referral code");
   return data;
+}
+
+export async function apiSyncTelegram(identifier: string) {
+  const token = getSavedToken();
+  if (!token) throw new Error("Not authenticated");
+  const res = await fetch(`${API_BASE}/api/auth/telegram/sync`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    body: JSON.stringify({ identifier }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Telegram sync failed");
+  if (data.user) {
+    localStorage.setItem(LS_AUTH_USER, JSON.stringify(data.user));
+    window.dispatchEvent(new Event("boris-auth-change"));
+  }
+  return data;
+}
+
+export async function apiGetToolHistory(tool?: string): Promise<BorisToolHistoryItem[]> {
+  const token = getSavedToken();
+  if (!token) return [];
+  const q = tool ? `?tool=${encodeURIComponent(tool)}` : "";
+  const res = await fetch(`${API_BASE}/api/tools/history${q}`, {
+    headers: { Authorization: "Bearer " + token },
+  });
+  if (!res.ok) return [];
+  const data = await res.json().catch(() => ({}));
+  return data.items || [];
+}
+
+export async function apiGetToolHistoryItem(id: number): Promise<any> {
+  const token = getSavedToken();
+  if (!token) throw new Error("Not authenticated");
+  const res = await fetch(`${API_BASE}/api/tools/history/${id}`, {
+    headers: { Authorization: "Bearer " + token },
+  });
+  if (!res.ok) throw new Error("History item not found");
+  return res.json();
 }

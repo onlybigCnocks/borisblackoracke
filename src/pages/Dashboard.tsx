@@ -32,6 +32,7 @@ import {
   apiGetRadarFeed,
   apiGetReferral,
   apiBindReferral,
+  apiSyncTelegram,
   getScanExportUrl,
   clearAuthSession,
   getSavedToken,
@@ -79,6 +80,30 @@ const Dashboard = () => {
   const [refData, setRefData] = useState<any>(null);
   const [refCodeInput, setRefCodeInput] = useState("");
   const [refMsg, setRefMsg] = useState<string | null>(null);
+  const [tgInput, setTgInput] = useState("");
+  const [tgSyncing, setTgSyncing] = useState(false);
+  const [tgMsg, setTgMsg] = useState<string | null>(null);
+
+  const handleSyncTelegram = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tgInput.trim()) return;
+    setTgSyncing(true);
+    setTgMsg(null);
+    try {
+      const res = await apiSyncTelegram(tgInput.trim());
+      if (res.user) setUser(res.user);
+      setTgMsg(
+        isRu
+          ? `✅ Привязан @${res.tg_username || res.tg_id} · Тариф: ${res.effective_tier} · Сканов: ${res.tg_scans}`
+          : `✅ Linked @${res.tg_username || res.tg_id} · Tier: ${res.effective_tier} · Scans: ${res.tg_scans}`
+      );
+      setTgInput("");
+    } catch (err: any) {
+      setTgMsg(`⚠️ ${err.message}`);
+    } finally {
+      setTgSyncing(false);
+    }
+  };
 
   const handleRescanDrift = async (s: BorisScanRecord) => {
     setDriftBusy(s.task_id);
@@ -366,6 +391,44 @@ const Dashboard = () => {
           </div>
         </GlowCard>
 
+        {/* Telegram Account Sync Card (TG <-> Web Tier Synchronization) */}
+        <GlowCard className="mb-8 border-primary/30">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-primary font-semibold">
+                <span>⚡ {isRu ? "Синхронизация с Telegram (@BlackOracleBORIS_bot)" : "Telegram Bot Tier Sync (@BlackOracleBORIS_bot)"}</span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {user?.tg_id
+                  ? isRu
+                    ? `Синхронизировано с Telegram: @${user.tg_username || user.tg_id} (ID: ${user.tg_id}) · Тариф ${user.tier}`
+                    : `Synced with Telegram: @${user.tg_username || user.tg_id} (ID: ${user.tg_id}) · Tier ${user.tier}`
+                  : isRu
+                  ? "Введите ваш @username или числовой ID из Telegram-бота, чтобы мгновенно перенести купленный тариф (RADAR / RAW / BLACKBOX) и счётчик сканов на сайт."
+                  : "Enter your Telegram @username or numeric ID to sync your @BlackOracleBORIS_bot subscription tier and scan count."}
+              </p>
+            </div>
+            <form onSubmit={handleSyncTelegram} className="flex flex-wrap items-center gap-2">
+              <input
+                type="text"
+                value={tgInput}
+                onChange={(e) => setTgInput(e.target.value)}
+                placeholder={user?.tg_username ? `@${user.tg_username}` : "@username or TG ID"}
+                className="rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-primary"
+              />
+              <button
+                type="submit"
+                disabled={tgSyncing || !tgInput.trim()}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-50"
+              >
+                <RefreshCw size={13} className={tgSyncing ? "animate-spin" : ""} />
+                <span>{user?.tg_id ? (isRu ? "Обновить синк" : "Re-sync") : isRu ? "Синхронизировать" : "Sync TG"}</span>
+              </button>
+            </form>
+          </div>
+          {tgMsg && <p className="mt-2 font-mono text-xs text-primary">{tgMsg}</p>}
+        </GlowCard>
+
         {/* Embedded Live Scanner right inside the Operator Cabinet */}
         <div className="mb-10 rounded-2xl border border-border bg-card/40 px-2">
           <DemoScanner />
@@ -416,7 +479,10 @@ const Dashboard = () => {
               }`}
             >
               <Bell size={14} />
-              <span>{isRu ? `Мониторинг и Алерты (${watchlist.length})` : `Watchlist & Alerts (${watchlist.length})`}</span>
+              <span>{isRu ? "Мониторинг 24/7" : "24/7 Watchlist"}</span>
+              <span className="rounded border border-primary/40 bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold text-primary">
+                SOON
+              </span>
             </button>
             <button
               onClick={() => setActiveTab("radar")}
@@ -706,110 +772,34 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* TAB 2: Watchlist & Contract Drift Alerts (RADAR+ Tier) */}
+        {/* TAB 2: Watchlist & Contract Drift Alerts — SOON Stub */}
         {activeTab === "watchlist" && (
-          <div className="space-y-6">
-            {(!user?.tier || user.tier.toUpperCase() === "GUEST") ? (
-              <div className="rounded-2xl border border-primary/35 bg-card p-10 text-center bg-radial-red">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/40 bg-primary/15 text-primary">
-                  <Lock size={26} />
-                </div>
-                <span className="rounded-full border border-primary/40 bg-primary/15 px-3 py-1 font-mono text-xs font-bold uppercase tracking-widest text-primary">
-                  RADAR+ TIER REQUIRED
-                </span>
-                <h4 className="mt-4 text-xl font-bold text-foreground">
-                  {isRu
-                    ? "Непрерывный 24/7 мониторинг смарт-контрактов и GitHub-репозиториев"
-                    : "Continuous 24/7 Smart Contract & GitHub Repository Drift Monitoring"}
-                </h4>
-                <p className="mx-auto mt-2 max-w-xl font-mono text-xs text-muted-foreground leading-relaxed">
-                  {isRu
-                    ? "Отслеживание новых коммитов после аудита (Audit Drift), смены Proxy-имплементации, вызовов привилегированных функций и перемещений средств топ-холдеров доступно начиная с тарифа RADAR ($19/мес)."
-                    : "Tracking post-audit commits (Audit Drift), proxy implementation upgrades, privileged function calls, and top-holder movements is available starting from the RADAR tier ($19/mo)."}
-                </p>
-                <div className="mt-6 flex flex-wrap justify-center gap-3">
-                  <Link
-                    to="/pricing"
-                    className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
-                  >
-                    <span>{isRu ? "Открыть доступ (RADAR / RAW / BLACKBOX)" : "Unlock Watchlist (RADAR+)"}</span>
-                    <ArrowUpRight size={14} />
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <>
-                <form onSubmit={handleAddWatch} className="rounded-xl border border-border bg-card p-5">
-                  <h4 className="mb-3 font-mono text-xs uppercase tracking-wider text-primary font-semibold">
-                    {isRu
-                      ? "➕ Добавить смарт-контракт или GitHub-репо на непрерывный 24/7 мониторинг"
-                      : "➕ Add Smart Contract or GitHub Repo to 24/7 Drift Watchlist"}
-                  </h4>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    <input
-                      type="text"
-                      value={watchTarget}
-                      onChange={(e) => setWatchTarget(e.target.value)}
-                      placeholder="0x... or github.com/org/repo"
-                      required
-                      className="sm:col-span-2 rounded-xl border border-border bg-background px-4 py-3 font-mono text-xs text-foreground outline-none focus:border-primary"
-                    />
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={watchLabel}
-                        onChange={(e) => setWatchLabel(e.target.value)}
-                        placeholder={isRu ? "Метка (напр. Main Vault)" : "Label (e.g. Main Vault)"}
-                        className="flex-1 rounded-xl border border-border bg-background px-3 py-3 font-mono text-xs text-foreground outline-none focus:border-primary"
-                      />
-                      <button
-                        type="submit"
-                        disabled={addingWatch}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-3 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-50"
-                      >
-                        <Plus size={14} />
-                        <span>{isRu ? "Следить" : "Watch"}</span>
-                      </button>
-                    </div>
-                  </div>
-                </form>
-
-                {watchlist.length === 0 ? (
-                  <div className="rounded-xl border border-border bg-card p-8 text-center font-mono text-xs text-muted-foreground">
-                    {isRu
-                      ? "Список наблюдения пуст. Добавьте адрес контракта или репозиторий выше для отслеживания новых коммитов, смены Proxy-имплементации и движений китов."
-                      : "Watchlist is empty. Add a contract or repo above to track proxy upgrades, new commits, and whale movements."}
-                  </div>
-                ) : (
-                  <div className="space-y-2.5">
-                    {watchlist.map((w) => (
-                      <div
-                        key={w.id}
-                        className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4"
-                      >
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-                            <span className="font-mono text-sm font-bold text-foreground">{w.label}</span>
-                            <span className="rounded border border-primary/40 bg-primary/10 px-2 py-0.5 font-mono text-[10px] text-primary">
-                              DRIFT GUARD ACTIVE
-                            </span>
-                          </div>
-                          <p className="mt-1 font-mono text-xs text-muted-foreground truncate">{w.target}</p>
-                        </div>
-                        <button
-                          onClick={() => handleDeleteWatch(w.id)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-3 py-1.5 font-mono text-xs text-muted-foreground hover:border-red-500/50 hover:text-red-400"
-                        >
-                          <Trash2 size={13} />
-                          <span>{isRu ? "Удалить" : "Remove"}</span>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
+          <div className="rounded-2xl border border-primary/30 bg-card p-10 text-center bg-radial-red">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/40 bg-primary/15 text-primary">
+              <Bell size={28} />
+            </div>
+            <span className="rounded-full border border-primary/40 bg-primary/15 px-3 py-1 font-mono text-xs font-bold uppercase tracking-widest text-primary">
+              COMING SOON // 24/7 DRIFT WATCHER
+            </span>
+            <h4 className="mt-4 text-xl font-bold text-foreground">
+              {isRu
+                ? "Непрерывный 24/7 мониторинг смарт-контрактов и GitHub-репозиториев (RADAR+)"
+                : "Continuous 24/7 Smart Contract & GitHub Repository Drift Monitoring (RADAR+)"}
+            </h4>
+            <p className="mx-auto mt-2 max-w-xl font-mono text-xs text-muted-foreground leading-relaxed">
+              {isRu
+                ? "Автоматический демон отслеживания новых коммитов после аудита (Audit Drift), смены Proxy-имплементации и движений топ-холдеров готовится к запуску для подписчиков RADAR / RAW / BLACKBOX. Для разового сравнения двух сканов используйте кнопку «Rescan и Drift» в истории сканов."
+                : "Autonomous daemon for tracking post-audit commits (Audit Drift), proxy implementation upgrades, and whale movements is preparing for launch for RADAR+ tiers. Use 'Rescan & Drift' in your scan history for on-demand drift comparison."}
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Link
+                to="/pricing"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
+              >
+                <span>{isRu ? "Тарифы доступа (RADAR / RAW / BLACKBOX)" : "View Access Tiers"}</span>
+                <ArrowUpRight size={14} />
+              </Link>
+            </div>
           </div>
         )}
 

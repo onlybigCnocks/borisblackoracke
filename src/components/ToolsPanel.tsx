@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Users,
@@ -10,12 +10,24 @@ import {
   Lock,
   Search,
   AlertTriangle,
+  Globe,
+  Compass,
+  KeyRound,
+  History,
+  Eye,
 } from "lucide-react";
-import { getSavedUser, authHeaders, type BorisUser } from "@/lib/auth";
+import {
+  getSavedUser,
+  authHeaders,
+  apiGetToolHistory,
+  apiGetToolHistoryItem,
+  type BorisUser,
+  type BorisToolHistoryItem,
+} from "@/lib/auth";
 
 const API_BASE = "https://api.black-oracle.com";
 
-type ToolId = "holders" | "funds" | "market" | "zk" | "drift";
+type ToolId = "holders" | "funds" | "market" | "social" | "soroban" | "ospec" | "zk" | "drift";
 
 const TIER_RANK: Record<string, number> = { GUEST: 0, RADAR: 1, RAW: 2, BLACKBOX: 3 };
 
@@ -34,6 +46,19 @@ const ToolsPanel = () => {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<any>(null);
 
+  const [historyItems, setHistoryItems] = useState<BorisToolHistoryItem[]>([]);
+  const [historyFilter, setHistoryFilter] = useState<string>("all");
+  const [loadingHistoryId, setLoadingHistoryId] = useState<number | null>(null);
+
+  const loadHistory = (filter?: string) => {
+    const f = filter ?? historyFilter;
+    apiGetToolHistory(f === "all" ? undefined : f).then(setHistoryItems);
+  };
+
+  useEffect(() => {
+    loadHistory(historyFilter);
+  }, [historyFilter]);
+
   const TOOLS: Array<{
     id: ToolId;
     labelRu: string;
@@ -45,6 +70,9 @@ const ToolsPanel = () => {
     { id: "holders", labelRu: "Холдеры и киты", labelEn: "Holders & Whales", icon: Users, minRank: 0, placeholder: "0xA0b86991...B48" },
     { id: "market", labelRu: "Рынок и деривативы", labelEn: "Market & Derivatives", icon: TrendingUp, minRank: 0, placeholder: "BTC / ETH / SOL / PEPE" },
     { id: "funds", labelRu: "Потоки средств 14д", labelEn: "Funds Flow 14d", icon: ArrowLeftRight, minRank: 1, placeholder: "0xA0b86991...B48" },
+    { id: "social", labelRu: "Social & OSINT", labelEn: "Social & OSINT", icon: Globe, minRank: 0, placeholder: "@handle, org/repo, t.me/..., x.com/..." },
+    { id: "soroban", labelRu: "Soroban / Stellar", labelEn: "Soroban / Stellar", icon: Compass, minRank: 0, placeholder: "USDC, AQUA, CODE:ISSUER, C..." },
+    { id: "ospec", labelRu: "OSPEC (Утечки 1.1M)", labelEn: "OSPEC (1.1M Secrets)", icon: KeyRound, minRank: 1, placeholder: "uniswap / org/repo / AWS / PRIVATE_KEY" },
     { id: "drift", labelRu: "Audit Drift (2 скана)", labelEn: "Audit Drift Compare", icon: GitCompare, minRank: 1, placeholder: "old task_id" },
     { id: "zk", labelRu: "ZK / Groth16 аудит", labelEn: "ZK Groth16 Audit", icon: ShieldCheck, minRank: 2, placeholder: "0x... verifier" },
   ];
@@ -65,6 +93,15 @@ const ToolsPanel = () => {
       } else if (tool === "market") {
         path = "/api/tools/market";
         body = { symbol: input1.trim().toUpperCase() };
+      } else if (tool === "social") {
+        path = "/api/tools/social";
+        body = { target: input1.trim() };
+      } else if (tool === "soroban") {
+        path = "/api/tools/soroban";
+        body = { target: input1.trim() };
+      } else if (tool === "ospec") {
+        path = "/api/tools/ospec";
+        body = { query: input1.trim() };
       } else if (tool === "zk") {
         path = "/api/tools/zk-audit";
         body = { address: input1.trim(), chain };
@@ -90,10 +127,28 @@ const ToolsPanel = () => {
         throw new Error(d.detail || `HTTP ${res.status}`);
       }
       setResult(await res.json());
+      loadHistory(historyFilter);
     } catch (e: any) {
       setError(e.message || "Error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenHistoryItem = async (item: BorisToolHistoryItem) => {
+    setLoadingHistoryId(item.id);
+    setError(null);
+    try {
+      const data = await apiGetToolHistoryItem(item.id);
+      if (data && data.result) {
+        setTool(item.tool as ToolId);
+        setInput1(item.target || "");
+        setResult(data.result);
+      }
+    } catch (e: any) {
+      setError(e.message || "Failed to load saved tool report");
+    } finally {
+      setLoadingHistoryId(null);
     }
   };
 
@@ -177,7 +232,7 @@ const ToolsPanel = () => {
               <div className="rounded-xl border border-border bg-background/60 px-4 py-3 font-mono text-xs text-muted-foreground">
                 {isRu ? "Тикер монеты" : "Coin ticker"}
               </div>
-            ) : (
+            ) : (tool === "holders" || tool === "funds" || tool === "zk") ? (
               <select
                 value={chain}
                 onChange={(e) => setChain(e.target.value)}
@@ -189,6 +244,14 @@ const ToolsPanel = () => {
                   </option>
                 ))}
               </select>
+            ) : (
+              <div className="flex items-center rounded-xl border border-border bg-background/60 px-4 py-3 font-mono text-xs text-muted-foreground">
+                {tool === "social"
+                  ? "X / TG / Discord / GitHub"
+                  : tool === "soroban"
+                  ? "Stellar / Soroban SIM"
+                  : "OSPEC Harvester DB (RADAR+)"}
+              </div>
             )}
             <button
               onClick={run}
@@ -389,6 +452,227 @@ const ToolsPanel = () => {
           </div>
         </div>
       )}
+
+      {result && tool === "social" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { k: isRu ? "Проект" : "Project", v: result.project_id },
+              { k: "Trust Score", v: `${result.trust_score}/100` },
+              { k: "Social Risk", v: `${result.social_score}/100` },
+              { k: isRu ? "Сигналы" : "Signals", v: result.signals_total },
+            ].map((c, i) => (
+              <div key={i} className="rounded-xl border border-border bg-card p-4">
+                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{c.k}</p>
+                <p className="mt-1 truncate font-mono text-lg font-bold text-foreground">{c.v}</p>
+              </div>
+            ))}
+          </div>
+          {result.platforms?.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-5">
+              <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-primary">
+                {isRu ? "Платформы" : "Platforms"}
+              </p>
+              <div className="space-y-1.5">
+                {result.platforms.map((p: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs">
+                    <span className="font-bold uppercase text-primary">{p.platform}</span>
+                    <span className="flex-1 truncate text-muted-foreground">{p.url}</span>
+                    <span className="text-foreground">{fmt(p.followers, 0)} followers</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.signals?.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-5 space-y-2">
+              <p className="font-mono text-[10px] uppercase tracking-wider text-primary">{isRu ? "OSINT Сигналы" : "OSINT Signals"}</p>
+              {result.signals.map((s: any, i: number) => (
+                <div key={i} className="rounded-lg border border-border bg-background p-3 font-mono text-xs">
+                  <div className="flex justify-between">
+                    <span className="font-bold text-foreground">{s.type}</span>
+                    <span className="text-muted-foreground">{s.platform} · {s.severity}</span>
+                  </div>
+                  <p className="mt-1 text-muted-foreground">{s.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {result && tool === "soroban" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { k: isRu ? "Вердикт" : "Verdict", v: result.verdict || "—" },
+              { k: "Overall Risk", v: `${result.overall_risk_score ?? 0}/100` },
+              { k: "Trustlines", v: fmt(result.asset_profile?.trustlines, 0) },
+              { k: "Bid Depth", v: `$${fmt(result.orderbook?.bid_depth_usd)}` },
+            ].map((c, i) => (
+              <div key={i} className="rounded-xl border border-border bg-card p-4">
+                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{c.k}</p>
+                <p className="mt-1 font-mono text-lg font-bold text-foreground">{c.v}</p>
+              </div>
+            ))}
+          </div>
+          <div className="rounded-xl border border-border bg-card p-5 font-mono text-xs space-y-2">
+            <p className="text-foreground font-bold">{result.target} ({result.target_type})</p>
+            {result.verdict_detail && <p className="text-muted-foreground">{result.verdict_detail}</p>}
+            {result.asset_profile?.home_domain && (
+              <p className="text-primary">Domain: {result.asset_profile.home_domain} · LP Pools: {result.lp_pool_count ?? 0}</p>
+            )}
+            {result.signals?.length > 0 && (
+              <div className="mt-3 space-y-1.5">
+                {result.signals.map((s: any, i: number) => (
+                  <div key={i} className="rounded-lg border border-border bg-background p-2.5">
+                    <div className="flex justify-between">
+                      <span className="font-bold text-foreground">{s.title || s.id}</span>
+                      <span className="text-muted-foreground">{s.severity}</span>
+                    </div>
+                    <p className="mt-1 text-muted-foreground">{s.description}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {result && tool === "ospec" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { k: isRu ? "База репо OSPEC" : "OSPEC Indexed Repos", v: fmt(result.db_stats?.indexed_repos, 0) },
+              { k: isRu ? "Всего секретов в БД" : "Total Indexed Secrets", v: fmt(result.db_stats?.indexed_findings, 0) },
+              { k: isRu ? "Найдено репо" : "Matched Repos", v: result.matched_repos_count },
+              { k: isRu ? "Найдено утечек" : "Matched Findings", v: result.findings_returned },
+            ].map((c, i) => (
+              <div key={i} className="rounded-xl border border-border bg-card p-4">
+                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{c.k}</p>
+                <p className="mt-1 font-mono text-lg font-bold text-foreground">{c.v}</p>
+              </div>
+            ))}
+          </div>
+
+          {result.matched_repos?.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-5">
+              <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-primary">
+                {isRu ? "Репозитории с утечками" : "Matched Repositories"}
+              </p>
+              <div className="space-y-1.5">
+                {result.matched_repos.slice(0, 10).map((r: any, i: number) => (
+                  <div key={i} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs">
+                    <span className="truncate text-foreground font-semibold">{r.ticker || r.repo_url}</span>
+                    <span className="text-muted-foreground">
+                      Crit: <b className="text-destructive">{r.n_crit}</b> · High: <b className="text-primary">{r.n_high}</b> · Med: {r.n_med}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {result.findings?.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-5">
+              <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-primary">
+                {isRu ? "Обнаруженные ключи и секреты (OSPEC)" : "Detected Leaked Keys & Secrets (OSPEC)"}
+              </p>
+              <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
+                {result.findings.map((f: any) => (
+                  <div key={f.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 font-mono text-[11px]">
+                    <span className="rounded bg-primary/15 px-2 py-0.5 font-bold text-primary">{f.kind}</span>
+                    <span className="flex-1 truncate text-foreground">{f.ticker || f.repo_url}</span>
+                    <span className="truncate text-muted-foreground">{f.path}:{f.line}</span>
+                    <span className="text-destructive font-bold">{f.severity}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TOOL RUN HISTORY (Holders & Whales, Market & Derivatives, Funds Flow 14d, Social, Soroban, OSPEC) */}
+      <div className="rounded-xl border border-border bg-card p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <History size={15} className="text-primary" />
+            <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-foreground">
+              {isRu
+                ? "История сканов по инструментам (Holders · Market · Funds Flow · Social · Soroban · OSPEC)"
+                : "Intelligence Tool Scan History (Holders · Market · Funds Flow · Social · Soroban · OSPEC)"}
+            </h4>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { id: "all", label: isRu ? "Все" : "All" },
+              { id: "holders", label: "Holders" },
+              { id: "market", label: "Market" },
+              { id: "funds", label: "Funds Flow" },
+              { id: "social", label: "Social" },
+              { id: "soroban", label: "Soroban" },
+              { id: "ospec", label: "OSPEC" },
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setHistoryFilter(f.id)}
+                className={`rounded-lg px-2.5 py-1 font-mono text-[10px] font-semibold transition-all ${
+                  historyFilter === f.id
+                    ? "bg-primary text-primary-foreground"
+                    : "border border-border bg-background text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {historyItems.length === 0 ? (
+          <p className="font-mono text-xs text-muted-foreground">
+            {isRu
+              ? "История запусков инструментов пока пуста. Любой прогон по Holders, Market, Funds Flow, Social, Soroban или OSPEC автоматически сохраняется здесь."
+              : "No tool runs recorded yet. Every Holders, Market, Funds Flow, Social, Soroban or OSPEC scan is saved here automatically."}
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {historyItems.map((item) => (
+              <div
+                key={item.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-background px-3.5 py-2.5 font-mono text-xs"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="rounded border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase text-primary">
+                      {item.tool}
+                    </span>
+                    <span className="truncate font-bold text-foreground">{item.target}</span>
+                    {item.chain && (
+                      <span className="text-[10px] uppercase text-muted-foreground">[{item.chain}]</span>
+                    )}
+                  </div>
+                  <p className="mt-1 truncate text-[11px] text-muted-foreground">
+                    {item.summary} · {new Date(item.created_at * 1000).toLocaleString()}
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleOpenHistoryItem(item)}
+                  disabled={loadingHistoryId === item.id}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[11px] font-semibold text-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+                >
+                  <Eye size={12} />
+                  <span>
+                    {loadingHistoryId === item.id
+                      ? isRu ? "Загрузка…" : "Loading…"
+                      : isRu ? "Открыть" : "Open"}
+                  </span>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
