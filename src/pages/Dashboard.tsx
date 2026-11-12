@@ -21,6 +21,7 @@ import {
   Activity,
   Lock,
   Wrench,
+  Users,
 } from "lucide-react";
 import {
   apiGetMe,
@@ -29,6 +30,8 @@ import {
   apiAddWatchlist,
   apiRemoveWatchlist,
   apiGetRadarFeed,
+  apiGetReferral,
+  apiBindReferral,
   getScanExportUrl,
   clearAuthSession,
   getSavedToken,
@@ -61,7 +64,7 @@ const Dashboard = () => {
   const [scans, setScans] = useState<BorisScanRecord[]>([]);
   const [watchlist, setWatchlist] = useState<BorisWatchlistItem[]>([]);
   const [radarAudits, setRadarAudits] = useState<BorisRadarAudit[]>([]);
-  const [activeTab, setActiveTab] = useState<"history" | "tools" | "watchlist" | "radar">("history");
+  const [activeTab, setActiveTab] = useState<"history" | "tools" | "watchlist" | "radar" | "referral">("history");
 
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -73,6 +76,9 @@ const Dashboard = () => {
   const [addingWatch, setAddingWatch] = useState(false);
   const [driftBusy, setDriftBusy] = useState<string | null>(null);
   const [driftInfo, setDriftInfo] = useState<any>(null);
+  const [refData, setRefData] = useState<any>(null);
+  const [refCodeInput, setRefCodeInput] = useState("");
+  const [refMsg, setRefMsg] = useState<string | null>(null);
 
   const handleRescanDrift = async (s: BorisScanRecord) => {
     setDriftBusy(s.task_id);
@@ -134,6 +140,7 @@ const Dashboard = () => {
     apiGetRadarFeed().then((feed) => {
       setRadarAudits(feed.audits || []);
     });
+    apiGetReferral().then(setRefData);
     window.addEventListener("boris-scan-started", fetchProfile);
     window.addEventListener("boris-scan-done", fetchProfile);
     return () => {
@@ -390,6 +397,17 @@ const Dashboard = () => {
               <span>{isRu ? "Инструменты разведки" : "Intelligence Tools"}</span>
             </button>
             <button
+              onClick={() => setActiveTab("referral")}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-mono text-xs font-semibold transition-all ${
+                activeTab === "referral"
+                  ? "bg-primary text-primary-foreground shadow"
+                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Users size={14} />
+              <span>{isRu ? "Партнёрка" : "Referral"}</span>
+            </button>
+            <button
               onClick={() => setActiveTab("watchlist")}
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-mono text-xs font-semibold transition-all ${
                 activeTab === "watchlist"
@@ -470,6 +488,106 @@ const Dashboard = () => {
                 )}
               </>
             )}
+          </div>
+        )}
+
+        {activeTab === "referral" && (
+          <div className="space-y-5">
+            <div className="rounded-xl border border-border bg-card p-5">
+              <h4 className="font-mono text-xs font-semibold uppercase tracking-wider text-primary">
+                {isRu ? "Партнёрская программа BORIS" : "BORIS Affiliate Program"}
+              </h4>
+              <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+                {isRu
+                  ? `Ваша ставка: ${Math.round((refData?.commission_rate ?? 0.1) * 100)}% с каждого оплаченного реферала. Ставка растёт с тарифом: GUEST 10% · RADAR 20% · RAW 25% · BLACKBOX 30%.`
+                  : `Your rate: ${Math.round((refData?.commission_rate ?? 0.1) * 100)}% of every paid referral. Rate scales with tier: GUEST 10% · RADAR 20% · RAW 25% · BLACKBOX 30%.`}
+              </p>
+
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="rounded-lg border border-border bg-background p-4">
+                  <p className="font-mono text-[10px] uppercase text-muted-foreground">{isRu ? "Код" : "Code"}</p>
+                  <p className="mt-1 font-mono text-lg font-bold text-primary">{refData?.code || "—"}</p>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-4 sm:col-span-2">
+                  <p className="font-mono text-[10px] uppercase text-muted-foreground">{isRu ? "Ссылка" : "Link"}</p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <p className="flex-1 truncate font-mono text-[11px] text-foreground">{refData?.link || "—"}</p>
+                    <button
+                      onClick={() => {
+                        if (refData?.link) {
+                          navigator.clipboard.writeText(refData.link);
+                          setRefMsg(isRu ? "Ссылка скопирована" : "Link copied");
+                          setTimeout(() => setRefMsg(null), 2000);
+                        }
+                      }}
+                      className="rounded border border-border px-2 py-1 font-mono text-[10px] text-muted-foreground hover:border-primary hover:text-primary"
+                    >
+                      {isRu ? "Копировать" : "Copy"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-3">
+                {[
+                  { k: isRu ? "Приглашено" : "Invited", v: refData?.total_invited ?? 0 },
+                  { k: isRu ? "Оплатили" : "Paid", v: refData?.paid_invited ?? 0 },
+                  { k: isRu ? "К выплате" : "Payout", v: `$${Number(refData?.pending_payout_usd ?? 0).toFixed(2)}` },
+                ].map((c, i) => (
+                  <div key={i} className="rounded-lg border border-border bg-background p-4 text-center">
+                    <p className="font-mono text-[10px] uppercase text-muted-foreground">{c.k}</p>
+                    <p className="mt-1 font-mono text-lg font-bold text-foreground">{c.v}</p>
+                  </div>
+                ))}
+              </div>
+              {refMsg && <p className="mt-2 font-mono text-[11px] text-primary">{refMsg}</p>}
+            </div>
+
+            {refData?.invited?.length > 0 && (
+              <div className="rounded-xl border border-border bg-card p-5">
+                <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-primary">
+                  {isRu ? "Рефералы" : "Referrals"}
+                </p>
+                <div className="space-y-1.5">
+                  {refData.invited.map((r: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 font-mono text-[11px]">
+                      <span className="text-foreground">{r.email}</span>
+                      <span className="text-muted-foreground">{r.tier}</span>
+                      <span className="text-primary">{r.status}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="rounded-xl border border-border bg-card p-5">
+              <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                {isRu ? "Ввести чужой реф-код (если вас пригласили)" : "Bind an inviter's referral code"}
+              </p>
+              <div className="mt-2 flex gap-2">
+                <input
+                  value={refCodeInput}
+                  onChange={(e) => setRefCodeInput(e.target.value.toUpperCase())}
+                  placeholder="BOXXXXXXXX"
+                  className="flex-1 rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-primary"
+                />
+                <button
+                  onClick={async () => {
+                    try {
+                      await apiBindReferral(refCodeInput);
+                      setRefMsg(isRu ? "Код привязан" : "Code bound");
+                      apiGetReferral().then(setRefData);
+                    } catch (e: any) {
+                      setRefMsg(e.message);
+                    }
+                  }}
+                  disabled={!refCodeInput}
+                  className="rounded-lg bg-primary px-4 py-2 font-mono text-xs font-semibold text-primary-foreground disabled:opacity-40"
+                >
+                  {isRu ? "Привязать" : "Bind"}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

@@ -81,11 +81,11 @@ export function clearAuthSession() {
   window.dispatchEvent(new Event("boris-auth-change"));
 }
 
-export async function apiRegister(email: string, password: string, name?: string) {
+export async function apiRegister(email: string, password: string, name?: string, ref?: string) {
   const res = await fetch(`${API_BASE}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password, name }),
+    body: JSON.stringify({ email, password, name, ref: ref || undefined }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -200,4 +200,38 @@ export async function apiGetRadarFeed(): Promise<{ audits: BorisRadarAudit[]; ma
   const res = await fetch(`${API_BASE}/api/auth/radar-feed`);
   if (!res.ok) return { audits: [], market_signals: [] };
   return res.json();
+}
+
+export interface BorisReferral {
+  code: string;
+  link: string;
+  commission_rate: number;
+  total_invited: number;
+  paid_invited: number;
+  pending_payout_usd: number;
+  invited: Array<{ email: string; tier: string; status: string; created_at: number }>;
+  tier: string;
+}
+
+export async function apiGetReferral(): Promise<BorisReferral | null> {
+  const token = getSavedToken();
+  if (!token) return null;
+  const res = await fetch(`${API_BASE}/api/auth/referral`, {
+    headers: { Authorization: "Bearer " + token },
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function apiBindReferral(code: string) {
+  const token = getSavedToken();
+  if (!token) throw new Error("Not authenticated");
+  const res = await fetch(`${API_BASE}/api/auth/referral/bind`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    body: JSON.stringify({ code }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Failed to bind referral code");
+  return data;
 }

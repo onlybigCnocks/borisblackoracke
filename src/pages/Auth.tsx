@@ -101,7 +101,8 @@ const Auth = () => {
     setLoading(true);
     try {
       if (mode === "register") {
-        await apiRegister(em, password, name.trim());
+        const refCode = new URLSearchParams(window.location.search).get("ref") || undefined;
+        await apiRegister(em, password, name.trim(), refCode);
       } else {
         await apiLogin(em, password);
       }
