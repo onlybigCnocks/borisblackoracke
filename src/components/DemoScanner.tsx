@@ -766,7 +766,7 @@ export function ResultTeaser({ result, isRu, taskId }: { result: DemoScanResult;
           )}
         </div>
 
-        {/* ==================== 8-SECTION DEEP ENGINEERING DOSSIER (CertiK x Arkham x BORIS) ==================== */}
+        {/* ==================== 8-SECTION DEEP ENGINEERING DOSSIER ==================== */}
         {result.deep_dossier && (
           <div className="space-y-5 border-t border-border pt-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -799,7 +799,7 @@ export function ResultTeaser({ result, isRu, taskId }: { result: DemoScanResult;
               )}
             </div>
 
-            {/* 1. Structural Profile (4 Indices like CertiK Skynet) */}
+            {/* 1. Structural Profile (4 Risk Indices) */}
             {result.deep_dossier.structural_profile && (
               <div className="rounded-xl border border-border bg-background/60 p-4">
                 <h4 className="mb-3 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
@@ -941,7 +941,7 @@ export function ResultTeaser({ result, isRu, taskId }: { result: DemoScanResult;
               </div>
             )}
 
-            {/* 4. Top-10 Holders & Liquidity Pool Distribution (Arkham Style) */}
+            {/* 4. Top-10 Holders & Liquidity Pool Distribution */}
             {result.deep_dossier.holders &&
               result.deep_dossier.holders.top_holders &&
               result.deep_dossier.holders.top_holders.length > 0 && (
@@ -949,7 +949,7 @@ export function ResultTeaser({ result, isRu, taskId }: { result: DemoScanResult;
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <h4 className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
                       <Users size={13} className="text-primary" />
-                      {isRu ? "7️⃣ Распределение холдеров и пулов (Arkham Entity View)" : "7️⃣ Holder & Pool Distribution (Arkham Entity View)"}
+                      {isRu ? "7️⃣ Распределение холдеров и пулов" : "7️⃣ Holder & Pool Distribution"}
                     </h4>
                     <div className="flex items-center gap-3 font-mono text-xs">
                       <span>
