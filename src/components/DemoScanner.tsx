@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { CheckCircle, Send, ShieldAlert, Lock, Sparkles, Terminal } from "lucide-react";
+import { CheckCircle, Send, ShieldAlert, Lock, Sparkles, Terminal, Download, Layers, Users, Code, Activity } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { getSavedToken } from "@/lib/auth";
+import { getSavedToken, getScanExportUrl } from "@/lib/auth";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://api.black-oracle.com";
 
@@ -102,6 +102,64 @@ interface DemoScanResult {
     status: "done" | "none";
     detail?: { ru: string; en: string };
   }>;
+  deep_dossier?: {
+    archetype?: string;
+    archetype_confidence?: number;
+    detected_chain?: string;
+    is_verified?: boolean;
+    claimed_model?: string;
+    abi_surface?: Array<{
+      contract_name: string;
+      address: string;
+      chain: string;
+      total_functions: number;
+      state_changing: number;
+      view_pure: number;
+      payable: number;
+      events: number;
+      privileged_functions: string[];
+    }>;
+    exploit_chains?: Array<{
+      title: string;
+      vector: string;
+      likelihood: string;
+      impact: string;
+      steps: string[];
+      requires: string[];
+      amplifiers: string[];
+      score: number;
+      confidence: number;
+      patch: string;
+    }>;
+    holders?: {
+      total_holders: number;
+      top10_pct: number;
+      real_top10_pct: number;
+      pools_pct: number;
+      top_holders: Array<{
+        rank: number;
+        address: string;
+        label: string;
+        percentage: number;
+        holder_type: string;
+        is_contract: boolean;
+      }>;
+    };
+    structural_profile?: {
+      governance: { index: number; level: string };
+      code_patterns: { index: number; level: string };
+      liquidity_risk: { index: number; level: string };
+      holder_concentration: { index: number; level: string };
+    };
+    findings_full?: Array<{
+      type: string;
+      severity: string;
+      description: string;
+      file: string;
+      line: number;
+      code_snippet: string;
+    }>;
+  };
 }
 
 type ScanState = "idle" | "scanning" | "done" | "error";
@@ -294,6 +352,21 @@ const DemoScanner = () => {
     return () => clearInterval(interval);
   }, [taskId, state, isRu, getStepText]);
 
+  // Listen to custom event from Cabinet History ("Open Report")
+  useEffect(() => {
+    const onLoadArchived = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.result) {
+        setInput(detail.result.target || "");
+        setTaskId(detail.taskId || null);
+        setResult(detail.result as DemoScanResult);
+        setState("done");
+      }
+    };
+    window.addEventListener("boris-load-archived-scan", onLoadArchived);
+    return () => window.removeEventListener("boris-load-archived-scan", onLoadArchived);
+  }, []);
+
   // Clear validation error when input changes
   useEffect(() => {
     if (validationError) setValidationError("");
@@ -422,15 +495,15 @@ const DemoScanner = () => {
         </div>
       )}
 
-      {/* Result — Compact Teaser */}
-      {state === "done" && result && <ResultTeaser result={result} isRu={isRu} />}
+      {/* Result — Compact Teaser + Deep Dossier */}
+      {state === "done" && result && <ResultTeaser result={result} isRu={isRu} taskId={taskId} />}
     </section>
   );
 };
 
 // --- Result Teaser Component ---
 
-function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean }) {
+export function ResultTeaser({ result, isRu, taskId }: { result: DemoScanResult; isRu: boolean; taskId?: string | null }) {
   const lang = isRu ? "ru" : "en";
   const verdictStyle = VERDICT_STYLE[result.verdict] || VERDICT_STYLE.CLEAN;
   const layers = result.layers || {};
@@ -683,6 +756,232 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
             </p>
           )}
         </div>
+
+        {/* ==================== 8-SECTION DEEP ENGINEERING DOSSIER (CertiK x Arkham x BORIS) ==================== */}
+        {result.deep_dossier && (
+          <div className="space-y-5 border-t border-border pt-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-primary font-bold">
+                <Layers size={15} />
+                <span>
+                  {isRu
+                    ? "Инженерная декомпозиция поверхности (8 слоёв)"
+                    : "Engineering Surface Decomposition (8 Layers)"}
+                </span>
+              </div>
+              {taskId && (
+                <a
+                  href={getScanExportUrl(taskId)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-1.5 font-mono text-xs font-semibold text-primary transition-all hover:bg-primary/20"
+                >
+                  <Download size={13} />
+                  <span>{isRu ? "Скачать JSON-досье" : "Export JSON Dossier"}</span>
+                </a>
+              )}
+            </div>
+
+            {/* 1. Structural Profile (4 Indices like CertiK Skynet) */}
+            {result.deep_dossier.structural_profile && (
+              <div className="rounded-xl border border-border bg-background/60 p-4">
+                <h4 className="mb-3 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                  <Activity size={13} className="text-primary" />
+                  {isRu ? "8️⃣ Структурный профиль индексов риска" : "8️⃣ Structural Risk Index Profile"}
+                </h4>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {[
+                    {
+                      label: "Governance",
+                      data: result.deep_dossier.structural_profile.governance,
+                    },
+                    {
+                      label: "Code Patterns",
+                      data: result.deep_dossier.structural_profile.code_patterns,
+                    },
+                    {
+                      label: "Liquidity Risk",
+                      data: result.deep_dossier.structural_profile.liquidity_risk,
+                    },
+                    {
+                      label: "Holder Conc.",
+                      data: result.deep_dossier.structural_profile.holder_concentration,
+                    },
+                  ].map((item) => {
+                    const isHigh = item.data.index >= 60;
+                    const isMod = item.data.index >= 25 && item.data.index < 60;
+                    const barColor = isHigh ? "bg-red-500" : isMod ? "bg-amber-500" : "bg-green-500";
+                    const textColor = isHigh ? "text-red-400" : isMod ? "text-amber-400" : "text-green-400";
+                    return (
+                      <div key={item.label} className="rounded-lg border border-border bg-card p-3">
+                        <div className="flex items-center justify-between font-mono text-xs">
+                          <span className="text-muted-foreground">{item.label}</span>
+                          <span className={`font-bold uppercase ${textColor}`}>{item.data.level}</span>
+                        </div>
+                        <p className="mt-1 font-mono text-xl font-bold text-foreground">
+                          {item.data.index}
+                          <span className="text-xs font-normal text-muted-foreground">/100</span>
+                        </p>
+                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-background">
+                          <div
+                            className={`h-full rounded-full ${barColor}`}
+                            style={{ width: `${Math.max(4, Math.min(100, item.data.index))}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 2. ABI Surface Map & Privileged Functions */}
+            {result.deep_dossier.abi_surface && result.deep_dossier.abi_surface.length > 0 && (
+              <div className="rounded-xl border border-border bg-background/60 p-4">
+                <h4 className="mb-3 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                  <Code size={13} className="text-primary" />
+                  {isRu ? "🔧 Карта ABI-поверхности и привилегированных вызовов" : "🔧 ABI Surface Map & Privileged Calls"}
+                </h4>
+                <div className="space-y-3">
+                  {result.deep_dossier.abi_surface.map((abi, idx) => (
+                    <div key={idx} className="rounded-lg border border-border bg-card p-3.5 font-mono text-xs">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-bold text-foreground">
+                          {abi.contract_name} <span className="text-primary">[{abi.chain.toUpperCase()}]</span>
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">
+                          Functions: <strong className="text-foreground">{abi.total_functions}</strong> · State-changing:{" "}
+                          <strong className="text-foreground">{abi.state_changing}</strong> · View:{" "}
+                          <strong className="text-foreground">{abi.view_pure}</strong> · Events:{" "}
+                          <strong className="text-foreground">{abi.events}</strong>
+                        </span>
+                      </div>
+                      {abi.privileged_functions && abi.privileged_functions.length > 0 && (
+                        <div className="mt-2.5">
+                          <span className="text-[10px] uppercase tracking-wider text-red-400">
+                            {isRu ? "🔴 Привилегированные функции (Admin / Mint / Burn / Drain):" : "🔴 Privileged Functions:"}
+                          </span>
+                          <div className="mt-1.5 flex flex-wrap gap-1.5">
+                            {abi.privileged_functions.map((fn, j) => (
+                              <span
+                                key={j}
+                                className="rounded border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-[11px] text-red-300"
+                              >
+                                {fn}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 3. Condition Chains (Attack Vector Breakdown) */}
+            {result.deep_dossier.exploit_chains && result.deep_dossier.exploit_chains.length > 0 && (
+              <div className="rounded-xl border border-amber-500/35 bg-amber-500/5 p-4">
+                <h4 className="mb-3 font-mono text-[11px] uppercase tracking-wider text-amber-400 font-semibold">
+                  {isRu ? "3️⃣ Цепочки условий и сценарии риска" : "3️⃣ Condition Chains & Risk Scenarios"}
+                </h4>
+                <div className="space-y-3">
+                  {result.deep_dossier.exploit_chains.map((ch, idx) => (
+                    <div key={idx} className="rounded-lg border border-border bg-card p-3.5 font-mono text-xs">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-bold text-foreground">
+                          Chain #{idx + 1}: {ch.title}
+                        </span>
+                        <div className="flex items-center gap-2 text-[11px]">
+                          <span className="rounded border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-amber-300">
+                            Vector: {ch.vector}
+                          </span>
+                          <span className="text-muted-foreground">
+                            Score: <strong className="text-foreground">{ch.score}</strong> · Confidence:{" "}
+                            <strong className="text-primary">{ch.confidence}%</strong>
+                          </span>
+                        </div>
+                      </div>
+                      {ch.steps && ch.steps.length > 0 && (
+                        <ul className="mt-2.5 space-y-1 text-[11px] text-muted-foreground">
+                          {ch.steps.map((st, sIdx) => (
+                            <li key={sIdx}>
+                              <span className="text-amber-400 mr-1.5">Condition {sIdx + 1}:</span>
+                              {st}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {ch.impact && (
+                        <p className="mt-2 text-[11px] text-foreground/90">
+                          <span className="text-primary font-semibold">Impact: </span>
+                          {ch.impact}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 4. Top-10 Holders & Liquidity Pool Distribution (Arkham Style) */}
+            {result.deep_dossier.holders &&
+              result.deep_dossier.holders.top_holders &&
+              result.deep_dossier.holders.top_holders.length > 0 && (
+                <div className="rounded-xl border border-border bg-background/60 p-4">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <h4 className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                      <Users size={13} className="text-primary" />
+                      {isRu ? "7️⃣ Распределение холдеров и пулов (Arkham Entity View)" : "7️⃣ Holder & Pool Distribution (Arkham Entity View)"}
+                    </h4>
+                    <div className="flex items-center gap-3 font-mono text-xs">
+                      <span>
+                        Top-10: <strong className="text-foreground">{result.deep_dossier.holders.top10_pct}%</strong>
+                      </span>
+                      <span>
+                        {isRu ? "Реальн. (без пулов):" : "Real (ex-pools):"}{" "}
+                        <strong className="text-amber-400">{result.deep_dossier.holders.real_top10_pct}%</strong>
+                      </span>
+                      <span>
+                        🏊 Pools: <strong className="text-cyan-400">{result.deep_dossier.holders.pools_pct}%</strong>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    {result.deep_dossier.holders.top_holders.slice(0, 10).map((h) => {
+                      const icon = h.holder_type === "pool" ? "🏊" : h.percentage >= 5 ? "🐋" : "👤";
+                      const shortAddr =
+                        h.address.length > 16 ? `${h.address.slice(0, 10)}…${h.address.slice(-6)}` : h.address;
+                      return (
+                        <div
+                          key={h.rank}
+                          className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 font-mono text-xs"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="w-6 text-muted-foreground">#{h.rank}</span>
+                            <span>{icon}</span>
+                            <span className="text-foreground truncate">{shortAddr}</span>
+                            <span className="rounded border border-border bg-background px-2 py-0.5 text-[10px] text-muted-foreground truncate max-w-[220px]">
+                              {h.label}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <div className="hidden sm:block w-24 h-1.5 rounded-full bg-background overflow-hidden">
+                              <div
+                                className="h-full bg-primary"
+                                style={{ width: `${Math.min(100, h.percentage)}%` }}
+                              />
+                            </div>
+                            <span className="w-14 text-right font-bold text-foreground">{h.percentage}%</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+          </div>
+        )}
 
         {/* CTA */}
         <div className="rounded-xl border border-primary/40 bg-radial-red p-5 text-center">

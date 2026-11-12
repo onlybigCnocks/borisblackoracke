@@ -26,6 +26,29 @@ export interface BorisScanRecord {
   created_at: number;
 }
 
+export interface BorisWatchlistItem {
+  id: number;
+  target: string;
+  label: string;
+  alert_on_drift: number;
+  last_verdict: string;
+  created_at: number;
+}
+
+export interface BorisRadarAudit {
+  address: string;
+  chain: string;
+  name: string;
+  scan_date: string;
+  risk_level: string;
+  risk_score: number;
+  findings_critical: number;
+  findings_high: number;
+  findings_medium: number;
+  findings_low: number;
+  findings_total: number;
+}
+
 export function getSavedToken(): string | null {
   return localStorage.getItem(LS_AUTH_TOKEN);
 }
@@ -93,7 +116,11 @@ export async function apiGoogleAuth(payload: { credential?: string; access_token
   return data as { token: string; user: BorisUser };
 }
 
-export async function apiGetMe(): Promise<{ user: BorisUser; scans: BorisScanRecord[] }> {
+export async function apiGetMe(): Promise<{
+  user: BorisUser;
+  scans: BorisScanRecord[];
+  watchlist?: BorisWatchlistItem[];
+}> {
   const token = getSavedToken();
   if (!token) throw new Error("Not authenticated");
   const res = await fetch(`${API_BASE}/api/auth/me`, {
@@ -125,4 +152,45 @@ export async function apiRotateKey(): Promise<string> {
     saveAuthSession(token, { ...current, api_key: data.api_key });
   }
   return data.api_key;
+}
+
+export async function apiGetArchivedScan(taskId: string) {
+  const res = await fetch(`${API_BASE}/api/auth/scan/${taskId}`);
+  if (!res.ok) throw new Error("Scan report not found");
+  return res.json();
+}
+
+export function getScanExportUrl(taskId: string): string {
+  return `${API_BASE}/api/auth/scan/${taskId}/export`;
+}
+
+export async function apiAddWatchlist(target: string, label?: string): Promise<BorisWatchlistItem[]> {
+  const token = getSavedToken();
+  if (!token) throw new Error("Not authenticated");
+  const res = await fetch(`${API_BASE}/api/auth/watchlist`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token,
+    },
+    body: JSON.stringify({ target, label }),
+  });
+  if (!res.ok) throw new Error("Failed to add to watchlist");
+  const data = await res.json();
+  return data.watchlist || [];
+}
+
+export async function apiRemoveWatchlist(id: number): Promise<void> {
+  const token = getSavedToken();
+  if (!token) throw new Error("Not authenticated");
+  await fetch(`${API_BASE}/api/auth/watchlist/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: "Bearer " + token },
+  });
+}
+
+export async function apiGetRadarFeed(): Promise<{ audits: BorisRadarAudit[]; market_signals: any[] }> {
+  const res = await fetch(`${API_BASE}/api/auth/radar-feed`);
+  if (!res.ok) return { audits: [], market_signals: [] };
+  return res.json();
 }

@@ -11,15 +11,29 @@ import {
   RefreshCw,
   LogOut,
   Shield,
+  Eye,
+  Download,
+  Radar,
+  Bell,
+  Plus,
+  Trash2,
+  Activity,
 } from "lucide-react";
 import {
   apiGetMe,
   apiRotateKey,
+  apiGetArchivedScan,
+  apiAddWatchlist,
+  apiRemoveWatchlist,
+  apiGetRadarFeed,
+  getScanExportUrl,
   clearAuthSession,
   getSavedToken,
   getSavedUser,
   type BorisUser,
   type BorisScanRecord,
+  type BorisWatchlistItem,
+  type BorisRadarAudit,
 } from "@/lib/auth";
 
 const VERDICT_BADGE: Record<string, string> = {
@@ -28,6 +42,8 @@ const VERDICT_BADGE: Record<string, string> = {
   MINIMAL_SURFACE: "border-green-500/50 bg-green-500/15 text-green-400",
   CLEAN: "border-green-500/50 bg-green-500/15 text-green-400",
   SCANNING: "border-primary/50 bg-primary/15 text-primary",
+  HIGH: "border-red-500/50 bg-red-500/15 text-red-400",
+  LOW: "border-green-500/50 bg-green-500/15 text-green-400",
 };
 
 const Dashboard = () => {
@@ -37,10 +53,18 @@ const Dashboard = () => {
 
   const [user, setUser] = useState<BorisUser | null>(getSavedUser());
   const [scans, setScans] = useState<BorisScanRecord[]>([]);
+  const [watchlist, setWatchlist] = useState<BorisWatchlistItem[]>([]);
+  const [radarAudits, setRadarAudits] = useState<BorisRadarAudit[]>([]);
+  const [activeTab, setActiveTab] = useState<"history" | "watchlist" | "radar">("history");
+
   const [loading, setLoading] = useState(true);
-  const [quickInput, setQuickInput] = useState("");
   const [copied, setCopied] = useState(false);
   const [rotating, setRotating] = useState(false);
+  const [loadingScanId, setLoadingScanId] = useState<string | null>(null);
+
+  const [watchTarget, setWatchTarget] = useState("");
+  const [watchLabel, setWatchLabel] = useState("");
+  const [addingWatch, setAddingWatch] = useState(false);
 
   useEffect(() => {
     const token = getSavedToken();
@@ -53,6 +77,7 @@ const Dashboard = () => {
         .then((data) => {
           setUser(data.user);
           setScans(data.scans || []);
+          setWatchlist(data.watchlist || []);
         })
         .catch(() => {
           navigate("/auth");
@@ -60,6 +85,9 @@ const Dashboard = () => {
         .finally(() => setLoading(false));
     };
     fetchProfile();
+    apiGetRadarFeed().then((feed) => {
+      setRadarAudits(feed.audits || []);
+    });
     window.addEventListener("boris-scan-started", fetchProfile);
     window.addEventListener("boris-scan-done", fetchProfile);
     return () => {
@@ -98,8 +126,51 @@ const Dashboard = () => {
       .then((data) => {
         setUser(data.user);
         setScans(data.scans || []);
+        setWatchlist(data.watchlist || []);
       })
       .catch(() => {});
+  };
+
+  const handleOpenSavedScan = async (taskId: string) => {
+    setLoadingScanId(taskId);
+    try {
+      const archived = await apiGetArchivedScan(taskId);
+      window.dispatchEvent(
+        new CustomEvent("boris-load-archived-scan", {
+          detail: { taskId, result: archived },
+        })
+      );
+      document.getElementById("demo-scanner")?.scrollIntoView({ behavior: "smooth" });
+    } catch {
+      // ignore
+    } finally {
+      setLoadingScanId(null);
+    }
+  };
+
+  const handleAddWatch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!watchTarget.trim()) return;
+    setAddingWatch(true);
+    try {
+      const updated = await apiAddWatchlist(watchTarget.trim(), watchLabel.trim());
+      setWatchlist(updated);
+      setWatchTarget("");
+      setWatchLabel("");
+    } catch {
+      // ignore
+    } finally {
+      setAddingWatch(false);
+    }
+  };
+
+  const handleDeleteWatch = async (id: number) => {
+    try {
+      await apiRemoveWatchlist(id);
+      setWatchlist((prev) => prev.filter((item) => item.id !== id));
+    } catch {
+      // ignore
+    }
   };
 
   if (loading && !user) {
@@ -238,72 +309,252 @@ const Dashboard = () => {
           <DemoScanner />
         </div>
 
-        {/* User Scan History */}
-        <div>
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-foreground">
-              {isRu ? "История ваших сканирований" : "Your Inspection History"}
-            </h3>
+        {/* Navigation Tabs: History vs Watchlist vs 24/7 Radar Feed */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+          <div className="flex flex-wrap gap-2">
             <button
-              onClick={refreshHistory}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+              onClick={() => setActiveTab("history")}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-mono text-xs font-semibold transition-all ${
+                activeTab === "history"
+                  ? "bg-primary text-primary-foreground shadow"
+                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
+              }`}
             >
-              <RefreshCw size={12} />
-              <span>{isRu ? "Обновить" : "Refresh"}</span>
+              <Activity size={14} />
+              <span>{isRu ? `История сканов (${scans.length})` : `Scan History (${scans.length})`}</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("watchlist")}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-mono text-xs font-semibold transition-all ${
+                activeTab === "watchlist"
+                  ? "bg-primary text-primary-foreground shadow"
+                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Bell size={14} />
+              <span>{isRu ? `Мониторинг и Алерты (${watchlist.length})` : `Watchlist & Alerts (${watchlist.length})`}</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("radar")}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-mono text-xs font-semibold transition-all ${
+                activeTab === "radar"
+                  ? "bg-primary text-primary-foreground shadow"
+                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Radar size={14} />
+              <span>{isRu ? "24/7 Live Radar Feed (Skynet)" : "24/7 Live Radar Feed (Skynet)"}</span>
             </button>
           </div>
-          {scans.length === 0 ? (
-            <div className="rounded-xl border border-border bg-card p-8 text-center">
-              <Shield className="mx-auto mb-2 text-muted-foreground" size={28} />
-              <p className="font-mono text-sm text-foreground">
-                {isRu ? "У вас пока нет сохранённых сканов" : "No saved scans in your history yet"}
-              </p>
-              <p className="mt-1 font-mono text-xs text-muted-foreground">
-                {isRu
-                  ? "Все сканы, запущенные вами после входа в аккаунт, автоматически сохраняются здесь."
-                  : "Every scan you run while signed in is automatically recorded here."}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2.5">
-              {scans.map((s) => {
-                const badge = VERDICT_BADGE[s.verdict || "SCANNING"] || VERDICT_BADGE.SCANNING;
-                const dateStr = new Date(s.created_at * 1000).toLocaleString();
-                return (
-                  <div
-                    key={s.task_id}
-                    className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2.5">
-                        <span className={`rounded border px-2 py-0.5 font-mono text-[10px] font-bold ${badge}`}>
-                          {s.verdict || "SCANNING"}
-                        </span>
-                        <span className="truncate font-mono text-sm font-semibold text-foreground">
-                          {s.project || s.target}
-                        </span>
-                      </div>
-                      <p className="mt-1 font-mono text-xs text-muted-foreground truncate">
-                        Target: {s.target} · {dateStr}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4 font-mono text-xs">
-                      <div>
-                        <span className="text-muted-foreground">Patterns: </span>
-                        <span className="font-bold text-foreground">{s.patterns_total}</span>
-                        {" ("}
-                        <span className="text-red-400">{s.patterns_critical}C</span>
-                        {" / "}
-                        <span className="text-orange-400">{s.patterns_high}H</span>
-                        {")"}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+
+          <button
+            onClick={refreshHistory}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+          >
+            <RefreshCw size={12} />
+            <span>{isRu ? "Обновить" : "Refresh"}</span>
+          </button>
         </div>
+
+        {/* TAB 1: User Scan History */}
+        {activeTab === "history" && (
+          <div>
+            {scans.length === 0 ? (
+              <div className="rounded-xl border border-border bg-card p-8 text-center">
+                <Shield className="mx-auto mb-2 text-muted-foreground" size={28} />
+                <p className="font-mono text-sm text-foreground">
+                  {isRu ? "У вас пока нет сохранённых сканов" : "No saved scans in your history yet"}
+                </p>
+                <p className="mt-1 font-mono text-xs text-muted-foreground">
+                  {isRu
+                    ? "Все сканы, запущенные вами после входа в аккаунт, автоматически сохраняются здесь."
+                    : "Every scan you run while signed in is automatically recorded here."}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {scans.map((s) => {
+                  const badge = VERDICT_BADGE[s.verdict || "SCANNING"] || VERDICT_BADGE.SCANNING;
+                  const dateStr = new Date(s.created_at * 1000).toLocaleString();
+                  return (
+                    <div
+                      key={s.task_id}
+                      className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2.5">
+                          <span className={`rounded border px-2 py-0.5 font-mono text-[10px] font-bold ${badge}`}>
+                            {s.verdict || "SCANNING"}
+                          </span>
+                          <span className="truncate font-mono text-sm font-semibold text-foreground">
+                            {s.project || s.target}
+                          </span>
+                        </div>
+                        <p className="mt-1 font-mono text-xs text-muted-foreground truncate">
+                          Target: {s.target} · {dateStr}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
+                        <div className="mr-2">
+                          <span className="text-muted-foreground">Patterns: </span>
+                          <span className="font-bold text-foreground">{s.patterns_total}</span>
+                          {" ("}
+                          <span className="text-red-400">{s.patterns_critical}C</span>
+                          {" / "}
+                          <span className="text-orange-400">{s.patterns_high}H</span>
+                          {")"}
+                        </div>
+
+                        <button
+                          onClick={() => handleOpenSavedScan(s.task_id)}
+                          disabled={loadingScanId === s.task_id}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-50"
+                        >
+                          <Eye size={13} />
+                          <span>
+                            {loadingScanId === s.task_id
+                              ? isRu ? "Загрузка..." : "Loading..."
+                              : isRu ? "Открыть досье" : "Open Dossier"}
+                          </span>
+                        </button>
+
+                        <a
+                          href={getScanExportUrl(s.task_id)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+                        >
+                          <Download size={13} />
+                          <span>JSON</span>
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 2: Watchlist & Contract Drift Alerts (Arkham / Tenderly style) */}
+        {activeTab === "watchlist" && (
+          <div className="space-y-6">
+            <form onSubmit={handleAddWatch} className="rounded-xl border border-border bg-card p-5">
+              <h4 className="mb-3 font-mono text-xs uppercase tracking-wider text-primary font-semibold">
+                {isRu
+                  ? "➕ Добавить смарт-контракт или GitHub-репо на непрерывный 24/7 мониторинг"
+                  : "➕ Add Smart Contract or GitHub Repo to 24/7 Drift Watchlist"}
+              </h4>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <input
+                  type="text"
+                  value={watchTarget}
+                  onChange={(e) => setWatchTarget(e.target.value)}
+                  placeholder="0x... or github.com/org/repo"
+                  required
+                  className="sm:col-span-2 rounded-xl border border-border bg-background px-4 py-3 font-mono text-xs text-foreground outline-none focus:border-primary"
+                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={watchLabel}
+                    onChange={(e) => setWatchLabel(e.target.value)}
+                    placeholder={isRu ? "Метка (напр. Main Vault)" : "Label (e.g. Main Vault)"}
+                    className="flex-1 rounded-xl border border-border bg-background px-3 py-3 font-mono text-xs text-foreground outline-none focus:border-primary"
+                  />
+                  <button
+                    type="submit"
+                    disabled={addingWatch}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-3 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-50"
+                  >
+                    <Plus size={14} />
+                    <span>{isRu ? "Следить" : "Watch"}</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            {watchlist.length === 0 ? (
+              <div className="rounded-xl border border-border bg-card p-8 text-center font-mono text-xs text-muted-foreground">
+                {isRu
+                  ? "Список наблюдения пуст. Добавьте адрес контракта или репозиторий выше для отслеживания новых коммитов, смены Proxy-имплементации и движений китов."
+                  : "Watchlist is empty. Add a contract or repo above to track proxy upgrades, new commits, and whale movements."}
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {watchlist.map((w) => (
+                  <div
+                    key={w.id}
+                    className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
+                        <span className="font-mono text-sm font-bold text-foreground">{w.label}</span>
+                        <span className="rounded border border-primary/40 bg-primary/10 px-2 py-0.5 font-mono text-[10px] text-primary">
+                          DRIFT GUARD ACTIVE
+                        </span>
+                      </div>
+                      <p className="mt-1 font-mono text-xs text-muted-foreground truncate">{w.target}</p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteWatch(w.id)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-3 py-1.5 font-mono text-xs text-muted-foreground hover:border-red-500/50 hover:text-red-400"
+                    >
+                      <Trash2 size={13} />
+                      <span>{isRu ? "Удалить" : "Remove"}</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 3: 24/7 Live Autonomous Radar Feed (CertiK Skynet style) */}
+        {activeTab === "radar" && (
+          <div className="space-y-3">
+            <p className="font-mono text-xs text-muted-foreground mb-2">
+              {isRu
+                ? "Живая лента находок автономных радаров BORIS (из базы radar_discoveries.db на сервере):"
+                : "Live stream of autonomous BORIS radar discoveries (from server radar_discoveries.db):"}
+            </p>
+            {radarAudits.map((a, idx) => {
+              const badge = VERDICT_BADGE[a.risk_level] || VERDICT_BADGE.LOW;
+              return (
+                <div
+                  key={idx}
+                  className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2.5">
+                      <span className={`rounded border px-2 py-0.5 font-mono text-[10px] font-bold ${badge}`}>
+                        {a.risk_level} (Score: {a.risk_score})
+                      </span>
+                      <span className="rounded bg-background px-2 py-0.5 font-mono text-[10px] uppercase text-primary">
+                        {a.chain}
+                      </span>
+                      <span className="font-mono text-sm font-semibold text-foreground truncate">{a.address}</span>
+                    </div>
+                    <p className="mt-1 font-mono text-xs text-muted-foreground">
+                      Archetype: {a.name} · Scanned: {a.scan_date?.slice(0, 19).replace("T", " ")}
+                    </p>
+                  </div>
+                  <div className="font-mono text-xs">
+                    <span className="text-muted-foreground">Findings: </span>
+                    <strong className="text-foreground">{a.findings_total}</strong>
+                    {" ("}
+                    <span className="text-red-400">{a.findings_critical}C</span>
+                    {" / "}
+                    <span className="text-orange-400">{a.findings_high}H</span>
+                    {")"}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </RevealOnScroll>
     </div>
   );
