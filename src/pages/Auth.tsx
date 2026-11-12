@@ -5,7 +5,9 @@ import { Shield, Mail, Lock, User, ArrowRight, Terminal, AlertCircle } from "luc
 import BorisLogo from "@/components/BorisLogo";
 import { apiLogin, apiRegister, apiGoogleAuth, getSavedToken } from "@/lib/auth";
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+const GOOGLE_CLIENT_ID =
+  import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+  "413186817939-this8dsm2d5o719ee19ae3lotc1t4vlm.apps.googleusercontent.com";
 
 declare global {
   interface Window {
@@ -187,53 +189,48 @@ const Auth = () => {
           </button>
         </div>
 
-        {/* Google Sign-In Button */}
-        {GOOGLE_CLIENT_ID ? (
-          <div className="mb-4 flex flex-col items-center">
-            <div ref={googleBtnRef} className="w-full flex justify-center" />
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={handleGoogleCustomClick}
-            className="mb-4 flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-background py-3 px-4 font-mono text-xs font-semibold text-foreground transition-all hover:border-primary/60 hover:bg-accent"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24">
-              <path
-                fill="#EA4335"
-                d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"
-              />
-              <path
-                fill="#4285F4"
-                d="M23.5 12.3c0-.8-.1-1.7-.2-2.5H12v4.8h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.3 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.2 0 13.5s.6 4.5 1.6 6.5l3.7-2.9z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.8C3.5 21.4 7.4 24 12 24z"
-              />
-            </svg>
-            <span>{isRu ? "Продолжить через Google" : "Continue with Google"}</span>
-          </button>
-        )}
+        {/* Google Sign-In Button (Custom Cyber Styled) */}
+        <button
+          type="button"
+          disabled={loading}
+          onClick={handleGoogleCustomClick}
+          className="mb-4 flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-background py-3.5 px-4 font-mono text-xs font-semibold text-foreground transition-all hover:border-primary/60 hover:bg-accent disabled:opacity-50"
+        >
+          <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
+            <path
+              fill="#EA4335"
+              d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"
+            />
+            <path
+              fill="#4285F4"
+              d="M23.5 12.3c0-.8-.1-1.7-.2-2.5H12v4.8h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.3 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.2 0 13.5s.6 4.5 1.6 6.5l3.7-2.9z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.8C3.5 21.4 7.4 24 12 24z"
+            />
+          </svg>
+          <span>{isRu ? "Продолжить через Google" : "Continue with Google"}</span>
+        </button>
 
         {googleHint && (
           <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 font-mono text-[11px] text-amber-300">
             {isRu
-              ? "Бэкенд Google OAuth готов (/api/auth/google). Для активации окна Google добавьте VITE_GOOGLE_CLIENT_ID или используйте вход по Email + Пароль ниже."
-              : "Google OAuth backend (/api/auth/google) is active. Set VITE_GOOGLE_CLIENT_ID or sign in with Email + Password below."}
+              ? "Модуль Google загружается или блокируется AdBlock. Попробуйте ещё раз через секунду или войдите по Email."
+              : "Google SDK is still loading or blocked by an adblocker. Try again in a moment or sign in with Email below."}
           </div>
         )}
 
-        <div className="relative my-5 flex items-center justify-center">
-          <div className="border-t border-border w-full" />
-          <span className="bg-card px-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        <div className="my-5 flex items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="shrink-0 whitespace-nowrap font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
             {isRu ? "или по Email" : "or with Email"}
           </span>
-          <div className="border-t border-border w-full" />
+          <div className="h-px flex-1 bg-border" />
         </div>
 
         {/* Form */}
