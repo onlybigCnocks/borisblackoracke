@@ -254,6 +254,7 @@ const DemoScanner = () => {
       localStorage.setItem(LS_TASK_ID, newTaskId);
       localStorage.setItem(LS_INPUT, trimmed);
       localStorage.setItem(LS_START_TIME, String(scanStartTime.current));
+      window.dispatchEvent(new Event("boris-scan-started"));
     } catch {
       setErrorMsg(isRu ? "⚠️ Сервер анализа недоступен. Telegram: @BlackOracleBORIS_bot" : "⚠️ Analysis server unavailable. Telegram: @BlackOracleBORIS_bot");
       setState("error");
@@ -279,6 +280,7 @@ const DemoScanner = () => {
         if (data.status === "done") {
           setResult(data as DemoScanResult);
           setState("done"); clearPersistence(); clearInterval(interval);
+          window.dispatchEvent(new Event("boris-scan-done"));
         } else if (data.status === "error") {
           setErrorMsg(data.message || "Unknown error");
           setState("error"); clearPersistence(); clearInterval(interval);

@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { RevealOnScroll, GlowCard } from "@/components/ui-boris";
+import DemoScanner from "@/components/DemoScanner";
 import {
-  Search,
   ArrowUpRight,
   Key,
   Copy,
@@ -11,7 +11,6 @@ import {
   RefreshCw,
   LogOut,
   Shield,
-  Terminal,
 } from "lucide-react";
 import {
   apiGetMe,
@@ -49,15 +48,24 @@ const Dashboard = () => {
       navigate("/auth");
       return;
     }
-    apiGetMe()
-      .then((data) => {
-        setUser(data.user);
-        setScans(data.scans || []);
-      })
-      .catch(() => {
-        navigate("/auth");
-      })
-      .finally(() => setLoading(false));
+    const fetchProfile = () => {
+      apiGetMe()
+        .then((data) => {
+          setUser(data.user);
+          setScans(data.scans || []);
+        })
+        .catch(() => {
+          navigate("/auth");
+        })
+        .finally(() => setLoading(false));
+    };
+    fetchProfile();
+    window.addEventListener("boris-scan-started", fetchProfile);
+    window.addEventListener("boris-scan-done", fetchProfile);
+    return () => {
+      window.removeEventListener("boris-scan-started", fetchProfile);
+      window.removeEventListener("boris-scan-done", fetchProfile);
+    };
   }, [navigate]);
 
   const handleCopyKey = () => {
@@ -84,15 +92,14 @@ const Dashboard = () => {
     navigate("/auth");
   };
 
-  const handleQuickScan = () => {
-    const target = quickInput.trim();
-    if (target) {
-      localStorage.setItem("boris_prefill_target", target);
-    }
-    navigate("/");
-    setTimeout(() => {
-      document.getElementById("demo-scanner")?.scrollIntoView({ behavior: "smooth" });
-    }, 150);
+  // Refresh history periodically while on dashboard
+  const refreshHistory = () => {
+    apiGetMe()
+      .then((data) => {
+        setUser(data.user);
+        setScans(data.scans || []);
+      })
+      .catch(() => {});
   };
 
   if (loading && !user) {
@@ -226,38 +233,25 @@ const Dashboard = () => {
           </div>
         </GlowCard>
 
-        {/* Quick Scan Bar */}
-        <div className="mb-8">
-          <h3 className="mb-3 flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-            <Terminal size={14} className="text-primary" />
-            <span>{isRu ? "Запустить новый скан" : "Launch New Inspection"}</span>
-          </h3>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-              <input
-                type="text"
-                value={quickInput}
-                onChange={(e) => setQuickInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleQuickScan()}
-                placeholder={isRu ? "github.com/protocol/repo или 0x1234...abcd" : "github.com/protocol/repo or 0x1234...abcd"}
-                className="w-full rounded-xl border border-border bg-card py-3.5 pl-12 pr-4 font-mono text-sm text-foreground outline-none focus:border-primary"
-              />
-            </div>
-            <button
-              onClick={handleQuickScan}
-              className="rounded-xl bg-primary px-8 py-3.5 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
-            >
-              {isRu ? "Сканировать →" : "Run Scan →"}
-            </button>
-          </div>
+        {/* Embedded Live Scanner right inside the Operator Cabinet */}
+        <div className="mb-10 rounded-2xl border border-border bg-card/40 px-2">
+          <DemoScanner />
         </div>
 
         {/* User Scan History */}
         <div>
-          <h3 className="mb-4 text-lg font-semibold text-foreground">
-            {isRu ? "История ваших сканирований" : "Your Inspection History"}
-          </h3>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-foreground">
+              {isRu ? "История ваших сканирований" : "Your Inspection History"}
+            </h3>
+            <button
+              onClick={refreshHistory}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+            >
+              <RefreshCw size={12} />
+              <span>{isRu ? "Обновить" : "Refresh"}</span>
+            </button>
+          </div>
           {scans.length === 0 ? (
             <div className="rounded-xl border border-border bg-card p-8 text-center">
               <Shield className="mx-auto mb-2 text-muted-foreground" size={28} />
