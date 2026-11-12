@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { GlowCard } from "@/components/ui-boris";
-import { CheckCircle, Send } from "lucide-react";
+import { CheckCircle, Send, ShieldAlert, Lock, Sparkles, Terminal } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://api.black-oracle.com";
@@ -12,6 +11,34 @@ const TIMEOUT_MS = 20 * 60 * 1000;
 const LS_TASK_ID = "boris_demo_taskId";
 const LS_INPUT = "boris_demo_input";
 const LS_START_TIME = "boris_demo_startTime";
+
+const QUICK_TARGETS = [
+  {
+    label: "USDC Proxy",
+    badge: "ERC-20",
+    target: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+  },
+  {
+    label: "Uniswap V3 Factory",
+    badge: "DEX",
+    target: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
+  },
+  {
+    label: "Curve 3Pool",
+    badge: "AMM",
+    target: "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7",
+  },
+  {
+    label: "Lido stETH",
+    badge: "LSD",
+    target: "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",
+  },
+  {
+    label: "Uniswap/v4-core",
+    badge: "GitHub",
+    target: "https://github.com/Uniswap/v4-core",
+  },
+];
 
 // --- Full API interface ---
 
@@ -42,6 +69,31 @@ interface DemoScanResult {
   layers: Record<string, boolean>;
   more_count: number;
   top_findings_preview?: Array<{ type: string; severity: string; file: string }>;
+  exploit_surface?: {
+    paths_count: number;
+    preconditions_total: number;
+    preconditions_matched: number;
+    match_ratio: string;
+    severity_breakdown: Record<string, number>;
+    label: { ru: string; en: string };
+  } | null;
+  market?: {
+    total_liquidity?: string | null;
+    total_pools?: number;
+    chains?: string[];
+    cex_count?: number;
+    wash_score?: number;
+    observations?: { ru: string[]; en: string[] };
+  } | null;
+  governance?: {
+    snapshot?: boolean;
+    emergency?: boolean;
+    freeze?: boolean;
+    claimed_model?: string;
+    observed_control?: string;
+    admin_functions_count?: number;
+    concentration?: string;
+  } | null;
   analyzed_files?: { shown: string[]; total: number; more: number };
   analysis_status?: Array<{
     key: string;
@@ -95,7 +147,6 @@ function formatDate(iso: string): string {
   }
 }
 
-
 const VERDICT_STYLE: Record<string, string> = {
   SIGNIFICANT_SURFACE: "border-amber-500/60 bg-amber-500/15 text-amber-400",
   MODERATE_SURFACE: "border-yellow-500/60 bg-yellow-500/15 text-yellow-400",
@@ -103,10 +154,17 @@ const VERDICT_STYLE: Record<string, string> = {
   CLEAN: "border-green-500/60 bg-green-500/15 text-green-400",
 };
 
+const SEVERITY_BADGE: Record<string, string> = {
+  CRITICAL: "border-red-500/50 bg-red-500/15 text-red-400",
+  HIGH: "border-orange-500/50 bg-orange-500/15 text-orange-400",
+  MEDIUM: "border-yellow-500/50 bg-yellow-500/15 text-yellow-400",
+  LOW: "border-blue-500/50 bg-blue-500/15 text-blue-400",
+};
+
 // --- Component ---
 
 const DemoScanner = () => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const isRu = i18n.language === "ru";
 
   const [input, setInput] = useState("");
@@ -144,11 +202,15 @@ const DemoScanner = () => {
       scanStartTime.current = startTime;
       setCurrentStep(isRu ? "⏳ Ожидание в очереди..." : "⏳ Waiting in queue...");
     }
-  }, []);
+  }, [isRu]);
 
-  const startScan = useCallback(async () => {
-    const trimmed = input.trim();
+  const startScan = useCallback(async (overrideTarget?: string) => {
+    const raw = typeof overrideTarget === "string" ? overrideTarget : input;
+    const trimmed = raw.trim();
     if (!trimmed) return;
+    if (typeof overrideTarget === "string") {
+      setInput(trimmed);
+    }
     if (!isValidTarget(trimmed)) {
       setValidationError(isRu
         ? "Введите адрес контракта (0x...) или ссылку на GitHub репозиторий"
@@ -171,7 +233,7 @@ const DemoScanner = () => {
         body: JSON.stringify({ target: trimmed }),
       });
       if (res.status === 429) {
-        setErrorMsg(isRu ? "Лимит бесплатных сканов: 3 в сутки. Используйте Telegram-бот для полного доступа." : "Free scan limit: 3 per day. Use Telegram bot for full access.");
+        setErrorMsg(isRu ? "Лимит бесплатных сканов: 3 в час. Используйте Telegram-бот для полного доступа." : "Free scan limit: 3 per hour. Use Telegram bot for full access.");
         setState("error"); return;
       }
       if (!res.ok) throw new Error("API error");
@@ -198,7 +260,7 @@ const DemoScanner = () => {
       try {
         const res = await fetch(`${API_BASE}/api/demo-scan/status/${taskId}`);
         if (res.status === 429) {
-          setErrorMsg(isRu ? "Лимит бесплатных сканов: 3 в сутки. Используйте Telegram-бот для полного доступа." : "Free scan limit: 3 per day. Use Telegram bot for full access.");
+          setErrorMsg(isRu ? "Лимит бесплатных сканов: 3 в час. Используйте Telegram-бот для полного доступа." : "Free scan limit: 3 per hour. Use Telegram bot for full access.");
           setState("error"); clearPersistence(); clearInterval(interval); return;
         }
         if (!res.ok) throw new Error("Poll error");
@@ -227,15 +289,19 @@ const DemoScanner = () => {
 
   return (
     <section id="demo-scanner" className="container mx-auto px-4 py-20">
+      <div className="mb-2 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-primary">
+        <Terminal size={14} />
+        <span>{isRu ? "Интерактивный песочный скан" : "Interactive Live Sandbox"}</span>
+      </div>
       <h2 className="mb-2 text-3xl font-bold text-foreground md:text-4xl">
         {isRu ? "Проверь проект" : "Scan a Project"}
       </h2>
-      <p className="mb-8 font-mono text-sm text-muted-foreground">
-        {isRu ? "Вставь ссылку на GitHub репозиторий или адрес смарт-контракта" : "Paste a GitHub repo URL or smart contract address"}
+      <p className="mb-6 font-mono text-sm text-muted-foreground">
+        {isRu ? "Вставь ссылку на GitHub репозиторий или адрес смарт-контракта (EVM / Solana / Tron)" : "Paste a GitHub repo URL or smart contract address (EVM / Solana / Tron)"}
       </p>
 
       {/* Input */}
-      <div className="flex gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <input
           type="text"
           value={input}
@@ -246,9 +312,9 @@ const DemoScanner = () => {
           className="flex-1 rounded-xl border border-border bg-card py-4 px-5 font-mono text-sm text-foreground outline-none transition-all focus:border-primary focus:shadow-[0_0_20px_hsl(var(--primary)/0.3)] disabled:opacity-50"
         />
         <button
-          onClick={startScan}
+          onClick={() => startScan()}
           disabled={state === "scanning" || !input.trim()}
-          className="rounded-xl bg-primary px-6 py-4 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow disabled:opacity-50 whitespace-nowrap"
+          className="rounded-xl bg-primary px-8 py-4 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow disabled:opacity-50 whitespace-nowrap"
         >
           {state === "scanning" ? (isRu ? "Анализ..." : "Analyzing...") : (isRu ? "Запустить анализ" : "Run Analysis")}
         </button>
@@ -256,20 +322,54 @@ const DemoScanner = () => {
 
       {validationError && <p className="mt-2 font-mono text-xs text-red-400">{validationError}</p>}
 
-      <p className="mt-2 font-mono text-xs text-muted-foreground">
-        {isRu ? "Бесплатный GUEST-отчёт. ~3-15 мин на полный скан." : "Free GUEST report. ~3-15 min for full scan."}
+      {/* Quick Presets */}
+      <div className="mt-3.5 flex flex-wrap items-center gap-2">
+        <span className="inline-flex items-center gap-1 font-mono text-xs text-muted-foreground mr-1">
+          <Sparkles size={12} className="text-primary" />
+          {isRu ? "Быстрый тест:" : "Quick presets:"}
+        </span>
+        {QUICK_TARGETS.map((p) => {
+          const active = input.trim().toLowerCase() === p.target.toLowerCase();
+          return (
+            <button
+              key={p.label}
+              type="button"
+              disabled={state === "scanning"}
+              onClick={() => setInput(p.target)}
+              className={`group inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 font-mono text-xs transition-all disabled:opacity-40 ${
+                active
+                  ? "border-primary bg-primary/15 text-primary"
+                  : "border-border bg-card/70 text-muted-foreground hover:border-primary/60 hover:text-foreground"
+              }`}
+            >
+              <span>{p.label}</span>
+              <span className="rounded bg-background/80 px-1.5 py-0.2 text-[10px] text-muted-foreground group-hover:text-primary">
+                {p.badge}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <p className="mt-2.5 font-mono text-xs text-muted-foreground">
+        {isRu ? "Бесплатный GUEST-тизер (поверхность риска и ключевые сигналы). ~1–5 мин на скан." : "Free GUEST teaser (risk surface & top signals). ~1–5 min per scan."}
       </p>
 
       {/* Scanning State */}
       {state === "scanning" && (
-        <div className="mt-8 rounded-xl border border-border bg-card p-6">
-          <div className="mb-4 flex items-center gap-3">
-            <span className="relative flex h-3 w-3">
-              <span className="pulse-dot absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex h-3 w-3 rounded-full bg-primary" />
-            </span>
-            <span className="font-mono text-sm font-semibold text-foreground">
-              {isRu ? "Анализ запущен..." : "Analysis running..."}
+        <div className="mt-8 rounded-xl border border-primary/30 bg-card p-6 shadow-[0_0_30px_hsl(var(--primary)/0.08)]">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-3 w-3">
+                <span className="pulse-dot absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-primary" />
+              </span>
+              <span className="font-mono text-sm font-semibold text-foreground">
+                {isRu ? "БОРИС сканирует цель..." : "BORIS is scanning target..."}
+              </span>
+            </div>
+            <span className="rounded border border-border bg-background px-2 py-0.5 font-mono text-[11px] text-muted-foreground truncate max-w-[240px]">
+              {input}
             </span>
           </div>
           <div className="mb-3 flex items-center gap-3 font-mono text-sm">
@@ -283,14 +383,17 @@ const DemoScanner = () => {
             </div>
           )}
           {tail.length > 0 && (
-            <div className="mt-3 rounded-lg border border-border bg-background p-3 max-h-32 overflow-y-auto">
+            <div className="mt-3 rounded-lg border border-border bg-background/90 p-3.5 max-h-36 overflow-y-auto font-mono text-[11px] text-muted-foreground space-y-1">
               {tail.map((line, i) => (
-                <p key={i} className="font-mono text-[11px] text-muted-foreground leading-relaxed">{line}</p>
+                <p key={i} className="leading-relaxed">
+                  <span className="text-primary/70 mr-2">›</span>
+                  {line}
+                </p>
               ))}
             </div>
           )}
           <p className="mt-4 font-mono text-xs text-muted-foreground">
-            {isRu ? "Это реальный анализ. Полное сканирование может занять до 15 минут." : "This is a real scan. Full analysis may take up to 15 minutes."}
+            {isRu ? "Запущены реальные анализаторы (AST, Slither/Semgrep, On-Chain Граф). Подождите завершения." : "Real engines active (AST, Slither/Semgrep, On-Chain Graph). Please wait."}
           </p>
         </div>
       )}
@@ -323,16 +426,19 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
   const facts = result.facts?.[lang] || result.facts?.en || (Array.isArray(result.facts) ? result.facts : []);
   const analyzedFiles = result.analyzed_files;
   const analysisStatus = result.analysis_status;
+  const topFindings = result.top_findings_preview || [];
+  const exploitSurface = result.exploit_surface;
+  const governance = result.governance;
 
   return (
-    <div className="mt-8 rounded-xl border border-border bg-card overflow-hidden">
+    <div className="mt-8 rounded-xl border border-border bg-card overflow-hidden shadow-xl">
       {/* Row 1 — Header */}
-      <div className="border-b border-border px-5 py-4">
+      <div className="border-b border-border bg-background/40 px-5 py-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-lg shrink-0">{result.archetype_icon}</span>
-            <span className="font-mono text-sm font-bold text-foreground truncate">{result.project}</span>
-            <span className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="text-xl shrink-0">{result.archetype_icon}</span>
+            <span className="font-mono text-base font-bold text-foreground truncate">{result.project}</span>
+            <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 font-mono text-[10px] font-semibold text-primary shrink-0">
               {result.archetype_label?.[lang] || result.archetype_label?.en || result.archetype}
             </span>
             <span className="font-mono text-[11px] text-muted-foreground shrink-0">{formatDate(result.scan_date)}</span>
@@ -342,33 +448,31 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
           </span>
         </div>
         {result.intro && (
-          <p className="mt-2 font-mono text-xs italic text-muted-foreground line-clamp-2">
+          <p className="mt-2.5 font-mono text-xs text-muted-foreground leading-relaxed">
             {result.intro?.[lang] || result.intro?.en || ""}
           </p>
         )}
-        {/* Prominent disclaimer */}
-        <div className="mt-3 rounded-md border-l-[3px]" style={{ borderColor: '#F59E0B', background: 'rgba(245, 158, 11, 0.08)', padding: '12px 16px' }}>
-          <p className="font-mono text-[16px]" style={{ color: '#F59E0B' }}>
-            {(result as any).disclaimer?.main?.[lang] || (isRu
-              ? "⚠️ Это не означает эксплуатацию. Это означает наличие поверхности риска."
-              : "⚠️ This does not imply exploitation. It indicates the presence of a risk surface.")}
-          </p>
-        </div>
       </div>
 
-      <div className="p-5 space-y-5">
+      <div className="p-5 space-y-6">
         {/* Row 2 — Scope stats (horizontal scroll) */}
         <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ flexWrap: "nowrap" }}>
           {(result.scope?.patterns_total ?? 0) > 0 && (
-            <ScopeStat value={String(result.scope.patterns_total)} label="Patterns">
-              <span className="font-mono text-[9px]">
-                <span className="text-red-400">{result.scope?.patterns_critical ?? 0}C</span>
+            <ScopeStat value={String(result.scope.patterns_total)} label={isRu ? "Паттернов" : "Patterns"}>
+              <span className="font-mono text-[10px]">
+                <span className="text-red-400 font-semibold">{result.scope?.patterns_critical ?? 0}C</span>
                 {" / "}
-                <span className="text-orange-400">{result.scope?.patterns_high ?? 0}H</span>
+                <span className="text-orange-400 font-semibold">{result.scope?.patterns_high ?? 0}H</span>
               </span>
             </ScopeStat>
           )}
-          <ScopeStat value={`${activeLayers}/${totalLayers}`} label="Layers" />
+          <ScopeStat value={`${activeLayers}/${totalLayers}`} label={isRu ? "Слоёв" : "Layers"} />
+
+          {exploitSurface && exploitSurface.paths_count > 0 && (
+            <ScopeStat value={String(exploitSurface.paths_count)} label={isRu ? "Цепочки атак" : "Exploit Chains"}>
+              <span className="font-mono text-[9px] text-amber-400">modeled</span>
+            </ScopeStat>
+          )}
 
           {result.scope?.social && result.scope.social.total_followers > 0 && (
             <ScopeStat value={formatFollowers(result.scope.social.total_followers)} label="Followers">
@@ -397,7 +501,7 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
           )}
 
           {result.scope?.liquidity && (
-            <ScopeStat value={result.scope.liquidity} label="Liquidity" />
+            <ScopeStat value={result.scope.liquidity} label={isRu ? "Ликвидность" : "Liquidity"} />
           )}
 
           {result.scope?.top10_holders_pct != null && result.scope.top10_holders_pct > 0 && (
@@ -413,48 +517,134 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
           )}
         </div>
 
-        {/* Analyzed Files */}
-        {analyzedFiles && analyzedFiles.shown?.length > 0 && (
-          <div>
-            <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2 font-mono">
-              {isRu ? "Проанализированные файлы" : "Analyzed Files"}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
-              {analyzedFiles.shown.map((file, i) => (
-                <p key={i} className="font-mono text-[11px] text-muted-foreground truncate">
-                  📄 {file}
-                </p>
-              ))}
+        {/* Top Findings Preview (Surface Teaser without line numbers/PoC) */}
+        {topFindings.length > 0 && (
+          <div className="rounded-xl border border-primary/25 bg-background/60 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-foreground font-mono font-semibold">
+                <ShieldAlert size={14} className="text-primary" />
+                {isRu ? "Обнаруженные сигнатуры (Превью)" : "Detected Signatures (Preview)"}
+              </h3>
+              <span className="inline-flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
+                <Lock size={11} className="text-primary" />
+                {isRu ? "Строки кода и PoC скрыты" : "Lines & PoC locked"}
+              </span>
             </div>
-            {analyzedFiles.more > 0 && (
-              <p className="mt-1.5 font-mono text-xs italic text-muted-foreground">
-                {isRu ? `...и ещё ${analyzedFiles.more} файлов` : `...and ${analyzedFiles.more} more files`}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {topFindings.map((f, i) => {
+                const badgeStyle = SEVERITY_BADGE[f.severity?.toUpperCase()] || SEVERITY_BADGE.LOW;
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-mono text-xs font-semibold text-foreground truncate">{f.type}</p>
+                      <p className="font-mono text-[10px] text-muted-foreground truncate">
+                        {f.file ? `${f.file} · line ███` : "contract · line ███"}
+                      </p>
+                    </div>
+                    <span className={`shrink-0 rounded border px-2 py-0.5 font-mono text-[10px] font-bold ${badgeStyle}`}>
+                      {f.severity}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            {(result.more_count ?? 0) > 0 && (
+              <p className="mt-2.5 font-mono text-xs text-primary/90">
+                + {result.more_count} {isRu ? "дополнительных паттернов и граф вызовов доступны в полном отчёте" : "additional patterns & call-graph available in full report"}
               </p>
             )}
           </div>
         )}
 
-        {/* Analysis Completed */}
-        {analysisStatus && analysisStatus.length > 0 && (
-          <div>
-            <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2 font-mono">
-              {isRu ? "Выполненный анализ" : "Analysis Completed"}
-            </h3>
-            <ul className="space-y-1">
-              {analysisStatus.map((item) => (
-                <li key={item.key} className="flex items-start gap-1.5 font-mono text-xs">
-                  <span className="shrink-0">{item.status === "done" ? "✅" : "⬜"}</span>
-                  <span>
-                    <span className="text-foreground">{item.label?.[lang] || item.label?.en || item.key}</span>
-                    {item.detail?.[lang] && (
-                      <span className="ml-1.5 text-muted-foreground">{item.detail[lang]}</span>
-                    )}
-                  </span>
-                </li>
-              ))}
-            </ul>
+        {/* Exploit Surface + Governance flags teaser */}
+        {(exploitSurface || governance) && (
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {exploitSurface && exploitSurface.paths_count > 0 && (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3.5">
+                <p className="font-mono text-[10px] uppercase tracking-wider text-amber-400">
+                  {isRu ? "Моделирование векторов атаки" : "Attack Vector Modeling"}
+                </p>
+                <p className="mt-1 font-mono text-xs font-semibold text-foreground">
+                  ⚡ {exploitSurface.label?.[lang] || exploitSurface.label?.en}
+                </p>
+                <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+                  {isRu ? "Детализация цепочки транзакций доступна в BLACKBOX-отчёте." : "Transaction chain breakdown available in BLACKBOX report."}
+                </p>
+              </div>
+            )}
+            {governance && (governance.emergency || governance.freeze || (governance.admin_functions_count ?? 0) > 0) && (
+              <div className="rounded-lg border border-border bg-background/60 p-3.5">
+                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {isRu ? "Контур привилегий и управления" : "Governance & Privilege Surface"}
+                </p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5 font-mono text-[11px]">
+                  {governance.emergency && (
+                    <span className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-amber-300">
+                      Emergency Drain / Pause
+                    </span>
+                  )}
+                  {governance.freeze && (
+                    <span className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-amber-300">
+                      Blacklist / Freeze
+                    </span>
+                  )}
+                  {(governance.admin_functions_count ?? 0) > 0 && (
+                    <span className="rounded border border-border bg-card px-2 py-0.5 text-foreground">
+                      {governance.admin_functions_count} {isRu ? "admin-функций" : "admin functions"}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
+
+        {/* Analyzed Files & Completed Engines side by side */}
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          {analyzedFiles && analyzedFiles.shown?.length > 0 && (
+            <div>
+              <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2 font-mono">
+                {isRu ? "Затронутые модули" : "Inspected Modules"}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                {analyzedFiles.shown.map((file, i) => (
+                  <p key={i} className="font-mono text-[11px] text-muted-foreground truncate">
+                    📄 {file}
+                  </p>
+                ))}
+              </div>
+              {analyzedFiles.more > 0 && (
+                <p className="mt-1.5 font-mono text-xs italic text-muted-foreground">
+                  {isRu ? `...и ещё ${analyzedFiles.more} файлов` : `...and ${analyzedFiles.more} more files`}
+                </p>
+              )}
+            </div>
+          )}
+
+          {analysisStatus && analysisStatus.length > 0 && (
+            <div>
+              <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2 font-mono">
+                {isRu ? "Отработавшие контуры" : "Executed Pipelines"}
+              </h3>
+              <ul className="space-y-1">
+                {analysisStatus.map((item) => (
+                  <li key={item.key} className="flex items-start gap-1.5 font-mono text-xs">
+                    <span className="shrink-0">{item.status === "done" ? "✅" : "⬜"}</span>
+                    <span>
+                      <span className="text-foreground">{item.label?.[lang] || item.label?.en || item.key}</span>
+                      {item.detail?.[lang] && (
+                        <span className="ml-1.5 text-muted-foreground">({item.detail[lang]})</span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
 
         {/* Observed facts */}
         <div>
@@ -463,62 +653,56 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
           </h3>
           {facts.length > 0 ? (
             <ul className="space-y-1">
-              {facts.slice(0, 3).map((fact, i) => (
-                <li key={i} className="font-mono text-sm text-foreground/80">
-                  <span className="text-muted-foreground mr-1.5">▸</span>{fact}
+              {facts.slice(0, 4).map((fact, i) => (
+                <li key={i} className="font-mono text-sm text-foreground/85">
+                  <span className="text-primary mr-1.5">▸</span>{fact}
                 </li>
               ))}
             </ul>
           ) : (
             <p className="font-mono text-sm text-muted-foreground italic">
-              {isRu ? "Значимых паттернов не обнаружено" : "No significant patterns detected"}
+              {isRu ? "Явных аномалий на базовом уровне не выявлено" : "No surface-level anomalies detected"}
             </p>
           )}
-          {facts.length > 3 && (
+          {facts.length > 4 && (
             <p className="mt-1.5 font-mono text-xs italic text-muted-foreground">
-              {isRu ? `...и ещё ${facts.length - 3}` : `...and ${facts.length - 3} more`}
+              {isRu ? `...и ещё ${facts.length - 4}` : `...and ${facts.length - 4} more`}
             </p>
           )}
-          {(result.more_count ?? 0) > 0 && (
-            <p className="mt-1 font-mono text-xs text-muted-foreground">
-              +{result.more_count} {isRu ? "находок в полном отчёте" : "findings in full report"}
-            </p>
-          )}
-          <p className="mt-2 font-mono italic text-muted-foreground" style={{ fontSize: '13px', color: '#6B7280' }}>
-            ℹ️ {(result as any).disclaimer?.facts_note?.[lang] || (isRu
-              ? "Некоторые факты могут быть частью архитектуры проекта или намеренных дизайн-решений."
-              : "Some facts may be part of the project architecture or intentional design decisions.")}
-          </p>
         </div>
 
         {/* CTA */}
-        <div className="relative">
-          <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-b from-transparent to-card pointer-events-none" />
-          <div className="relative z-10 flex flex-col items-center gap-2 pt-2">
-            <a
-              href="https://t.me/BlackOracleBORIS_bot"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow text-sm"
-            >
-              <Send size={16} />
-              {isRu ? "Открыть полный отчёт" : "Get Full Report"}
-            </a>
-            <span className="font-mono text-[10px] text-muted-foreground tracking-widest">RADAR · RAW · BLACKBOX</span>
-          </div>
+        <div className="rounded-xl border border-primary/40 bg-radial-red p-5 text-center">
+          <p className="font-mono text-xs text-foreground mb-1 font-semibold">
+            {isRu
+              ? "Полная расшифровка уязвимостей, точные строки кода, граф транзакций и проверка контракта в 1 клик:"
+              : "Full vulnerability breakdown, exact code lines, transaction graph & deep audit in 1 click:"}
+          </p>
+          <p className="font-mono text-[11px] text-muted-foreground mb-4">
+            {isRu
+              ? "Заберите полный отчёт (RADAR / RAW / BLACKBOX) в официальном Telegram-терминале BORIS"
+              : "Unlock the complete report (RADAR / RAW / BLACKBOX) in the official BORIS Telegram terminal"}
+          </p>
+          <a
+            href="https://t.me/BlackOracleBORIS_bot"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow text-sm"
+          >
+            <Send size={16} />
+            {isRu ? "Открыть полный отчёт в Telegram" : "Unlock Full Report in Telegram"}
+          </a>
         </div>
 
-        {/* Row 5 — Footer disclaimer */}
-        <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-4 py-2.5">
+        {/* Single clean disclaimer at bottom */}
+        <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-4 py-2.5 flex items-center justify-between gap-2 flex-wrap">
           <p className="font-mono text-[11px] text-yellow-400/80">
-            {isRu
-              ? "⚠️ Это не означает эксплуатацию. Это означает наличие поверхности риска."
-              : "⚠️ This does not imply exploitation. It indicates risk surface."}
+            {(result as any).disclaimer?.main?.[lang] || (isRu
+              ? "⚠️ Наличие поверхности риска не означает активную эксплуатацию. Часть паттернов может быть архитектурным решением."
+              : "⚠️ Risk surface presence does not imply active exploitation. Some patterns may be intentional design choices.")}
           </p>
+          <span className="font-mono text-[10px] text-muted-foreground">BORIS v2.4</span>
         </div>
-        <p className="text-center font-mono text-[10px] text-muted-foreground">
-          BORIS — {isRu ? "автоматизированная система инспекции" : "automated inspection system"}
-        </p>
       </div>
     </div>
   );
@@ -526,9 +710,9 @@ function ResultTeaser({ result, isRu }: { result: DemoScanResult; isRu: boolean 
 
 function ScopeStat({ value, label, children }: { value: string; label: string; children?: React.ReactNode }) {
   return (
-    <div className="shrink-0 min-w-[80px] rounded-lg border border-border bg-background p-2.5 text-center">
+    <div className="shrink-0 min-w-[90px] rounded-lg border border-border bg-background p-2.5 text-center">
       <p className="font-mono text-lg font-bold text-foreground leading-none">{value}</p>
-      <p className="text-[10px] text-muted-foreground mt-0.5">{label}</p>
+      <p className="text-[10px] text-muted-foreground mt-1">{label}</p>
       {children}
     </div>
   );
