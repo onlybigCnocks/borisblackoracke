@@ -670,6 +670,14 @@ const Dashboard = () => {
                           </button>
                         ) : null}
 
+                        <Link
+                          to={`/report/${s.task_id}`}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+                        >
+                          <ArrowUpRight size={13} />
+                          <span>{isRu ? "Поделиться" : "Share"}</span>
+                        </Link>
+
                         {user?.tier && user.tier.toUpperCase() !== "GUEST" ? (
                           <a
                             href={getScanExportUrl(s.task_id)}

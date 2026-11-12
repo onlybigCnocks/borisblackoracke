@@ -1,162 +1,176 @@
-import { useTranslation } from "react-i18next";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { RevealOnScroll, GlowCard, SectionLabel } from "@/components/ui-boris";
-import { MOCK_SCAN } from "@/lib/data";
-import { ArrowLeft, Download, Share2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
-import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { AlertTriangle, ArrowUpRight, Share2, Loader2, Shield } from "lucide-react";
 
-const riskColors: Record<string, string> = {
-  CRITICAL: "bg-primary text-primary-foreground",
-  HIGH: "bg-primary-bright/20 text-primary-bright",
-  MEDIUM: "bg-yellow-500/20 text-yellow-400",
-  LOW: "bg-green-500/20 text-green-400",
-  SAFE: "bg-muted text-muted-foreground",
-};
-
-const severityColors: Record<string, string> = {
-  CRITICAL: "border-primary bg-primary/10 text-primary",
-  HIGH: "border-primary-bright bg-primary-bright/10 text-primary-bright",
-  MEDIUM: "border-yellow-500 bg-yellow-500/10 text-yellow-400",
-  LOW: "border-green-500 bg-green-500/10 text-green-400",
-};
+const API_BASE = "https://api.black-oracle.com";
 
 const Report = () => {
-  const { t } = useTranslation();
   const { id } = useParams();
-  const scan = MOCK_SCAN;
-  const [expandedFindings, setExpandedFindings] = useState<Set<string>>(new Set());
+  const { i18n } = useTranslation();
+  const lang = i18n.language === "ru" ? "ru" : "en";
+  const [data, setData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
-  const toggleFinding = (fid: string) => {
-    setExpandedFindings(prev => {
-      const next = new Set(prev);
-      next.has(fid) ? next.delete(fid) : next.add(fid);
-      return next;
-    });
+  useEffect(() => {
+    if (!id) return;
+    fetch(`${API_BASE}/api/report/${id}`)
+      .then(async (r) => {
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.detail || `HTTP ${r.status}`);
+        setData(j);
+      })
+      .catch((e) => setError(e.message));
+  }, [id]);
+
+  const share = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
+  if (error) {
+    return (
+      <div className="container mx-auto min-h-screen px-4 py-24">
+        <div className="mx-auto max-w-lg rounded-xl border border-destructive/40 bg-card p-8 text-center">
+          <AlertTriangle className="mx-auto mb-3 text-destructive" size={30} />
+          <p className="font-mono text-sm text-foreground">{error}</p>
+          <Link to="/" className="mt-4 inline-block rounded-lg bg-primary px-5 py-2 font-mono text-xs font-semibold text-primary-foreground">
+            {lang === "ru" ? "На главную" : "Back home"}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="animate-spin text-primary" size={28} />
+      </div>
+    );
+  }
+
+  const r = data.report || {};
+  const sc = r.scope || {};
+  const label = (v: any) => (typeof v === "string" ? v : v?.[lang] || v?.en || "");
+  const verdictColor =
+    r.verdict === "SIGNIFICANT_SURFACE" ? "text-destructive border-destructive/40" : "text-primary border-primary/40";
+
   return (
-    <div className="container mx-auto min-h-screen px-4 py-12">
-      <RevealOnScroll>
-        <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary">
-          <ArrowLeft size={16} /> {t("report.back")}
-        </Link>
+    <div className="container mx-auto min-h-screen px-4 py-24">
+      <div className="mx-auto max-w-3xl space-y-6">
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                BORIS // PUBLIC REPORT
+              </p>
+              <h1 className="mt-1 truncate font-mono text-xl font-bold text-foreground">
+                {r.project || data.target}
+              </h1>
+              <p className="mt-1 truncate font-mono text-[11px] text-muted-foreground">{data.target}</p>
+            </div>
+            <button
+              onClick={share}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 font-mono text-xs text-muted-foreground hover:border-primary hover:text-primary"
+            >
+              <Share2 size={13} />
+              <span>{copied ? (lang === "ru" ? "Скопировано" : "Copied") : lang === "ru" ? "Поделиться" : "Share"}</span>
+            </button>
+          </div>
 
-        <div className="mb-8 flex flex-wrap items-center gap-4">
-          <h1 className="text-3xl font-bold text-foreground">{scan.target}</h1>
-          <span className={`rounded-lg px-4 py-1.5 text-sm font-bold ${riskColors[scan.riskLevel]}`}>
-            {scan.riskLevel}
-          </span>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className={`rounded border px-2.5 py-1 font-mono text-[10px] font-bold ${verdictColor}`}>
+              {r.verdict || "REPORT"}
+            </span>
+            {r.archetype && (
+              <span className="rounded border border-border px-2.5 py-1 font-mono text-[10px] text-muted-foreground">
+                {r.archetype_icon} {label(r.archetype_label) || r.archetype}
+              </span>
+            )}
+            <span className="rounded border border-border px-2.5 py-1 font-mono text-[10px] text-muted-foreground">
+              {String(data.task_id).slice(0, 8)}
+            </span>
+          </div>
+
+          {r.intro && <p className="mt-4 font-mono text-xs leading-relaxed text-muted-foreground">{label(r.intro)}</p>}
         </div>
 
-        <p className="mb-8 text-sm text-muted-foreground">
-          {t("report.scanDate")}: {new Date(scan.date).toLocaleString()}
-        </p>
-
-        {/* Score Grid */}
-        <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-          {(["critical", "high", "medium", "low"] as const).map((level) => {
-            const colors = { critical: "text-primary", high: "text-primary-bright", medium: "text-yellow-400", low: "text-green-400" };
-            return (
-              <GlowCard key={level}>
-                <p className="text-xs uppercase text-muted-foreground">{t(`report.${level}`)}</p>
-                <p className={`mt-1 font-mono text-3xl font-bold ${colors[level]}`}>
-                  {scan.findings[level]}
-                </p>
-              </GlowCard>
-            );
-          })}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { k: lang === "ru" ? "Паттерны" : "Patterns", v: sc.patterns_total ?? 0 },
+            { k: "Critical", v: sc.patterns_critical ?? 0 },
+            { k: "High", v: sc.patterns_high ?? 0 },
+            { k: lang === "ru" ? "Ликвидность" : "Liquidity", v: sc.liquidity || "—" },
+          ].map((c, i) => (
+            <div key={i} className="rounded-xl border border-border bg-card p-4">
+              <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{c.k}</p>
+              <p className="mt-1 font-mono text-lg font-bold text-foreground">{c.v}</p>
+            </div>
+          ))}
         </div>
 
-        {/* Risk Categories */}
-        {scan.categories && (
-          <GlowCard className="mb-8">
-            <h3 className="mb-4 text-lg font-semibold text-foreground">{t("report.categories")}</h3>
-            <div className="space-y-3">
-              {scan.categories.map((cat) => (
-                <div key={cat.name} className="flex items-center gap-4">
-                  <span className="w-24 text-sm text-muted-foreground">{cat.name}</span>
-                  <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${cat.score * 10}%` }} />
-                  </div>
-                  <span className="font-mono text-sm text-foreground">{cat.score}</span>
-                </div>
-              ))}
-            </div>
-          </GlowCard>
-        )}
-
-        {/* Governance */}
-        {scan.governance && (
-          <GlowCard className="mb-8">
-            <h3 className="mb-4 text-lg font-semibold text-foreground">{t("report.governance")}</h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <p className="text-xs text-muted-foreground">{t("report.claimedModel")}</p>
-                <p className="font-mono text-sm text-foreground">{scan.governance.claimed}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{t("report.observedModel")}</p>
-                <p className="font-mono text-sm text-primary">{scan.governance.observed}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{t("report.adminScore")}</p>
-                <p className="font-mono text-2xl font-bold text-primary">{scan.governance.adminScore}/10</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{t("report.privilegedRoles")}</p>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {scan.governance.roles.map((r) => (
-                    <span key={r} className="rounded border border-border px-2 py-0.5 font-mono text-xs text-muted-foreground">{r}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </GlowCard>
-        )}
-
-        {/* Findings */}
-        {scan.findingsList && (
-          <div className="mb-8">
-            <h3 className="mb-4 text-lg font-semibold text-foreground">{t("report.findings")}</h3>
+        {Array.isArray(r.top_findings_preview) && r.top_findings_preview.length > 0 && (
+          <div className="rounded-xl border border-border bg-card p-5">
+            <p className="mb-3 font-mono text-[10px] uppercase tracking-wider text-primary">
+              {lang === "ru" ? "Обнаруженные сигнатуры (превью)" : "Detected Signatures (Preview)"}
+            </p>
             <div className="space-y-2">
-              {scan.findingsList.map((f) => (
-                <div key={f.id} className="rounded-xl border border-border bg-card overflow-hidden">
-                  <button
-                    onClick={() => toggleFinding(f.id)}
-                    className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-accent"
-                  >
-                    <span className={`rounded border px-2 py-0.5 font-mono text-[10px] font-bold ${severityColors[f.severity]}`}>
-                      {f.severity}
+              {r.top_findings_preview.map((f: any, i: number) => (
+                <div key={i} className="rounded-lg border border-border bg-background p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-mono text-xs font-bold text-foreground">
+                      {f.title || f.name || f.pattern}
                     </span>
-                    <span className="flex-1 text-sm font-medium text-foreground">{f.type}</span>
-                    {f.file && <span className="hidden text-xs text-muted-foreground md:block">{f.file}:{f.line}</span>}
-                    {expandedFindings.has(f.id) ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
-                  </button>
-                  {expandedFindings.has(f.id) && (
-                    <div className="border-t border-border px-4 py-3">
-                      <p className="text-sm text-muted-foreground">{f.description}</p>
-                      {f.file && <p className="mt-2 font-mono text-xs text-muted-foreground">{f.file}:{f.line}</p>}
-                    </div>
-                  )}
+                    <span className="font-mono text-[10px] text-muted-foreground">
+                      {f.severity} {f.file ? `· ${f.file}` : ""}
+                    </span>
+                  </div>
+                  {f.summary && <p className="mt-1 font-mono text-[11px] text-muted-foreground">{f.summary}</p>}
                 </div>
               ))}
             </div>
+            {r.more_count ? (
+              <p className="mt-2 font-mono text-[11px] text-primary">
+                +{r.more_count} {lang === "ru" ? "паттернов скрыто" : "patterns hidden"}
+              </p>
+            ) : null}
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex flex-wrap gap-3">
-          <button className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary-dim">
-            <RefreshCw size={16} /> {t("report.rescan")}
-          </button>
-          <button className="flex items-center gap-2 rounded-lg border border-border px-6 py-2.5 text-sm font-semibold text-foreground transition-all hover:border-primary hover:text-primary">
-            <Download size={16} /> {t("report.download")}
-          </button>
-          <button className="flex items-center gap-2 rounded-lg border border-border px-6 py-2.5 text-sm font-semibold text-foreground transition-all hover:border-primary hover:text-primary">
-            <Share2 size={16} /> {t("report.share")}
-          </button>
+        <div className="rounded-2xl border border-primary/40 bg-card p-6 text-center bg-radial-red">
+          <Shield className="mx-auto mb-2 text-primary" size={26} />
+          <p className="font-mono text-sm font-bold text-foreground">
+            {lang === "ru" ? "Нужен полный отчёт?" : "Need the full report?"}
+          </p>
+          <p className="mx-auto mt-1 max-w-md font-mono text-[11px] text-muted-foreground">
+            {lang === "ru"
+              ? "Полные цепочки эксплуатации, file:line по каждому паттерну, холдеры без маскировки и JSON-экспорт доступны с тарифа RADAR."
+              : "Full exploit chains, file:line for every pattern, unmasked holders and JSON export require RADAR tier."}
+          </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-3">
+            <Link
+              to="/pricing"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 font-mono text-xs font-semibold text-primary-foreground btn-glow"
+            >
+              {lang === "ru" ? "Открыть RADAR" : "Unlock RADAR"}
+              <ArrowUpRight size={13} />
+            </Link>
+            <Link
+              to="/auth"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-5 py-2.5 font-mono text-xs font-semibold text-foreground hover:border-primary"
+            >
+              {lang === "ru" ? "Создать кабинет" : "Create cabinet"}
+            </Link>
+          </div>
         </div>
-      </RevealOnScroll>
+
+        <p className="text-center font-mono text-[10px] text-muted-foreground">
+          {r.disclaimer || "BORIS — structural analysis, not an investment recommendation."}
+        </p>
+      </div>
     </div>
   );
 };

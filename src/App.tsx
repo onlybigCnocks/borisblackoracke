@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 const Pricing = lazy(() => import("./pages/Pricing"));
 const About = lazy(() => import("./pages/About"));
 const Market = lazy(() => import("./pages/Market"));
+const Report = lazy(() => import("./pages/Report"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/about" element={<About />} />
               <Route path="/market" element={<Market />} />
+              <Route path="/report/:id" element={<Report />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="*" element={<NotFound />} />
