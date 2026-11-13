@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Users,
@@ -15,12 +15,15 @@ import {
   KeyRound,
   History,
   Eye,
+  Copy,
+  Check,
 } from "lucide-react";
 import {
   getSavedUser,
   authHeaders,
   apiGetToolHistory,
   apiGetToolHistoryItem,
+  apiGetOspecFindingDetail,
   type BorisUser,
   type BorisToolHistoryItem,
 } from "@/lib/auth";
@@ -54,6 +57,32 @@ const ToolsPanel = () => {
   const [ospecSeverity, setOspecSeverity] = useState<string>("");
   const [ospecOnlyReal, setOspecOnlyReal] = useState<boolean>(false);
   const [ospecOnlyLive, setOspecOnlyLive] = useState<boolean>(false);
+  const [expandedFindingId, setExpandedFindingId] = useState<number | null>(null);
+  const [findingDetail, setFindingDetail] = useState<Record<number, any>>({});
+  const [loadingFindingId, setLoadingFindingId] = useState<number | null>(null);
+  const [copiedSecretId, setCopiedSecretId] = useState<string | null>(null);
+  const [openedHistoryBanner, setOpenedHistoryBanner] = useState<string | null>(null);
+
+  const skipAutoOspecRef = useRef<boolean>(false);
+  const resultsTopRef = useRef<HTMLDivElement | null>(null);
+
+  const handleToggleOspecFinding = async (fid: number) => {
+    if (expandedFindingId === fid) {
+      setExpandedFindingId(null);
+      return;
+    }
+    setExpandedFindingId(fid);
+    if (findingDetail[fid]) return;
+    setLoadingFindingId(fid);
+    try {
+      const detail = await apiGetOspecFindingDetail(fid);
+      setFindingDetail((prev) => ({ ...prev, [fid]: detail }));
+    } catch {
+      // ignore
+    } finally {
+      setLoadingFindingId(null);
+    }
+  };
 
   const loadHistory = (filter?: string) => {
     const f = filter ?? historyFilter;
@@ -77,6 +106,7 @@ const ToolsPanel = () => {
     const liveVal = opts?.live !== undefined ? opts.live : ospecOnlyLive;
 
     setError(null);
+    setOpenedHistoryBanner(null);
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/tools/ospec`, {
@@ -101,6 +131,10 @@ const ToolsPanel = () => {
   };
 
   useEffect(() => {
+    if (skipAutoOspecRef.current) {
+      skipAutoOspecRef.current = false;
+      return;
+    }
     if (tool === "ospec" && rank >= 1 && !result) {
       runOspecWithFilters({ q: "", sev: "", real: false, live: false });
     }
@@ -189,9 +223,27 @@ const ToolsPanel = () => {
     try {
       const data = await apiGetToolHistoryItem(item.id);
       if (data && data.result) {
+        skipAutoOspecRef.current = true;
+        const r = data.result;
+        // Normalize legacy OSPEC history records if needed
+        if (item.tool === "ospec" && Array.isArray(r.findings)) {
+          r.findings = r.findings.map((f: any) => ({
+            ...f,
+            hits: f.hits || 1,
+            kind: String(f.kind || "SECRET").replace("secret:", ""),
+            gh_url: f.gh_url || f.repo_url || "",
+          }));
+          if (!r.filter_mode) r.filter_mode = `history:${item.target}`;
+        }
         setTool(item.tool as ToolId);
         setInput1(item.target || "");
-        setResult(data.result);
+        setResult(r);
+        setOpenedHistoryBanner(
+          `${item.tool.toUpperCase()} · ${item.target} (${new Date(item.created_at * 1000).toLocaleString()})`
+        );
+        setTimeout(() => {
+          resultsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 80);
       }
     } catch (e: any) {
       setError(e.message || "Failed to load saved tool report");
@@ -213,7 +265,22 @@ const ToolsPanel = () => {
   };
 
   return (
-    <div className="space-y-5">
+    <div ref={resultsTopRef} className="space-y-5">
+      {openedHistoryBanner && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/50 bg-primary/10 px-4 py-2.5 font-mono text-xs text-primary">
+          <span>
+            📂 {isRu ? "Открыт сохранённый отчёт из истории:" : "Loaded saved report from history:"}{" "}
+            <b className="text-foreground">{openedHistoryBanner}</b>
+          </span>
+          <button
+            type="button"
+            onClick={() => setOpenedHistoryBanner(null)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            ✕
+          </button>
+        </div>
+      )}
       {/* Tool selector */}
       <div className="flex flex-wrap gap-2">
         {TOOLS.map((t) => {
@@ -911,9 +978,25 @@ const ToolsPanel = () => {
                             </span>
                           ) : null}
                         </div>
-                        {f.found_at && (
-                          <span className="text-[10px] text-muted-foreground">{f.found_at}</span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {f.found_at && (
+                            <span className="text-[10px] text-muted-foreground">{f.found_at}</span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleOspecFinding(f.id)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1 font-mono text-[10px] font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                          >
+                            <Eye size={11} />
+                            <span>
+                              {loadingFindingId === f.id
+                                ? isRu ? "Загрузка…" : "Loading…"
+                                : expandedFindingId === f.id
+                                ? isRu ? "Скрыть" : "Close"
+                                : isRu ? "Открыть" : "Open"}
+                            </span>
+                          </button>
+                        </div>
                       </div>
 
                       <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px]">
@@ -956,6 +1039,60 @@ const ToolsPanel = () => {
                               Preview: <code className="text-primary">{f.secret_masked}</code>
                             </span>
                           )}
+                        </div>
+                      )}
+
+                      {expandedFindingId === f.id && findingDetail[f.id] && (
+                        <div className="mt-3 rounded-lg border border-primary/30 bg-card p-3 space-y-2">
+                          <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-primary font-bold">
+                            <span>
+                              {isRu
+                                ? `Детализация всех вхождений в репозитории (${findingDetail[f.id].occurrences_count})`
+                                : `All Secret Occurrences in Repository (${findingDetail[f.id].occurrences_count})`}
+                            </span>
+                            <a
+                              href={f.repo_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="underline hover:text-foreground"
+                            >
+                              GitHub Repo ↗
+                            </a>
+                          </div>
+                          <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+                            {(findingDetail[f.id].occurrences || []).map((occ: any) => (
+                              <div
+                                key={occ.id}
+                                className="flex flex-wrap items-center justify-between gap-2 rounded border border-border bg-background px-2.5 py-1.5 text-[11px]"
+                              >
+                                <a
+                                  href={occ.gh_url || f.repo_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="font-semibold text-foreground hover:text-primary truncate max-w-[260px]"
+                                >
+                                  📄 {occ.path}{occ.line ? `:${occ.line}` : ""} ↗
+                                </a>
+                                <div className="flex items-center gap-2">
+                                  <code className="rounded bg-card px-2 py-0.5 text-primary select-all">
+                                    {occ.secret_preview}
+                                  </code>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(occ.secret_preview || "");
+                                      setCopiedSecretId(String(occ.id));
+                                      setTimeout(() => setCopiedSecretId(null), 1500);
+                                    }}
+                                    className="rounded border border-border p-1 text-muted-foreground hover:border-primary hover:text-primary"
+                                    title={isRu ? "Скопировать" : "Copy"}
+                                  >
+                                    {copiedSecretId === String(occ.id) ? <Check size={11} /> : <Copy size={11} />}
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>

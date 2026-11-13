@@ -302,3 +302,35 @@ export async function apiGetToolHistoryItem(id: number): Promise<any> {
   if (!res.ok) throw new Error("History item not found");
   return res.json();
 }
+
+export async function apiUpdateProfile(payload: {
+  name?: string;
+  email?: string;
+  avatar_url?: string;
+  new_password?: string;
+}): Promise<{ token: string; user: BorisUser }> {
+  const token = getSavedToken();
+  if (!token) throw new Error("Not authenticated");
+  const res = await fetch(`${API_BASE}/api/auth/profile`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Failed to update profile");
+  if (data.token && data.user) {
+    saveAuthSession(data.token, data.user);
+  }
+  return data;
+}
+
+export async function apiGetOspecFindingDetail(findingId: number): Promise<any> {
+  const token = getSavedToken();
+  if (!token) throw new Error("Not authenticated");
+  const res = await fetch(`${API_BASE}/api/tools/ospec/finding/${findingId}`, {
+    headers: { Authorization: "Bearer " + token },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Failed to load finding details");
+  return data;
+}

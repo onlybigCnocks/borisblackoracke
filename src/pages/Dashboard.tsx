@@ -22,6 +22,7 @@ import {
   Lock,
   Wrench,
   Users,
+  Settings,
 } from "lucide-react";
 import {
   apiGetMe,
@@ -34,6 +35,7 @@ import {
   apiBindReferral,
   apiSyncTelegram,
   apiInitTelegramDeeplink,
+  apiUpdateProfile,
   getScanExportUrl,
   clearAuthSession,
   getSavedToken,
@@ -85,6 +87,46 @@ const Dashboard = () => {
   const [tgSyncing, setTgSyncing] = useState(false);
   const [tgWaitingApp, setTgWaitingApp] = useState(false);
   const [tgMsg, setTgMsg] = useState<string | null>(null);
+
+  // Profile Settings Drawer State
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profName, setProfName] = useState("");
+  const [profEmail, setProfEmail] = useState("");
+  const [profAvatar, setProfAvatar] = useState("");
+  const [profPassword, setProfPassword] = useState("");
+  const [profSaving, setProfSaving] = useState(false);
+  const [profMsg, setProfMsg] = useState<string | null>(null);
+
+  const openProfileEditor = () => {
+    setProfName(user?.name || "");
+    setProfEmail(user?.email || "");
+    setProfAvatar(user?.avatar_url || "");
+    setProfPassword("");
+    setProfMsg(null);
+    setEditingProfile((prev) => !prev);
+  };
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfSaving(true);
+    setProfMsg(null);
+    try {
+      const res = await apiUpdateProfile({
+        name: profName.trim(),
+        email: profEmail.trim(),
+        avatar_url: profAvatar.trim(),
+        new_password: profPassword.trim() || undefined,
+      });
+      setUser(res.user);
+      setProfPassword("");
+      setProfMsg(isRu ? "✅ Настройки профиля сохранены" : "✅ Profile settings saved");
+      setTimeout(() => setEditingProfile(false), 900);
+    } catch (err: any) {
+      setProfMsg(`⚠️ ${err.message}`);
+    } finally {
+      setProfSaving(false);
+    }
+  };
 
   const handleLaunchTelegramAppSync = async () => {
     setTgWaitingApp(true);
@@ -303,48 +345,135 @@ const Dashboard = () => {
     <div className="container mx-auto min-h-screen px-4 py-12">
       <RevealOnScroll>
         {/* Top Profile Header */}
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-primary/30 bg-card p-6 bg-radial-red">
-          <div className="flex items-center gap-4">
-            {user?.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt={user.name}
-                className="h-14 w-14 rounded-full border border-primary/50 object-cover"
-              />
-            ) : (
-              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-primary/40 bg-primary/15 font-mono text-xl font-bold text-primary">
-                {(user?.name || user?.email || "B")[0].toUpperCase()}
+        <div className="mb-8 rounded-2xl border border-primary/30 bg-card p-6 bg-radial-red">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              {user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={user.name}
+                  className="h-14 w-14 rounded-full border border-primary/50 object-cover"
+                />
+              ) : (
+                <div className="flex h-14 w-14 items-center justify-center rounded-full border border-primary/40 bg-primary/15 font-mono text-xl font-bold text-primary">
+                  {(user?.name || user?.email || "B")[0].toUpperCase()}
+                </div>
+              )}
+              <div>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h1 className="font-mono text-xl font-bold text-foreground md:text-2xl">
+                    {user?.name || "Operator"}
+                  </h1>
+                  <span className="rounded border border-primary/40 bg-primary/15 px-2.5 py-0.5 font-mono text-xs font-bold text-primary">
+                    {user?.tier || "GUEST"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={openProfileEditor}
+                    className="inline-flex items-center gap-1 rounded-lg border border-border bg-background/80 px-2.5 py-1 font-mono text-[11px] text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                  >
+                    <Settings size={12} />
+                    <span>{isRu ? "Настройки профиля" : "Edit Profile"}</span>
+                  </button>
+                </div>
+                <p className="font-mono text-xs text-muted-foreground">{user?.email}</p>
               </div>
-            )}
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="font-mono text-xl font-bold text-foreground md:text-2xl">
-                  {user?.name || "Operator"}
-                </h1>
-                <span className="rounded border border-primary/40 bg-primary/15 px-2.5 py-0.5 font-mono text-xs font-bold text-primary">
-                  {user?.tier || "GUEST"}
-                </span>
-              </div>
-              <p className="font-mono text-xs text-muted-foreground">{user?.email}</p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Link
+                to="/pricing"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
+              >
+                <span>{isRu ? "Повысить тариф" : "Upgrade Tier"}</span>
+                <ArrowUpRight size={14} />
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-4 py-2.5 font-mono text-xs font-semibold text-muted-foreground transition-all hover:border-primary hover:text-foreground"
+              >
+                <LogOut size={14} />
+                <span>{isRu ? "Выйти" : "Sign Out"}</span>
+              </button>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link
-              to="/pricing"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
+          {editingProfile && (
+            <form
+              onSubmit={handleSaveProfile}
+              className="mt-5 border-t border-border pt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
             >
-              <span>{isRu ? "Повысить тариф" : "Upgrade Tier"}</span>
-              <ArrowUpRight size={14} />
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-4 py-2.5 font-mono text-xs font-semibold text-muted-foreground transition-all hover:border-primary hover:text-foreground"
-            >
-              <LogOut size={14} />
-              <span>{isRu ? "Выйти" : "Sign Out"}</span>
-            </button>
-          </div>
+              <div>
+                <label className="mb-1 block font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {isRu ? "Никнейм / Имя" : "Nickname / Display Name"}
+                </label>
+                <input
+                  type="text"
+                  value={profName}
+                  onChange={(e) => setProfName(e.target.value)}
+                  required
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 font-mono text-xs text-foreground outline-none focus:border-primary"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={profEmail}
+                  onChange={(e) => setProfEmail(e.target.value)}
+                  required
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 font-mono text-xs text-foreground outline-none focus:border-primary"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {isRu ? "URL аватарки (опц.)" : "Avatar URL (optional)"}
+                </label>
+                <input
+                  type="url"
+                  value={profAvatar}
+                  onChange={(e) => setProfAvatar(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 font-mono text-xs text-foreground outline-none focus:border-primary"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {isRu ? "Новый пароль (опц.)" : "New Password (optional)"}
+                </label>
+                <input
+                  type="password"
+                  value={profPassword}
+                  onChange={(e) => setProfPassword(e.target.value)}
+                  placeholder={isRu ? "Оставьте пустым без смены" : "Leave blank to keep"}
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 font-mono text-xs text-foreground outline-none focus:border-primary"
+                />
+              </div>
+              <div className="sm:col-span-2 lg:col-span-4 flex flex-wrap items-center justify-between gap-3 pt-1">
+                <span className="font-mono text-xs text-primary">{profMsg || ""}</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingProfile(false)}
+                    className="rounded-xl border border-border bg-background px-4 py-2 font-mono text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    {isRu ? "Отмена" : "Cancel"}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={profSaving}
+                    className="rounded-xl bg-primary px-5 py-2 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-50 btn-glow"
+                  >
+                    {profSaving
+                      ? isRu ? "Сохранение…" : "Saving…"
+                      : isRu ? "Сохранить профиль" : "Save Profile"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
         </div>
 
         {/* Stats Grid */}

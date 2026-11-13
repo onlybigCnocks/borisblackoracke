@@ -49,7 +49,10 @@ const Header = () => {
   }, []);
 
   const toggleLang = () => {
-    i18n.changeLanguage(i18n.language === "ru" ? "en" : "ru");
+    const next = i18n.language === "ru" ? "en" : "ru";
+    localStorage.setItem("boris_ui_lang", next);
+    localStorage.setItem("i18nextLng", next);
+    i18n.changeLanguage(next);
   };
 
   const scrollToScanner = () => {
