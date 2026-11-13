@@ -513,13 +513,14 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
             >
               <span>{isRu ? "🔥 Перейти в бесплатный GitHub Radar" : "🔥 Open Free GitHub Radar"}</span>
             </button>
-            <Link
-              to="/pricing"
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent("boris-open-checkout", { detail: { tier: tab === "zk" ? "raw" : "radar" } }))}
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 font-mono text-xs font-semibold text-primary-foreground hover:bg-primary-dim btn-glow"
             >
-              <span>{isRu ? "Повысить тариф (RADAR / RAW / BLACKBOX)" : "Upgrade Tier"}</span>
+              <span>{isRu ? "Оплатить доступ в крипте (RADAR+)" : "Unlock Instantly with Crypto"}</span>
               <ArrowUpRight size={14} />
-            </Link>
+            </button>
           </div>
         </div>
       ) : loading ? (

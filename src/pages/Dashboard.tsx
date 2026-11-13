@@ -24,6 +24,8 @@ import {
   Wrench,
   Users,
   Settings,
+  Wallet,
+  Sparkles,
 } from "lucide-react";
 import {
   apiGetMe,
@@ -37,6 +39,10 @@ import {
   apiSyncTelegram,
   apiInitTelegramDeeplink,
   apiUpdateProfile,
+  apiGetPaymentHistory,
+  apiCheckPaymentInvoice,
+  apiWithdrawReferral,
+  openCryptoCheckout,
   getScanExportUrl,
   clearAuthSession,
   getSavedToken,
@@ -71,7 +77,15 @@ const Dashboard = () => {
   const [histPerPage, setHistPerPage] = useState<number>(10);
   const [watchlist, setWatchlist] = useState<BorisWatchlistItem[]>([]);
   const [radarAudits, setRadarAudits] = useState<BorisRadarAudit[]>([]);
-  const [activeTab, setActiveTab] = useState<"history" | "tools" | "watchlist" | "radar" | "referral">("history");
+  const [activeTab, setActiveTab] = useState<"history" | "tools" | "watchlist" | "radar" | "referral" | "billing">("history");
+
+  // Billing & Referral Payout states
+  const [billingData, setBillingData] = useState<any>(null);
+  const [wdNet, setWdNet] = useState<string>("arbitrum");
+  const [wdAsset, setWdAsset] = useState<string>("USDT");
+  const [wdDest, setWdDest] = useState<string>("");
+  const [wdBusy, setWdBusy] = useState<boolean>(false);
+  const [wdMsg, setWdMsg] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -244,17 +258,28 @@ const Dashboard = () => {
           navigate("/auth");
         })
         .finally(() => setLoading(false));
+      apiGetPaymentHistory().then(setBillingData).catch(() => {});
+      apiGetReferral().then(setRefData).catch(() => {});
     };
     fetchProfile();
+    // Auto-verify if returning from @CryptoBot callback URL (?paid_inv=...)
+    const params = new URLSearchParams(window.location.search);
+    const paidInvId = params.get("paid_inv");
+    if (paidInvId) {
+      apiCheckPaymentInvoice(paidInvId)
+        .then(() => fetchProfile())
+        .catch(() => {});
+    }
     apiGetRadarFeed().then((feed) => {
       setRadarAudits(feed.audits || []);
     });
-    apiGetReferral().then(setRefData);
     window.addEventListener("boris-scan-started", fetchProfile);
     window.addEventListener("boris-scan-done", fetchProfile);
+    window.addEventListener("boris-auth-change", fetchProfile);
     return () => {
       window.removeEventListener("boris-scan-started", fetchProfile);
       window.removeEventListener("boris-scan-done", fetchProfile);
+      window.removeEventListener("boris-auth-change", fetchProfile);
     };
   }, [navigate]);
 
@@ -371,6 +396,12 @@ const Dashboard = () => {
                   <span className="rounded border border-primary/40 bg-primary/15 px-2.5 py-0.5 font-mono text-xs font-bold text-primary">
                     {user?.tier || "GUEST"}
                   </span>
+                  {user?.tier_expires_at ? (
+                    <span className="rounded border border-border bg-background/80 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+                      {isRu ? "до " : "until "}
+                      {new Date(user.tier_expires_at * 1000).toLocaleDateString()}
+                    </span>
+                  ) : null}
                   <button
                     type="button"
                     onClick={openProfileEditor}
@@ -385,13 +416,14 @@ const Dashboard = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              <Link
-                to="/pricing"
+              <button
+                type="button"
+                onClick={() => openCryptoCheckout({ tier: "raw" })}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
               >
-                <span>{isRu ? "Повысить тариф" : "Upgrade Tier"}</span>
-                <ArrowUpRight size={14} />
-              </Link>
+                <Sparkles size={14} />
+                <span>{isRu ? "Оплатить / Повысить тариф" : "Upgrade with Crypto"}</span>
+              </button>
               <button
                 onClick={handleLogout}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-4 py-2.5 font-mono text-xs font-semibold text-muted-foreground transition-all hover:border-primary hover:text-foreground"
@@ -658,6 +690,17 @@ const Dashboard = () => {
               <span>{isRu ? "Партнёрка" : "Referral"}</span>
             </button>
             <button
+              onClick={() => setActiveTab("billing")}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-mono text-xs font-semibold transition-all ${
+                activeTab === "billing"
+                  ? "bg-primary text-primary-foreground shadow"
+                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Wallet size={14} />
+              <span>{isRu ? "Подписка и Счета" : "Crypto Billing"}</span>
+            </button>
+            <button
               onClick={() => setActiveTab("watchlist")}
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-mono text-xs font-semibold transition-all ${
                 activeTab === "watchlist"
@@ -781,11 +824,12 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              <div className="mt-3 grid grid-cols-3 gap-3">
+              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {[
                   { k: isRu ? "Приглашено" : "Invited", v: refData?.total_invited ?? 0 },
                   { k: isRu ? "Оплатили" : "Paid", v: refData?.paid_invited ?? 0 },
-                  { k: isRu ? "К выплате" : "Payout", v: `$${Number(refData?.pending_payout_usd ?? 0).toFixed(2)}` },
+                  { k: isRu ? "Доступно к выводу" : "Available Balance", v: `$${Number(refData?.available_balance_usd ?? refData?.pending_payout_usd ?? 0).toFixed(2)}` },
+                  { k: isRu ? "Всего заработано" : "Total Earned", v: `$${Number(refData?.total_earned_usd ?? 0).toFixed(2)}` },
                 ].map((c, i) => (
                   <div key={i} className="rounded-lg border border-border bg-background p-4 text-center">
                     <p className="font-mono text-[10px] uppercase text-muted-foreground">{c.k}</p>
@@ -794,6 +838,113 @@ const Dashboard = () => {
                 ))}
               </div>
               {refMsg && <p className="mt-2 font-mono text-[11px] text-primary">{refMsg}</p>}
+            </div>
+
+            {/* Instant Crypto Payout & Pay-With-Balance Card */}
+            <div className="rounded-xl border border-primary/30 bg-card p-5 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h4 className="font-mono text-xs font-semibold uppercase tracking-wider text-primary">
+                    {isRu ? "Вывод партнёрского баланса в крипте" : "Crypto Affiliate Payout"}
+                  </h4>
+                  <p className="font-mono text-[11px] text-muted-foreground">
+                    {isRu
+                      ? "Минимум к выводу $5.00 USDT/USDC без комиссии, либо оплатите собственную подписку с баланса."
+                      : "Minimum withdrawal $5.00 USDT/USDC with 0% fee, or spend balance directly on your own tier."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openCryptoCheckout({ tier: "radar" })}
+                  className="rounded-lg border border-primary/40 bg-primary/10 px-3 py-1.5 font-mono text-xs font-semibold text-primary hover:bg-primary/20"
+                >
+                  {isRu ? "Оплатить подписку с баланса" : "Buy Tier with Balance"}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
+                <select
+                  value={wdNet}
+                  onChange={(e) => {
+                    const n = e.target.value;
+                    setWdNet(n);
+                    if (n === "tron") setWdAsset("USDT");
+                    if (n === "solana") setWdAsset("USDC");
+                  }}
+                  className="rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-primary"
+                >
+                  <option value="arbitrum">Arbitrum One</option>
+                  <option value="base">Base</option>
+                  <option value="bsc">BNB Chain (BEP-20)</option>
+                  <option value="tron">TRON (TRC-20)</option>
+                  <option value="solana">Solana (SPL)</option>
+                  <option value="cryptobot">@CryptoBot (TG)</option>
+                </select>
+                <select
+                  value={wdAsset}
+                  onChange={(e) => setWdAsset(e.target.value)}
+                  className="rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-primary"
+                >
+                  <option value="USDT">USDT</option>
+                  {wdNet !== "tron" && <option value="USDC">USDC</option>}
+                </select>
+                <input
+                  type="text"
+                  value={wdDest}
+                  onChange={(e) => setWdDest(e.target.value)}
+                  placeholder={isRu ? "Кошелёк 0x... / T... / @username" : "Wallet 0x... / T... / @username"}
+                  className="rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-primary sm:col-span-2"
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-mono text-xs text-primary">{wdMsg || ""}</span>
+                <button
+                  type="button"
+                  disabled={wdBusy || !wdDest.trim() || Number(refData?.available_balance_usd ?? 0) < 5}
+                  onClick={async () => {
+                    setWdBusy(true);
+                    setWdMsg(null);
+                    try {
+                      const res = await apiWithdrawReferral({
+                        network: wdNet,
+                        asset: wdAsset,
+                        destination: wdDest.trim(),
+                      });
+                      setWdMsg(
+                        isRu
+                          ? `✅ Заявка #${res.payout_id} на $${res.amount_usd.toFixed(2)} принята к выплате`
+                          : `✅ Payout #${res.payout_id} for $${res.amount_usd.toFixed(2)} queued`
+                      );
+                      setWdDest("");
+                      apiGetReferral().then(setRefData);
+                      apiGetPaymentHistory().then(setBillingData);
+                    } catch (err: any) {
+                      setWdMsg(`⚠️ ${err.message}`);
+                    } finally {
+                      setWdBusy(false);
+                    }
+                  }}
+                  className="rounded-xl bg-primary px-5 py-2 font-mono text-xs font-bold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-40 btn-glow"
+                >
+                  {wdBusy ? (isRu ? "Отправка…" : "Submitting…") : isRu ? "Запросить выплату" : "Withdraw Crypto"}
+                </button>
+              </div>
+
+              {refData?.payouts?.length > 0 && (
+                <div className="space-y-1.5 border-t border-border pt-3">
+                  <p className="font-mono text-[10px] uppercase text-muted-foreground">
+                    {isRu ? "История выводов" : "Payout History"}
+                  </p>
+                  {refData.payouts.map((p: any) => (
+                    <div key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 font-mono text-[11px]">
+                      <span className="font-bold text-foreground">${Number(p.amount_usd).toFixed(2)} {p.asset} ({p.network})</span>
+                      <span className="truncate max-w-[220px] text-muted-foreground">{p.destination}</span>
+                      <span className="text-primary uppercase">{p.status}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {refData?.invited?.length > 0 && (
@@ -845,6 +996,120 @@ const Dashboard = () => {
         )}
 
         {activeTab === "tools" && <ToolsPanel />}
+
+        {activeTab === "billing" && (
+          <div className="space-y-5">
+            <div className="rounded-2xl border border-primary/30 bg-card p-6 bg-radial-red">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="font-mono text-xs uppercase tracking-wider text-primary font-bold">
+                    {isRu ? "Статус крипто-подписки" : "Active Crypto Subscription"}
+                  </p>
+                  <div className="mt-1 flex items-center gap-3">
+                    <span className="font-mono text-2xl font-bold text-foreground">{user?.tier || "GUEST"}</span>
+                    {billingData?.subscription?.days_remaining > 0 && (
+                      <span className="rounded-full border border-primary/40 bg-primary/15 px-3 py-0.5 font-mono text-xs font-semibold text-primary">
+                        {isRu
+                          ? `Активно ещё ${billingData.subscription.days_remaining} дн.`
+                          : `${billingData.subscription.days_remaining} days remaining`}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 font-mono text-xs text-muted-foreground">
+                    {isRu
+                      ? "Прямая оплата на индивидуальный HD-адрес (Arbitrum, Base, BSC, TRC-20, Solana) с 0% комиссией или в 1 клик через @CryptoBot."
+                      : "Direct payment to dedicated HD deposit address (Arbitrum, Base, BSC, TRC-20, Solana) with 0% fee or 1-click @CryptoBot."}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openCryptoCheckout({ tier: "radar", yearly: false })}
+                    className="rounded-xl border border-border bg-background px-4 py-2.5 font-mono text-xs font-semibold text-foreground hover:border-primary"
+                  >
+                    RADAR · $19
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openCryptoCheckout({ tier: "raw", yearly: false })}
+                    className="rounded-xl bg-primary px-4 py-2.5 font-mono text-xs font-bold text-primary-foreground hover:bg-primary-dim btn-glow"
+                  >
+                    RAW · $29
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openCryptoCheckout({ tier: "blackbox", yearly: false })}
+                    className="rounded-xl border border-primary/50 bg-primary/15 px-4 py-2.5 font-mono text-xs font-bold text-primary hover:bg-primary/25"
+                  >
+                    BLACKBOX · $49
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-card p-5">
+              <h4 className="mb-3 font-mono text-xs font-semibold uppercase tracking-wider text-primary">
+                {isRu ? "История крипто-инвойсов" : "Crypto Invoice History"}
+              </h4>
+              {!billingData?.invoices?.length ? (
+                <p className="font-mono text-xs text-muted-foreground">
+                  {isRu ? "Счетов пока нет." : "No crypto invoices created yet."}
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {billingData.invoices.map((inv: any) => (
+                    <div
+                      key={inv.id}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-background px-4 py-3 font-mono text-xs"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-foreground">{inv.base_tier}</span>
+                          <span className="text-muted-foreground">({inv.duration_days}d)</span>
+                          <span
+                            className={`rounded border px-2 py-0.5 text-[10px] font-bold uppercase ${
+                              inv.status === "paid"
+                                ? "border-green-500/40 bg-green-500/15 text-green-400"
+                                : inv.status === "pending"
+                                ? "border-primary/40 bg-primary/15 text-primary"
+                                : "border-border text-muted-foreground"
+                            }`}
+                          >
+                            {inv.status}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">
+                          {new Date(inv.created_at * 1000).toLocaleString()} · {inv.method.toUpperCase()} ({inv.network})
+                          {inv.deposit_address ? ` · ${inv.deposit_address.slice(0, 10)}…${inv.deposit_address.slice(-6)}` : ""}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-primary">
+                          ${Number(inv.amount_usd).toFixed(2)} {inv.asset}
+                        </span>
+                        {inv.status === "pending" && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              await apiCheckPaymentInvoice(inv.id).catch(() => {});
+                              apiGetPaymentHistory().then(setBillingData);
+                              apiGetMe().then((d) => setUser(d.user)).catch(() => {});
+                            }}
+                            className="rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-primary/20"
+                          >
+                            {isRu ? "Проверить" : "Verify"}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {activeTab === "history" && (
           <div>
@@ -1010,13 +1275,14 @@ const Dashboard = () => {
                                   <span>JSON</span>
                                 </a>
                               ) : (
-                                <Link
-                                  to="/pricing"
+                                <button
+                                  type="button"
+                                  onClick={() => openCryptoCheckout({ tier: "radar" })}
                                   className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                                 >
                                   <Lock size={12} className="text-primary" />
                                   <span>JSON [RADAR+]</span>
-                                </Link>
+                                </button>
                               )}
                             </div>
                           </div>

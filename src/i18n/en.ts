@@ -107,7 +107,7 @@ const en = {
       price: "$29",
       priceYearly: "$261",
       period: "/mo",
-      features: ["30 scans/day", "Full findings list with line numbers", "Archetype + governance model", "All detectors unfiltered — technical dump", "Holders, liquidity, deployments, CEX listings", "No evaluations, no verdicts — facts only", "For those who read code, not conclusions", "JSON export (full technical data)"],
+      features: ["50 scans/day", "Full findings list with line numbers", "Archetype + governance model", "All detectors unfiltered — technical dump", "Holders, liquidity, deployments, CEX listings", "No evaluations, no verdicts — facts only", "For those who read code, not conclusions", "JSON export (full technical data)"],
     },
     blackbox: {
       name: "BLACKBOX",

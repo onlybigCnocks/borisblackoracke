@@ -9,6 +9,8 @@ export interface BorisUser {
   name: string;
   avatar_url?: string;
   tier: "GUEST" | "RADAR" | "RAW" | "BLACKBOX" | string;
+  tier_expires_at?: number | null;
+  ref_balance_usd?: number;
   api_key: string;
   scans_total: number;
   scans_today?: number;
@@ -272,6 +274,19 @@ export interface BorisReferral {
   total_invited: number;
   paid_invited: number;
   pending_payout_usd: number;
+  available_balance_usd?: number;
+  total_earned_usd?: number;
+  total_withdrawn_usd?: number;
+  min_withdrawal_usd?: number;
+  payouts?: Array<{
+    id: string;
+    amount_usd: number;
+    network: string;
+    asset: string;
+    destination: string;
+    status: string;
+    created_at: number;
+  }>;
   invited: Array<{ email: string; tier: string; status: string; created_at: number }>;
   tier: string;
 }
@@ -383,5 +398,194 @@ export async function apiGetOspecFindingDetail(findingId: number): Promise<any> 
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.detail || "Failed to load finding details");
+  return data;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CRYPTO PAYMENTS & SUBSCRIPTIONS API
+// ═══════════════════════════════════════════════════════════════
+
+export interface BorisPaymentNetwork {
+  id: string;
+  name: string;
+  short: string;
+  family: "evm" | "tron" | "solana";
+  chain_id: number;
+  chain_hex: string;
+  fee_hint: string;
+  recommended: boolean;
+  tokens: string[];
+}
+
+export interface BorisPaymentQuote {
+  plan_id: string;
+  base_tier: string;
+  billing: "monthly" | "yearly";
+  duration_days: number;
+  bonus_days: number;
+  total_days: number;
+  base_price_usd: number;
+  proration_credit_usd: number;
+  promo_code: string;
+  discount_usd: number;
+  final_amount_usd: number;
+  ref_balance_usd: number;
+  can_pay_with_ref_balance: boolean;
+}
+
+export interface BorisPaymentInvoice {
+  id: string;
+  seq_index: number;
+  plan_id: string;
+  base_tier: string;
+  duration_days: number;
+  bonus_days: number;
+  base_price_usd: number;
+  proration_credit_usd: number;
+  promo_code: string;
+  discount_usd: number;
+  amount_usd: number;
+  method: "onchain" | "cryptobot" | "ref_balance";
+  network: string;
+  asset: string;
+  deposit_address: string;
+  pay_url: string;
+  cb_invoice_id?: number;
+  tx_hash?: string;
+  paid_amount?: number;
+  status: "pending" | "paid" | "expired" | "cancelled";
+  remaining_seconds: number;
+  created_at: number;
+  expires_at: number;
+  paid_at?: number | null;
+  qr_svg?: string;
+  raw_units_str?: string;
+  evm_transfer_data?: string;
+  network_meta?: {
+    name: string;
+    short: string;
+    family: string;
+    chain_id: number;
+    chain_hex: string;
+    fee_hint: string;
+    explorer_addr: string;
+    explorer_tx_prefix: string;
+    token_contract: string;
+    token_decimals: number;
+  };
+}
+
+export function openCryptoCheckout(opts?: { tier?: "radar" | "raw" | "blackbox"; yearly?: boolean; planId?: string }) {
+  const detail = opts || { tier: "raw", yearly: false };
+  window.dispatchEvent(new CustomEvent("boris-open-checkout", { detail }));
+}
+
+export async function apiGetPaymentPlans(): Promise<{
+  plans: Record<string, any>;
+  networks: BorisPaymentNetwork[];
+  cryptobot_enabled: boolean;
+  subscription?: {
+    tier: string;
+    expires_at: number | null;
+    days_remaining: number;
+    ref_balance_usd: number;
+    ref_earned_usd: number;
+  } | null;
+}> {
+  const res = await fetch(`${API_BASE}/api/payments/plans`, { headers: authHeaders() });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Failed to load payment plans");
+  return data;
+}
+
+export async function apiQuotePayment(plan_id: string, promo_code?: string): Promise<BorisPaymentQuote> {
+  const res = await fetch(`${API_BASE}/api/payments/quote`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ plan_id, promo_code: promo_code || "" }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Failed to calculate quote");
+  return data;
+}
+
+export async function apiCreatePaymentInvoice(payload: {
+  plan_id: string;
+  method: "onchain" | "cryptobot" | "ref_balance";
+  network?: string;
+  asset?: string;
+  promo_code?: string;
+}): Promise<{ invoice: BorisPaymentInvoice; quote: BorisPaymentQuote }> {
+  const res = await fetch(`${API_BASE}/api/payments/create-invoice`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Failed to create invoice");
+  return data;
+}
+
+export async function apiSwitchInvoiceNetwork(
+  invoiceId: string,
+  network: string,
+  asset: string
+): Promise<{ invoice: BorisPaymentInvoice }> {
+  const res = await fetch(`${API_BASE}/api/payments/invoice/${invoiceId}/switch-network`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ network, asset }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Failed to switch network");
+  return data;
+}
+
+export async function apiCheckPaymentInvoice(
+  invoiceId: string,
+  tx_hash?: string
+): Promise<{
+  paid: boolean;
+  detected_amount: number;
+  invoice: BorisPaymentInvoice;
+  user_tier: string;
+  tier_expires_at?: number | null;
+}> {
+  const res = await fetch(`${API_BASE}/api/payments/invoice/${invoiceId}/check`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ tx_hash: tx_hash || "" }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Failed to verify payment");
+  return data;
+}
+
+export async function apiGetPaymentHistory(): Promise<{
+  subscription: { tier: string; expires_at: number | null; days_remaining: number };
+  referral_wallet: { balance_usd: number; earned_usd: number; withdrawn_usd: number; min_withdrawal_usd: number };
+  invoices: BorisPaymentInvoice[];
+  payouts: any[];
+  commissions: any[];
+}> {
+  const res = await fetch(`${API_BASE}/api/payments/history`, { headers: authHeaders() });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Failed to load billing history");
+  return data;
+}
+
+export async function apiWithdrawReferral(payload: {
+  amount_usd?: number;
+  network: string;
+  asset: string;
+  destination: string;
+}): Promise<{ ok: boolean; payout_id: string; amount_usd: number; status: string }> {
+  const res = await fetch(`${API_BASE}/api/payments/referral/withdraw`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Withdrawal request failed");
   return data;
 }

@@ -806,13 +806,14 @@ export function ResultTeaser({ result, isRu, taskId }: { result: DemoScanResult;
                   <span>{isRu ? "Скачать JSON-досье" : "Export JSON Dossier"}</span>
                 </a>
               ) : (
-                <a
-                  href="/pricing"
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent("boris-open-checkout", { detail: { tier: "radar" } }))}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 font-mono text-xs text-muted-foreground transition-all hover:border-primary hover:text-primary"
                 >
                   <Lock size={12} className="text-primary" />
                   <span>{isRu ? "JSON-экспорт [с тарифа RADAR]" : "JSON Export [RADAR+ Tier]"}</span>
-                </a>
+                </button>
               )}
             </div>
 
