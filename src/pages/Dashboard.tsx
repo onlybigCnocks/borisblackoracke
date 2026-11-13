@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { RevealOnScroll, GlowCard } from "@/components/ui-boris";
 import DemoScanner from "@/components/DemoScanner";
 import ToolsPanel from "@/components/ToolsPanel";
+import RadarStreamPanel from "@/components/RadarStreamPanel";
 import {
   ArrowUpRight,
   Key,
@@ -172,10 +173,11 @@ const Dashboard = () => {
     try {
       const res = await apiSyncTelegram(tgInput.trim());
       if (res.user) setUser(res.user);
+      refreshHistory();
       setTgMsg(
         isRu
-          ? `✅ Привязан @${res.tg_username || res.tg_id} · Тариф: ${res.effective_tier} · Сканов: ${res.tg_scans}`
-          : `✅ Linked @${res.tg_username || res.tg_id} · Tier: ${res.effective_tier} · Scans: ${res.tg_scans}`
+          ? `✅ Привязан @${res.tg_username || res.tg_id} · Тариф: ${res.effective_tier} · Всего сканов: ${res.tg_scans} (импортировано в кабинет: ${res.imported_history_count ?? 0})`
+          : `✅ Linked @${res.tg_username || res.tg_id} · Tier: ${res.effective_tier} · Total scans: ${res.tg_scans} (imported to cabinet: ${res.imported_history_count ?? 0})`
       );
       setTgInput("");
     } catch (err: any) {
@@ -677,8 +679,8 @@ const Dashboard = () => {
             >
               <Radar size={14} />
               <span>24/7 Live Radar Feed</span>
-              <span className="rounded border border-primary/40 bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold text-primary">
-                SOON
+              <span className="rounded border border-green-500/40 bg-green-500/15 px-1.5 py-0.5 text-[9px] font-bold text-green-400">
+                LIVE
               </span>
             </button>
           </div>
@@ -986,35 +988,17 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* TAB 3: 24/7 Live Autonomous Radar Feed — SOON Stub */}
+        {/* TAB 3: 24/7 Live Autonomous Radar Feed (Connected to runtime boris-server DBs) */}
         {activeTab === "radar" && (
-          <div className="rounded-2xl border border-primary/30 bg-card p-10 text-center bg-radial-red">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/40 bg-primary/15 text-primary">
-              <Radar size={28} />
-            </div>
-            <span className="rounded-full border border-primary/40 bg-primary/15 px-3 py-1 font-mono text-xs font-bold uppercase tracking-widest text-primary">
-              COMING SOON // BORIS RADAR STREAM
-            </span>
-            <h4 className="mt-4 text-xl font-bold text-foreground">
-              {isRu
-                ? "Прямой эфир 5 автономных радаров (GitHub · DeFiLlama · Verified Contracts · Soroban · ZK)"
-                : "24/7 Autonomous Radar Stream (GitHub · DeFiLlama · Verified Contracts · Soroban · ZK)"}
-            </h4>
-            <p className="mx-auto mt-2 max-w-xl font-mono text-xs text-muted-foreground leading-relaxed">
-              {isRu
-                ? "Модуль синхронизации фоновых радаров с веб-терминалом находится в закрытом тестировании для подписчиков RADAR / RAW / BLACKBOX. Сейчас поток находок в реальном времени доступен через Telegram-контур."
-                : "Direct web synchronization of BORIS autonomous radars is in closed testing for RADAR / RAW / BLACKBOX tiers. Live discovery alerts are currently streamed via the Telegram terminal."}
-            </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Link
-                to="/pricing"
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
-              >
-                <span>{isRu ? "Тарифы доступа (RADAR / RAW / BLACKBOX)" : "View Access Tiers"}</span>
-                <ArrowUpRight size={14} />
-              </Link>
-            </div>
-          </div>
+          <RadarStreamPanel
+            user={user}
+            onOpenDossier={(taskId) => handleOpenSavedScan(taskId)}
+            onPrefillScan={(target) => {
+              localStorage.setItem("boris_prefill_target", target);
+              window.dispatchEvent(new CustomEvent("boris-prefill-target", { detail: { target } }));
+              document.getElementById("demo-scanner")?.scrollIntoView({ behavior: "smooth" });
+            }}
+          />
         )}
       </RevealOnScroll>
     </div>

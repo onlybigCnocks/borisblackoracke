@@ -260,6 +260,14 @@ const DemoScanner = () => {
       localStorage.removeItem("boris_prefill_target");
       setInput(prefill);
     }
+    const onPrefillEvent = (e: Event) => {
+      const custom = e as CustomEvent;
+      if (custom.detail?.target) {
+        setInput(custom.detail.target);
+        setValidationError("");
+      }
+    };
+    window.addEventListener("boris-prefill-target", onPrefillEvent);
     const savedTaskId = localStorage.getItem(LS_TASK_ID);
     const savedInput = localStorage.getItem(LS_INPUT);
     const savedStartTime = localStorage.getItem(LS_START_TIME);
@@ -272,6 +280,9 @@ const DemoScanner = () => {
       scanStartTime.current = startTime;
       setCurrentStep(isRu ? "⏳ Ожидание в очереди..." : "⏳ Waiting in queue...");
     }
+    return () => {
+      window.removeEventListener("boris-prefill-target", onPrefillEvent);
+    };
   }, [isRu]);
 
   const startScan = useCallback(async (overrideTarget?: string) => {

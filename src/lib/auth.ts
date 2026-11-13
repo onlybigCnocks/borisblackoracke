@@ -16,6 +16,19 @@ export interface BorisUser {
   ref_code?: string;
   tg_id?: string;
   tg_username?: string;
+  tg_meta?: {
+    member_since?: string;
+    bonus_scans_today?: number;
+    scans_used_today_tg?: number;
+    radar_alerts_enabled?: boolean;
+    radar_min_score?: number;
+    radar_sources?: string[];
+    defillama_alerts_enabled?: boolean;
+    defillama_min_tvl?: number;
+    explorer_alerts_enabled?: boolean;
+    explorer_min_score?: number;
+    explorer_chains?: string[];
+  };
   auth_provider: "email" | "google";
   created_at: number;
 }
@@ -208,10 +221,44 @@ export async function apiRemoveWatchlist(id: number): Promise<void> {
   });
 }
 
-export async function apiGetRadarFeed(): Promise<{ audits: BorisRadarAudit[]; market_signals: any[] }> {
-  const res = await fetch(`${API_BASE}/api/auth/radar-feed`);
-  if (!res.ok) return { audits: [], market_signals: [] };
+export async function apiGetRadarFeed(params?: {
+  tab?: string;
+  chain?: string;
+  q?: string;
+  min_score?: number;
+  limit?: number;
+}): Promise<any> {
+  const qs = new URLSearchParams();
+  if (params?.tab) qs.set("tab", params.tab);
+  if (params?.chain) qs.set("chain", params.chain);
+  if (params?.q) qs.set("q", params.q);
+  if (params?.min_score) qs.set("min_score", String(params.min_score));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  const queryStr = qs.toString() ? `?${qs.toString()}` : "";
+  const res = await fetch(`${API_BASE}/api/auth/radar-feed${queryStr}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) return { status: "error", items: [], stats: {} };
   return res.json();
+}
+
+export async function apiUpdateRadarSettings(payload: {
+  radar_alerts_enabled?: boolean;
+  radar_min_score?: number;
+  defillama_alerts_enabled?: boolean;
+  explorer_alerts_enabled?: boolean;
+  explorer_min_score?: number;
+}): Promise<any> {
+  const token = getSavedToken();
+  if (!token) throw new Error("Not authenticated");
+  const res = await fetch(`${API_BASE}/api/auth/radar-settings`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Failed to update radar settings");
+  return data;
 }
 
 export interface BorisReferral {
