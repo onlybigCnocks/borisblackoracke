@@ -11,6 +11,10 @@ import {
   Loader2,
   Zap,
   RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import {
   apiGetRadarFeed,
@@ -35,8 +39,20 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
   const [query, setQuery] = useState<string>("");
   const [minScore, setMinScore] = useState<number>(0);
 
+  // Pagination state (default 10 per page with selector 10 / 20 / 50)
+  const [page, setPage] = useState<number>(1);
+  const [perPage, setPerPage] = useState<number>(10);
+
   const [loading, setLoading] = useState<boolean>(true);
-  const [feed, setFeed] = useState<any>({ stats: {}, items: [], locked: false });
+  const [feed, setFeed] = useState<any>({
+    stats: {},
+    items: [],
+    locked: false,
+    page: 1,
+    per_page: 10,
+    total: 0,
+    total_pages: 1,
+  });
 
   // Telegram Radar Alert Settings (synced with users_db.json)
   const tgMeta = user?.tg_meta || {};
@@ -54,7 +70,14 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
     }
   }, [user?.tg_meta]);
 
-  const loadFeed = async (override?: { t?: RadarTab; c?: string; q?: string; ms?: number }) => {
+  const loadFeed = async (override?: {
+    t?: RadarTab;
+    c?: string;
+    q?: string;
+    ms?: number;
+    p?: number;
+    pp?: number;
+  }) => {
     setLoading(true);
     try {
       const data = await apiGetRadarFeed({
@@ -62,7 +85,8 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
         chain: override?.c ?? chain,
         q: override?.q ?? query,
         min_score: override?.ms ?? minScore,
-        limit: 40,
+        page: override?.p ?? page,
+        per_page: override?.pp ?? perPage,
       });
       setFeed(data);
     } finally {
@@ -71,8 +95,8 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
   };
 
   useEffect(() => {
-    loadFeed({ t: tab, c: chain });
-  }, [tab, chain]);
+    loadFeed({ t: tab, c: chain, p: page, pp: perPage });
+  }, [tab, chain, page, perPage]);
 
   const handleToggleAlert = async (field: "gh" | "defi" | "expl") => {
     if (!user?.tg_id) return;
@@ -106,35 +130,206 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
   };
 
   const stats = feed?.stats || {};
+  const totalItems = Number(feed?.total || 0);
+  const totalPages = Math.max(1, Number(feed?.total_pages || 1));
+  const currentPage = Math.min(totalPages, Math.max(1, Number(feed?.page || page)));
 
-  const TABS: Array<{ id: RadarTab; labelRu: string; labelEn: string; count?: number }> = [
-    { id: "github", labelRu: "🔥 GitHub Репо", labelEn: "🔥 GitHub Repos", count: stats.github_repos },
-    { id: "defillama", labelRu: "📊 DeFiLlama", labelEn: "📊 DeFiLlama", count: stats.defillama_protocols },
-    { id: "contracts", labelRu: "🔗 Верифицированные контракты", labelEn: "🔗 Verified Contracts", count: stats.verified_contracts },
-    { id: "soroban", labelRu: "🛡️ Soroban / Stellar", labelEn: "🛡️ Soroban Radar", count: stats.soroban_targets },
-    { id: "zk", labelRu: "🔐 ZK Groth16 [RAW+]", labelEn: "🔐 ZK Groth16 [RAW+]", count: stats.zk_verifiers },
-    { id: "audits_base", labelRu: "📚 Архив аудитов (10.5K)", labelEn: "📚 Audit Archive (10.5K)", count: stats.audits_archive },
+  const userTier = (user?.tier || "GUEST").toUpperCase();
+  const isPaid = ["RADAR", "RAW", "BLACKBOX"].includes(userTier);
+  const isDeep = ["RAW", "BLACKBOX"].includes(userTier);
+
+  const TABS: Array<{
+    id: RadarTab;
+    labelRu: string;
+    labelEn: string;
+    tierBadge: string;
+    lockedForUser: boolean;
+  }> = [
+    {
+      id: "github",
+      labelRu: "🔥 GitHub Репо",
+      labelEn: "🔥 GitHub Repos",
+      tierBadge: "FREE",
+      lockedForUser: false,
+    },
+    {
+      id: "defillama",
+      labelRu: "📊 DeFiLlama",
+      labelEn: "📊 DeFiLlama",
+      tierBadge: "RADAR+",
+      lockedForUser: !isPaid,
+    },
+    {
+      id: "contracts",
+      labelRu: "🔗 Верифицированные контракты",
+      labelEn: "🔗 Verified Contracts",
+      tierBadge: "RADAR+",
+      lockedForUser: !isPaid,
+    },
+    {
+      id: "soroban",
+      labelRu: "🛡️ Soroban / Stellar",
+      labelEn: "🛡️ Soroban Radar",
+      tierBadge: "RADAR+",
+      lockedForUser: !isPaid,
+    },
+    {
+      id: "zk",
+      labelRu: "🔐 ZK Groth16",
+      labelEn: "🔐 ZK Groth16",
+      tierBadge: "RAW+",
+      lockedForUser: !isDeep,
+    },
+    {
+      id: "audits_base",
+      labelRu: "📚 Архив аудитов (10.5K)",
+      labelEn: "📚 Audit Archive (10.5K)",
+      tierBadge: "RADAR+",
+      lockedForUser: !isPaid,
+    },
   ];
 
+  const getPageNumbers = (): Array<number | string> => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const pages: Array<number | string> = [1];
+    const start = Math.max(2, currentPage - 2);
+    const end = Math.min(totalPages - 1, currentPage + 2);
+    if (start > 2) pages.push("...");
+    for (let p = start; p <= end; p++) pages.push(p);
+    if (end < totalPages - 1) pages.push("...");
+    pages.push(totalPages);
+    return pages;
+  };
+
+  const renderPaginationBar = () => {
+    if (feed?.locked || totalItems === 0) return null;
+    const fromIdx = (currentPage - 1) * perPage + 1;
+    const toIdx = Math.min(totalItems, currentPage * perPage);
+
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-2.5 font-mono text-xs">
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <span>
+            {isRu
+              ? `Показано ${fmt(fromIdx)}–${fmt(toIdx)} из ${fmt(totalItems)} · Стр. ${fmt(currentPage)} / ${fmt(totalPages)}`
+              : `Showing ${fmt(fromIdx)}–${fmt(toIdx)} of ${fmt(totalItems)} · Page ${fmt(currentPage)} / ${fmt(totalPages)}`}
+          </span>
+          <select
+            value={perPage}
+            onChange={(e) => {
+              const nextPp = Number(e.target.value) || 10;
+              setPerPage(nextPp);
+              setPage(1);
+            }}
+            className="rounded-lg border border-border bg-background px-2.5 py-1 text-xs text-foreground outline-none focus:border-primary"
+          >
+            <option value={10}>{isRu ? "По 10 / стр." : "10 / page"}</option>
+            <option value={20}>{isRu ? "По 20 / стр." : "20 / page"}</option>
+            <option value={50}>{isRu ? "По 50 / стр." : "50 / page"}</option>
+          </select>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1">
+          <button
+            type="button"
+            disabled={currentPage <= 1 || loading}
+            onClick={() => setPage(1)}
+            title={isRu ? "Первая страница" : "First page"}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:border-primary hover:text-foreground disabled:opacity-40"
+          >
+            <ChevronsLeft size={14} />
+          </button>
+          <button
+            type="button"
+            disabled={currentPage <= 1 || loading}
+            onClick={() => setPage(Math.max(1, currentPage - 1))}
+            title={isRu ? "Предыдущая" : "Previous"}
+            className="inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-background px-2.5 text-muted-foreground transition-colors hover:border-primary hover:text-foreground disabled:opacity-40"
+          >
+            <ChevronLeft size={14} />
+            <span className="hidden sm:inline">{isRu ? "Назад" : "Prev"}</span>
+          </button>
+
+          {getPageNumbers().map((p, idx) =>
+            p === "..." ? (
+              <span key={`dots-${idx}`} className="px-1.5 text-muted-foreground">
+                …
+              </span>
+            ) : (
+              <button
+                key={p}
+                type="button"
+                disabled={loading}
+                onClick={() => setPage(Number(p))}
+                className={`inline-flex h-8 min-w-[32px] items-center justify-center rounded-lg px-2 text-xs font-bold transition-all ${
+                  Number(p) === currentPage
+                    ? "bg-primary text-primary-foreground shadow"
+                    : "border border-border bg-background text-muted-foreground hover:border-primary hover:text-foreground"
+                }`}
+              >
+                {p}
+              </button>
+            )
+          )}
+
+          <button
+            type="button"
+            disabled={currentPage >= totalPages || loading}
+            onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
+            title={isRu ? "Следующая" : "Next"}
+            className="inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-background px-2.5 text-muted-foreground transition-colors hover:border-primary hover:text-foreground disabled:opacity-40"
+          >
+            <span className="hidden sm:inline">{isRu ? "Вперёд" : "Next"}</span>
+            <ChevronRight size={14} />
+          </button>
+          <button
+            type="button"
+            disabled={currentPage >= totalPages || loading}
+            onClick={() => setPage(totalPages)}
+            title={isRu ? "Последняя страница" : "Last page"}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:border-primary hover:text-foreground disabled:opacity-40"
+          >
+            <ChevronsRight size={14} />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Global Live Counters across all 6 BORIS radars */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {[
-          { k: "GitHub Radar", v: fmt(stats.github_repos || 33121) },
-          { k: "DeFiLlama", v: fmt(stats.defillama_protocols || 9396) },
-          { k: "Verified Contracts", v: fmt(stats.verified_contracts || 245175) },
-          { k: "Soroban Radar", v: fmt(stats.soroban_targets || 641) },
-          { k: "ZK Verifiers", v: fmt(stats.zk_verifiers || 4982) },
-          { k: isRu ? "Архив AUDITS_BASE" : "AUDITS_BASE Archive", v: fmt(stats.audits_archive || 10572) },
+          { k: "GitHub Radar [FREE]", v: fmt(stats.github_repos || 33122), tabId: "github" as RadarTab },
+          { k: "DeFiLlama [RADAR+]", v: fmt(stats.defillama_protocols || 9396), tabId: "defillama" as RadarTab },
+          { k: "Contracts [RADAR+]", v: fmt(stats.verified_contracts || 245189), tabId: "contracts" as RadarTab },
+          { k: "Soroban [RADAR+]", v: fmt(stats.soroban_targets || 641), tabId: "soroban" as RadarTab },
+          { k: "ZK Verifiers [RAW+]", v: fmt(stats.zk_verifiers || 4982), tabId: "zk" as RadarTab },
+          { k: isRu ? "Архив [RADAR+]" : "Archive [RADAR+]", v: fmt(stats.audits_archive || 10572), tabId: "audits_base" as RadarTab },
         ].map((c, i) => (
-          <div key={i} className="rounded-xl border border-border bg-card p-3.5">
+          <button
+            key={i}
+            type="button"
+            onClick={() => {
+              setTab(c.tabId);
+              setChain("all");
+              setPage(1);
+            }}
+            className={`rounded-xl border p-3.5 text-left transition-all ${
+              tab === c.tabId
+                ? "border-primary bg-primary/10"
+                : "border-border bg-card hover:border-primary/40"
+            }`}
+          >
             <div className="flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
               <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground truncate">{c.k}</p>
             </div>
             <p className="mt-1 font-mono text-lg font-bold text-foreground">{c.v}</p>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -191,7 +386,7 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
         </div>
       )}
 
-      {/* Radar Stream Sub-Tabs */}
+      {/* Radar Stream Sub-Tabs with Tier Badges */}
       <div className="flex flex-wrap gap-2">
         {TABS.map((t) => (
           <button
@@ -200,6 +395,7 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
             onClick={() => {
               setTab(t.id);
               setChain("all");
+              setPage(1);
             }}
             className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2.5 font-mono text-xs font-semibold transition-all ${
               tab === t.id
@@ -208,6 +404,17 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
             }`}
           >
             <span>{isRu ? t.labelRu : t.labelEn}</span>
+            <span
+              className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${
+                tab === t.id
+                  ? "bg-black/25 text-primary-foreground"
+                  : t.tierBadge === "FREE"
+                  ? "border border-green-500/40 bg-green-500/15 text-green-400"
+                  : "border border-primary/40 bg-primary/15 text-primary"
+              }`}
+            >
+              {t.lockedForUser ? `🔒 ${t.tierBadge}` : t.tierBadge}
+            </span>
           </button>
         ))}
       </div>
@@ -221,7 +428,12 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && loadFeed({ q: query })}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setPage(1);
+                  loadFeed({ q: query, p: 1 });
+                }
+              }}
               placeholder={
                 tab === "audits_base"
                   ? isRu
@@ -238,7 +450,10 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
           {(tab === "contracts" || tab === "zk") && (
             <select
               value={chain}
-              onChange={(e) => setChain(e.target.value)}
+              onChange={(e) => {
+                setChain(e.target.value);
+                setPage(1);
+              }}
               className="rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-primary"
             >
               <option value="all">{isRu ? "Все сети" : "All Chains"}</option>
@@ -252,7 +467,10 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
 
           <button
             type="button"
-            onClick={() => loadFeed({ q: query })}
+            onClick={() => {
+              setPage(1);
+              loadFeed({ q: query, p: 1 });
+            }}
             disabled={loading}
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 font-mono text-xs font-semibold text-primary-foreground hover:bg-primary-dim disabled:opacity-50"
           >
@@ -261,6 +479,9 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
           </button>
         </div>
       )}
+
+      {/* Top Pagination Carousel */}
+      {renderPaginationBar()}
 
       {/* Locked State for GUEST or RAW+ ZK */}
       {feed?.locked ? (
@@ -273,15 +494,25 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
           </span>
           <h4 className="mt-4 text-xl font-bold text-foreground">
             {isRu
-              ? "Прямой поток 5 автономных радаров и архива из 10,572 аудитов"
-              : "Live Stream of 5 Autonomous Radars & 10,572-Audit Archive"}
+              ? "Этот радарный контур доступен с тарифа RADAR и выше (GitHub Radar открыт бесплатно)"
+              : "This Autonomous Radar Requires RADAR+ Tier (GitHub Radar is Free)"}
           </h4>
           <p className="mx-auto mt-2 max-w-xl font-mono text-xs text-muted-foreground leading-relaxed">
             {isRu
-              ? "Доступ к живому потоку находок GitHub Radar (33K репо), DeFiLlama (9.3K протоколов), Verified Contracts (245K контрактов), Soroban, ZK Groth16 и архиву AUDITS_BASE открывается с тарифа RADAR."
-              : "Access to live discoveries across GitHub Radar (33K repos), DeFiLlama (9.3K protocols), Verified Contracts (245K contracts), Soroban, ZK Groth16, and the AUDITS_BASE archive requires RADAR+."}
+              ? "GitHub Radar (33,122+ репозиториев) открыт для всех пользователей. Доступ к DeFiLlama Radar (9.3K протоколов), Verified Contracts (245K контрактов), Soroban Radar, архиву AUDITS_BASE (10.5K аудитов) и ZK Groth16 открывается по подписке RADAR / RAW / BLACKBOX."
+              : "GitHub Radar (33,122+ repos) is open to all users. Access to DeFiLlama Radar (9.3K protocols), Verified Contracts (245K contracts), Soroban Radar, AUDITS_BASE (10.5K audits), and ZK Groth16 requires a RADAR / RAW / BLACKBOX subscription."}
           </p>
-          <div className="mt-6 flex justify-center">
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setTab("github");
+                setPage(1);
+              }}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-5 py-2.5 font-mono text-xs font-semibold text-foreground hover:border-primary"
+            >
+              <span>{isRu ? "🔥 Перейти в бесплатный GitHub Radar" : "🔥 Open Free GitHub Radar"}</span>
+            </button>
             <Link
               to="/pricing"
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 font-mono text-xs font-semibold text-primary-foreground hover:bg-primary-dim btn-glow"
@@ -383,6 +614,9 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
           ))}
         </div>
       )}
+
+      {/* Bottom Pagination Carousel */}
+      {renderPaginationBar()}
     </div>
   );
 };

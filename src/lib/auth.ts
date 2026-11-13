@@ -226,6 +226,8 @@ export async function apiGetRadarFeed(params?: {
   chain?: string;
   q?: string;
   min_score?: number;
+  page?: number;
+  per_page?: number;
   limit?: number;
 }): Promise<any> {
   const qs = new URLSearchParams();
@@ -233,6 +235,8 @@ export async function apiGetRadarFeed(params?: {
   if (params?.chain) qs.set("chain", params.chain);
   if (params?.q) qs.set("q", params.q);
   if (params?.min_score) qs.set("min_score", String(params.min_score));
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.per_page) qs.set("per_page", String(params.per_page));
   if (params?.limit) qs.set("limit", String(params.limit));
   const queryStr = qs.toString() ? `?${qs.toString()}` : "";
   const res = await fetch(`${API_BASE}/api/auth/radar-feed${queryStr}`, {

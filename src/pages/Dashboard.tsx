@@ -67,6 +67,8 @@ const Dashboard = () => {
 
   const [user, setUser] = useState<BorisUser | null>(getSavedUser());
   const [scans, setScans] = useState<BorisScanRecord[]>([]);
+  const [histPage, setHistPage] = useState<number>(1);
+  const [histPerPage, setHistPerPage] = useState<number>(10);
   const [watchlist, setWatchlist] = useState<BorisWatchlistItem[]>([]);
   const [radarAudits, setRadarAudits] = useState<BorisRadarAudit[]>([]);
   const [activeTab, setActiveTab] = useState<"history" | "tools" | "watchlist" | "radar" | "referral">("history");
@@ -860,98 +862,170 @@ const Dashboard = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {scans.map((s) => {
-                  const badge = VERDICT_BADGE[s.verdict || "SCANNING"] || VERDICT_BADGE.SCANNING;
-                  const dateStr = new Date(s.created_at * 1000).toLocaleString();
-                  return (
-                    <div
-                      key={s.task_id}
-                      className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2.5">
-                          <span className={`rounded border px-2 py-0.5 font-mono text-[10px] font-bold ${badge}`}>
-                            {s.verdict || "SCANNING"}
-                          </span>
-                          <span className="truncate font-mono text-sm font-semibold text-foreground">
-                            {s.project || s.target}
-                          </span>
-                        </div>
-                        <p className="mt-1 font-mono text-xs text-muted-foreground truncate">
-                          Target: {s.target} · {dateStr}
-                        </p>
+                {/* Scan History Pagination Bar */}
+                {(() => {
+                  const totalScans = scans.length;
+                  const totalPages = Math.max(1, Math.ceil(totalScans / histPerPage));
+                  const curPage = Math.min(totalPages, Math.max(1, histPage));
+                  const fromIdx = (curPage - 1) * histPerPage + 1;
+                  const toIdx = Math.min(totalScans, curPage * histPerPage);
+                  const pagedScans = scans.slice((curPage - 1) * histPerPage, curPage * histPerPage);
+
+                  const renderHistPager = () => (
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-2.5 font-mono text-xs">
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                        <span>
+                          {isRu
+                            ? `Показано ${fromIdx}–${toIdx} из ${totalScans} · Стр. ${curPage} / ${totalPages}`
+                            : `Showing ${fromIdx}–${toIdx} of ${totalScans} · Page ${curPage} / ${totalPages}`}
+                        </span>
+                        <select
+                          value={histPerPage}
+                          onChange={(e) => {
+                            setHistPerPage(Number(e.target.value) || 10);
+                            setHistPage(1);
+                          }}
+                          className="rounded-lg border border-border bg-background px-2.5 py-1 text-xs text-foreground outline-none focus:border-primary"
+                        >
+                          <option value={10}>{isRu ? "По 10 / стр." : "10 / page"}</option>
+                          <option value={20}>{isRu ? "По 20 / стр." : "20 / page"}</option>
+                          <option value={50}>{isRu ? "По 50 / стр." : "50 / page"}</option>
+                        </select>
                       </div>
-
-                      <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
-                        <div className="mr-2">
-                          <span className="text-muted-foreground">Patterns: </span>
-                          <span className="font-bold text-foreground">{s.patterns_total}</span>
-                          {" ("}
-                          <span className="text-red-400">{s.patterns_critical}C</span>
-                          {" / "}
-                          <span className="text-orange-400">{s.patterns_high}H</span>
-                          {")"}
-                        </div>
-
+                      <div className="flex flex-wrap items-center gap-1">
                         <button
-                          onClick={() => handleOpenSavedScan(s.task_id)}
-                          disabled={loadingScanId === s.task_id}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-50"
+                          type="button"
+                          disabled={curPage <= 1}
+                          onClick={() => setHistPage(Math.max(1, curPage - 1))}
+                          className="inline-flex h-8 items-center rounded-lg border border-border bg-background px-2.5 text-muted-foreground hover:border-primary hover:text-foreground disabled:opacity-40"
                         >
-                          <Eye size={13} />
-                          <span>
-                            {loadingScanId === s.task_id
-                              ? isRu ? "Загрузка..." : "Loading..."
-                              : isRu ? "Открыть досье" : "Open Dossier"}
-                          </span>
+                          {isRu ? "‹ Назад" : "‹ Prev"}
                         </button>
-
-                        {user?.tier && user.tier.toUpperCase() !== "GUEST" ? (
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                           <button
-                            onClick={() => handleRescanDrift(s)}
-                            disabled={driftBusy === s.task_id}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-foreground disabled:opacity-50"
+                            key={p}
+                            type="button"
+                            onClick={() => setHistPage(p)}
+                            className={`inline-flex h-8 min-w-[32px] items-center justify-center rounded-lg px-2 text-xs font-bold transition-all ${
+                              p === curPage
+                                ? "bg-primary text-primary-foreground shadow"
+                                : "border border-border bg-background text-muted-foreground hover:border-primary hover:text-foreground"
+                            }`}
                           >
-                            <RefreshCw size={13} className={driftBusy === s.task_id ? "animate-spin" : ""} />
-                            <span>
-                              {driftBusy === s.task_id
-                                ? isRu ? "Рескан…" : "Rescan…"
-                                : isRu ? "Rescan и Drift" : "Rescan & Drift"}
-                            </span>
+                            {p}
                           </button>
-                        ) : null}
-
-                        <Link
-                          to={`/report/${s.task_id}`}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+                        ))}
+                        <button
+                          type="button"
+                          disabled={curPage >= totalPages}
+                          onClick={() => setHistPage(Math.min(totalPages, curPage + 1))}
+                          className="inline-flex h-8 items-center rounded-lg border border-border bg-background px-2.5 text-muted-foreground hover:border-primary hover:text-foreground disabled:opacity-40"
                         >
-                          <ArrowUpRight size={13} />
-                          <span>{isRu ? "Поделиться" : "Share"}</span>
-                        </Link>
-
-                        {user?.tier && user.tier.toUpperCase() !== "GUEST" ? (
-                          <a
-                            href={getScanExportUrl(s.task_id)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
-                          >
-                            <Download size={13} />
-                            <span>JSON</span>
-                          </a>
-                        ) : (
-                          <Link
-                            to="/pricing"
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-                          >
-                            <Lock size={12} className="text-primary" />
-                            <span>JSON [RADAR+]</span>
-                          </Link>
-                        )}
+                          {isRu ? "Вперёд ›" : "Next ›"}
+                        </button>
                       </div>
                     </div>
                   );
-                })}
+
+                  return (
+                    <>
+                      {renderHistPager()}
+                      {pagedScans.map((s) => {
+                        const badge = VERDICT_BADGE[s.verdict || "SCANNING"] || VERDICT_BADGE.SCANNING;
+                        const dateStr = new Date(s.created_at * 1000).toLocaleString();
+                        return (
+                          <div
+                            key={s.task_id}
+                            className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2.5">
+                                <span className={`rounded border px-2 py-0.5 font-mono text-[10px] font-bold ${badge}`}>
+                                  {s.verdict || "SCANNING"}
+                                </span>
+                                <span className="truncate font-mono text-sm font-semibold text-foreground">
+                                  {s.project || s.target}
+                                </span>
+                              </div>
+                              <p className="mt-1 font-mono text-xs text-muted-foreground truncate">
+                                Target: {s.target} · {dateStr}
+                              </p>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
+                              <div className="mr-2">
+                                <span className="text-muted-foreground">Patterns: </span>
+                                <span className="font-bold text-foreground">{s.patterns_total}</span>
+                                {" ("}
+                                <span className="text-red-400">{s.patterns_critical}C</span>
+                                {" / "}
+                                <span className="text-orange-400">{s.patterns_high}H</span>
+                                {")"}
+                              </div>
+
+                              <button
+                                onClick={() => handleOpenSavedScan(s.task_id)}
+                                disabled={loadingScanId === s.task_id}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-50"
+                              >
+                                <Eye size={13} />
+                                <span>
+                                  {loadingScanId === s.task_id
+                                    ? isRu ? "Загрузка..." : "Loading..."
+                                    : isRu ? "Открыть досье" : "Open Dossier"}
+                                </span>
+                              </button>
+
+                              {user?.tier && user.tier.toUpperCase() !== "GUEST" ? (
+                                <button
+                                  onClick={() => handleRescanDrift(s)}
+                                  disabled={driftBusy === s.task_id}
+                                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-foreground disabled:opacity-50"
+                                >
+                                  <RefreshCw size={13} className={driftBusy === s.task_id ? "animate-spin" : ""} />
+                                  <span>
+                                    {driftBusy === s.task_id
+                                      ? isRu ? "Рескан…" : "Rescan…"
+                                      : isRu ? "Rescan и Drift" : "Rescan & Drift"}
+                                  </span>
+                                </button>
+                              ) : null}
+
+                              <Link
+                                to={`/report/${s.task_id}`}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+                              >
+                                <ArrowUpRight size={13} />
+                                <span>{isRu ? "Поделиться" : "Share"}</span>
+                              </Link>
+
+                              {user?.tier && user.tier.toUpperCase() !== "GUEST" ? (
+                                <a
+                                  href={getScanExportUrl(s.task_id)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+                                >
+                                  <Download size={13} />
+                                  <span>JSON</span>
+                                </a>
+                              ) : (
+                                <Link
+                                  to="/pricing"
+                                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                                >
+                                  <Lock size={12} className="text-primary" />
+                                  <span>JSON [RADAR+]</span>
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {totalPages > 1 && renderHistPager()}
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>
