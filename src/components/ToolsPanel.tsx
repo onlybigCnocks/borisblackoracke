@@ -17,6 +17,9 @@ import {
   Eye,
   Copy,
   Check,
+  Flame,
+  Layers,
+  Radar,
 } from "lucide-react";
 import {
   getSavedUser,
@@ -30,7 +33,18 @@ import {
 
 const API_BASE = "https://api.black-oracle.com";
 
-type ToolId = "holders" | "funds" | "market" | "social" | "soroban" | "ospec" | "zk" | "drift";
+type ToolId =
+  | "holders"
+  | "funds"
+  | "market"
+  | "social"
+  | "soroban"
+  | "ospec"
+  | "zk"
+  | "drift"
+  | "hacks"
+  | "proxy"
+  | "surface";
 
 const TIER_RANK: Record<string, number> = { GUEST: 0, RADAR: 1, RAW: 2, BLACKBOX: 3 };
 
@@ -154,6 +168,9 @@ const ToolsPanel = () => {
     { id: "social", labelRu: "Social & OSINT", labelEn: "Social & OSINT", icon: Globe, minRank: 0, placeholder: "@handle, org/repo, t.me/..., x.com/..." },
     { id: "soroban", labelRu: "Soroban / Stellar", labelEn: "Soroban / Stellar", icon: Compass, minRank: 0, placeholder: "USDC, AQUA, CODE:ISSUER, C..." },
     { id: "ospec", labelRu: "OSPEC (Утечки 1.1M)", labelEn: "OSPEC (1.1M Secrets)", icon: KeyRound, minRank: 1, placeholder: "Фильтр по типу секрета или org/repo (пусто = последние находки)" },
+    { id: "hacks", labelRu: "DeFiHackLabs (861 взломов)", labelEn: "DeFiHackLabs (861 Exploits)", icon: Flame, minRank: 1, placeholder: "0x1F98431c8aD98523631AE4a59f267346ea31F984" },
+    { id: "proxy", labelRu: "Proxy & EIP-1967 Инспектор", labelEn: "Proxy & EIP-1967 Inspector", icon: Layers, minRank: 1, placeholder: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" },
+    { id: "surface", labelRu: "Web3 Surface Mapper (Домен)", labelEn: "Web3 Surface Mapper (Domain)", icon: Radar, minRank: 1, placeholder: "across.to / rhino.fi / app.uniswap.org" },
     { id: "drift", labelRu: "Audit Drift (Репозиторий)", labelEn: "Audit Drift (Repo Audits)", icon: GitCompare, minRank: 1, placeholder: "https://github.com/Uniswap/v4-core или org/repo" },
     { id: "zk", labelRu: "ZK / Groth16 аудит", labelEn: "ZK Groth16 Audit", icon: ShieldCheck, minRank: 2, placeholder: "0x... verifier" },
   ];
@@ -187,6 +204,15 @@ const ToolsPanel = () => {
       } else if (tool === "zk") {
         path = "/api/tools/zk-audit";
         body = { address: input1.trim(), chain };
+      } else if (tool === "hacks") {
+        path = "/api/tools/hack-matcher";
+        body = { address: input1.trim(), chain };
+      } else if (tool === "proxy") {
+        path = "/api/tools/proxy-check";
+        body = { address: input1.trim(), chain };
+      } else if (tool === "surface") {
+        path = "/api/tools/surface-map";
+        body = { domain: input1.trim() };
       } else {
         path = "/api/tools/drift-compare";
         body = { repo_url: input1.trim() };
@@ -335,7 +361,7 @@ const ToolsPanel = () => {
               placeholder={active.placeholder}
               className="rounded-xl border border-border bg-background px-4 py-3 font-mono text-xs text-foreground outline-none focus:border-primary sm:col-span-2"
             />
-            {(tool === "holders" || tool === "funds" || tool === "zk") ? (
+            {(tool === "holders" || tool === "funds" || tool === "zk" || tool === "hacks" || tool === "proxy") ? (
               <select
                 value={chain}
                 onChange={(e) => setChain(e.target.value)}
@@ -1104,6 +1130,242 @@ const ToolsPanel = () => {
         </div>
       )}
 
+      {/* 9. DeFiHackLabs Pattern Matcher (861 Historical Exploits) */}
+      {result && tool === "hacks" && (
+        <div className="rounded-xl border border-border bg-card p-5 space-y-4 font-mono text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+            <div>
+              <span className="text-primary font-bold">{result.target}</span>
+              <span className="ml-2 text-muted-foreground">({result.chain})</span>
+            </div>
+            <span className="rounded border border-primary/40 bg-primary/15 px-2.5 py-0.5 text-[11px] font-bold text-primary">
+              {result.verdict} · Score: {result.total_pattern_risk}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-[10px] uppercase text-muted-foreground">{isRu ? "База эксплойтов" : "Exploit DB"}</p>
+              <p className="mt-1 text-sm font-bold text-foreground">{result.total_incidents_in_db || 861} incidents</p>
+            </div>
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-[10px] uppercase text-muted-foreground">{isRu ? "Совпавших векторов" : "Matched Vectors"}</p>
+              <p className="mt-1 text-sm font-bold text-primary">{(result.matched_patterns || []).length}</p>
+            </div>
+            <div className="rounded-lg border border-border bg-background p-3 col-span-2 sm:col-span-1">
+              <p className="text-[10px] uppercase text-muted-foreground">{isRu ? "Рекомендация" : "Recommendation"}</p>
+              <p className="mt-1 text-xs font-semibold text-foreground">{result.recommendation}</p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {(result.matched_patterns || []).map((mp: any, idx: number) => (
+              <div key={idx} className="rounded-lg border border-border bg-background p-3.5 space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="rounded border border-primary/40 bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
+                      Score {mp.score} (hits: {mp.hits})
+                    </span>
+                    <span className="font-bold text-foreground">{mp.attack_type}</span>
+                  </div>
+                  <code className="text-[10px] text-muted-foreground">{mp.pattern}</code>
+                </div>
+                <p className="text-[11px] text-muted-foreground">{mp.note}</p>
+
+                {Array.isArray(mp.related_hacks) && mp.related_hacks.length > 0 && (
+                  <div className="mt-2 border-t border-border/60 pt-2">
+                    <p className="mb-1.5 text-[10px] uppercase text-primary font-semibold">
+                      {isRu ? "Исторические прецеденты из DeFiHackLabs:" : "Historical Precedents (DeFiHackLabs):"}
+                    </p>
+                    <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                      {mp.related_hacks.map((h: any, hi: number) => (
+                        <div key={hi} className="flex items-center justify-between rounded border border-border bg-card px-2.5 py-1.5 text-[11px]">
+                          <span className="font-semibold text-foreground truncate">{h.protocol}</span>
+                          <span className="text-red-400 font-bold">{h.lost}</span>
+                          <span className="text-[10px] text-muted-foreground">{h.date}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 10. Proxy & EIP-1967 Upgradeability Inspector */}
+      {result && tool === "proxy" && (
+        <div className="rounded-xl border border-border bg-card p-5 space-y-4 font-mono text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+            <div>
+              <span className="text-primary font-bold">{result.address}</span>
+              <span className="ml-2 text-muted-foreground">({result.chain})</span>
+            </div>
+            <span
+              className={`rounded border px-2.5 py-0.5 text-[11px] font-bold ${
+                result.status === "VULN"
+                  ? "border-red-500/50 bg-red-500/15 text-red-400"
+                  : "border-green-500/50 bg-green-500/15 text-green-400"
+              }`}
+            >
+              {result.status} · {result.is_proxy ? "PROXY DETECTED" : "STANDALONE CONTRACT"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-[10px] uppercase text-muted-foreground">EIP-1967 Implementation</p>
+              <p className="mt-1 truncate font-bold text-foreground">
+                {result.eip1967?.implementation || "None (or custom slot)"}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-[10px] uppercase text-muted-foreground">Proxy Admin Slot</p>
+              <p className="mt-1 truncate font-bold text-primary">
+                {result.eip1967?.admin || "None"}
+              </p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">{result.eip1967?.admin_type}</p>
+            </div>
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-[10px] uppercase text-muted-foreground">Bytecode Size / Beacon</p>
+              <p className="mt-1 font-bold text-foreground">{result.codesize} bytes</p>
+              <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
+                Beacon: {result.eip1967?.beacon || "—"}
+              </p>
+            </div>
+          </div>
+
+          {(result.targets_checked || []).map((tc: any, idx: number) => (
+            <div key={idx} className="rounded-lg border border-border bg-background p-3.5 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-bold text-foreground">
+                  [{tc.target?.toUpperCase()}] {tc.addr}
+                </span>
+                <div className="flex gap-2 text-[10px]">
+                  <span className="rounded border border-border bg-card px-2 py-0.5">
+                    upgradeSelector: <b>{tc.has_upgrade ? "YES" : "NO"}</b>
+                  </span>
+                  <span className="rounded border border-border bg-card px-2 py-0.5">
+                    _disableInitializers: <b>{tc.has_disable ? "YES" : "NO"}</b>
+                  </span>
+                </div>
+              </div>
+              {Array.isArray(tc.inits) && tc.inits.length > 0 ? (
+                <div className="space-y-1.5 pt-1">
+                  {tc.inits.map((ini: any, ii: number) => (
+                    <div
+                      key={ii}
+                      className={`flex flex-wrap items-center justify-between gap-2 rounded border px-2.5 py-1.5 text-[11px] ${
+                        ini.vulnerable
+                          ? "border-red-500/50 bg-red-500/10 text-red-400"
+                          : "border-border bg-card text-muted-foreground"
+                      }`}
+                    >
+                      <code className="font-bold text-foreground">{ini.sig} (0x{ini.selector})</code>
+                      <span>{ini.reason}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[11px] text-muted-foreground">
+                  {isRu
+                    ? "Открытых функций initialize() без аргументов в байткоде/ABI не обнаружено."
+                    : "No exposed argumentless initialize() selectors detected."}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 11. Web3 Off-Chain Surface Mapper */}
+      {result && tool === "surface" && (
+        <div className="rounded-xl border border-border bg-card p-5 space-y-4 font-mono text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+            <div>
+              <span className="text-primary font-bold">{result.domain}</span>
+              <span className="ml-2 text-muted-foreground">({result.scanned_url})</span>
+            </div>
+            <span className="rounded border border-primary/40 bg-primary/15 px-2.5 py-0.5 text-[11px] font-bold text-primary">
+              Alive Subdomains: {result.subdomains_count || 0}
+            </span>
+          </div>
+
+          {/* Subdomains */}
+          {Array.isArray(result.subdomains_alive) && result.subdomains_alive.length > 0 && (
+            <div className="rounded-lg border border-border bg-background p-3.5">
+              <p className="mb-2 text-[10px] uppercase tracking-wider text-primary font-bold">
+                {isRu ? "Обнаруженные поддомены инфраструктуры" : "Discovered Infrastructure Subdomains"}
+              </p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {result.subdomains_alive.map((s: any, i: number) => (
+                  <a
+                    key={i}
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between rounded border border-border bg-card px-3 py-2 hover:border-primary"
+                  >
+                    <span className="font-bold text-foreground truncate">{s.host}</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      HTTP {s.status || "DNS"} ({fmt(s.body_len, 0)}B)
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Frontend JS Artifacts */}
+          {result.frontend && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border border-border bg-background p-3.5">
+                <p className="mb-1.5 text-[10px] uppercase text-primary font-bold">
+                  {isRu
+                    ? `Контракты в JS-бандлах (${(result.frontend.contracts || []).length})`
+                    : `Contracts in JS Bundles (${(result.frontend.contracts || []).length})`}
+                </p>
+                {(result.frontend.contracts || []).length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground">—</p>
+                ) : (
+                  <div className="max-h-40 overflow-y-auto space-y-1">
+                    {(result.frontend.contracts || []).map((c: string, idx: number) => (
+                      <div key={idx} className="truncate text-[11px] text-foreground select-all">
+                        {c}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-lg border border-border bg-background p-3.5">
+                <p className="mb-1.5 text-[10px] uppercase text-primary font-bold">
+                  RPC / API / GraphQL / WebSockets
+                </p>
+                <div className="max-h-40 overflow-y-auto space-y-1 text-[11px]">
+                  {[
+                    ...(result.frontend.api || []),
+                    ...(result.frontend.rpc || []),
+                    ...(result.frontend.graphql || []),
+                    ...(result.frontend.ws || []),
+                  ].slice(0, 20).map((u: string, idx: number) => (
+                    <div key={idx} className="truncate text-muted-foreground select-all">
+                      {u}
+                    </div>
+                  ))}
+                  {(result.frontend.sourcemaps || []).length > 0 && (
+                    <div className="pt-1 text-amber-400">
+                      ⚠️ SourceMaps exposed: {(result.frontend.sourcemaps || []).length}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* TOOL RUN HISTORY (Holders & Whales, Market & Derivatives, Funds Flow 14d, Social, Soroban, OSPEC) */}
       <div className="rounded-xl border border-border bg-card p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -1124,6 +1386,9 @@ const ToolsPanel = () => {
               { id: "social", label: "Social" },
               { id: "soroban", label: "Soroban" },
               { id: "ospec", label: "OSPEC" },
+              { id: "hacks", label: "DeFiHackLabs" },
+              { id: "proxy", label: "Proxy" },
+              { id: "surface", label: "Surface" },
             ].map((f) => (
               <button
                 key={f.id}
