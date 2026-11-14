@@ -788,13 +788,73 @@ const ToolsPanel = () => {
       )}
 
       {result && tool === "zk" && (
-        <div className="rounded-xl border border-border bg-card p-5">
-          <p className="font-mono text-xs text-foreground">
-            {isRu ? "Найдено верификаторов" : "Verifiers found"}: <b>{result.verifiers_found}</b>
-          </p>
-          <pre className="mt-3 max-h-96 overflow-auto rounded-lg border border-border bg-background p-3 font-mono text-[10px] text-muted-foreground">
-            {JSON.stringify(result.results, null, 2)}
-          </pre>
+        <div className="rounded-xl border border-border bg-card p-5 space-y-4 font-mono text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+            <div>
+              <span className="text-primary font-bold">{result.address}</span>
+              <span className="ml-2 text-muted-foreground">({result.chain})</span>
+            </div>
+            <span
+              className={`rounded border px-2.5 py-0.5 text-[11px] font-bold ${
+                (result.critical_count || 0) > 0 || (result.high_count || 0) > 0
+                  ? "border-red-500/50 bg-red-500/15 text-red-400"
+                  : "border-green-500/50 bg-green-500/15 text-green-400"
+              }`}
+            >
+              {result.verdict || "ZK AUDIT COMPLETE"} · Findings: {result.verifiers_found}
+            </span>
+          </div>
+
+          {result.radar_metadata && (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="rounded-lg border border-border bg-background p-3">
+                <p className="text-[10px] uppercase text-muted-foreground">ZK Radar v4 Match</p>
+                <p className="mt-1 font-bold text-green-400">
+                  ✅ {result.radar_metadata.discovery_method || "Indexed"}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-background p-3">
+                <p className="text-[10px] uppercase text-muted-foreground">Deploy Block</p>
+                <p className="mt-1 font-bold text-foreground">
+                  {result.radar_metadata.deploy_block || "—"}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-background p-3">
+                <p className="text-[10px] uppercase text-muted-foreground">Bytecode Size</p>
+                <p className="mt-1 font-bold text-foreground">
+                  {result.radar_metadata.bytecode_size || 0} bytes
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-background p-3">
+                <p className="text-[10px] uppercase text-muted-foreground">Deployer EOA</p>
+                <p className="mt-1 truncate font-bold text-primary">
+                  {result.radar_metadata.deployer || "—"}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {Array.isArray(result.results) && result.results.length > 0 ? (
+            <div className="space-y-2">
+              {result.results.map((f: any, idx: number) => (
+                <div key={idx} className="rounded-lg border border-border bg-background p-3 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-foreground">{f.title || f.vuln_type || "ZK Finding"}</span>
+                    <span className="rounded border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                      {f.severity || "INFO"}
+                    </span>
+                  </div>
+                  {f.description && <p className="text-[11px] text-muted-foreground">{f.description}</p>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">
+              {isRu
+                ? "Уязвимостей кривой BN254, gamma==delta, подгрупповых атак G1/G2 или переполнения публичных входов не обнаружено."
+                : "No BN254 curve membership, gamma==delta, G1/G2 subgroup, or public input overflow flaws detected."}
+            </p>
+          )}
         </div>
       )}
 
