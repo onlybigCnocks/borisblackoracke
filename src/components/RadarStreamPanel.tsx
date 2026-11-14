@@ -19,6 +19,7 @@ import {
 import {
   apiGetRadarFeed,
   apiUpdateRadarSettings,
+  apiEnrichDefillama,
   type BorisUser,
 } from "@/lib/auth";
 
@@ -61,6 +62,29 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
   const [explAlerts, setExplAlerts] = useState<boolean>(Boolean(tgMeta.explorer_alerts_enabled));
   const [savingAlerts, setSavingAlerts] = useState<boolean>(false);
   const [alertMsg, setAlertMsg] = useState<string | null>(null);
+
+  // DeFiLlama 1-click enricher state (mirrors Telegram disc_defi_view_ / disc_defi_enrich_)
+  const [enrichLoadingSlug, setEnrichLoadingSlug] = useState<string | null>(null);
+  const [enrichedProtocols, setEnrichedProtocols] = useState<Record<string, any>>({});
+  const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
+
+  const handleEnrichDefillama = async (slug: string) => {
+    if (expandedSlug === slug && enrichedProtocols[slug]) {
+      setExpandedSlug(null);
+      return;
+    }
+    setExpandedSlug(slug);
+    if (enrichedProtocols[slug]) return;
+    setEnrichLoadingSlug(slug);
+    try {
+      const data = await apiEnrichDefillama(slug);
+      setEnrichedProtocols((prev) => ({ ...prev, [slug]: data }));
+    } catch (e: any) {
+      setEnrichedProtocols((prev) => ({ ...prev, [slug]: { error: e.message } }));
+    } finally {
+      setEnrichLoadingSlug(null);
+    }
+  };
 
   useEffect(() => {
     if (user?.tg_meta) {
@@ -573,6 +597,26 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
               </div>
 
               <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+                {item.source === "defillama" && item.identifier && (
+                  <button
+                    type="button"
+                    onClick={() => handleEnrichDefillama(item.identifier)}
+                    disabled={enrichLoadingSlug === item.identifier}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-background px-3 py-2 font-semibold text-foreground hover:border-primary hover:text-primary transition-colors"
+                  >
+                    {enrichLoadingSlug === item.identifier ? (
+                      <Loader2 size={13} className="animate-spin text-primary" />
+                    ) : (
+                      <Search size={13} className="text-primary" />
+                    )}
+                    <span>
+                      {expandedSlug === item.identifier
+                        ? isRu ? "Скрыть профиль" : "Hide Profile"
+                        : isRu ? "Найти GitHub / TVL" : "Enrich GitHub / TVL"}
+                    </span>
+                  </button>
+                )}
+
                 {item.task_id ? (
                   <button
                     type="button"
@@ -611,6 +655,139 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
                   </a>
                 )}
               </div>
+
+              {/* Expanded DeFiLlama Enriched Profile */}
+              {item.source === "defillama" &&
+                expandedSlug === item.identifier &&
+                enrichedProtocols[item.identifier] && (
+                  <div className="w-full mt-2 rounded-xl border border-primary/30 bg-background p-4 font-mono text-xs space-y-3">
+                    {enrichedProtocols[item.identifier].error ? (
+                      <p className="text-red-400">⚠️ {enrichedProtocols[item.identifier].error}</p>
+                    ) : (
+                      <>
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-bold text-primary">
+                              📊 {enrichedProtocols[item.identifier].name}
+                            </span>
+                            {enrichedProtocols[item.identifier].category && (
+                              <span className="rounded bg-card px-2 py-0.5 text-[10px] text-muted-foreground">
+                                {enrichedProtocols[item.identifier].category}
+                              </span>
+                            )}
+                            {enrichedProtocols[item.identifier].tvl_usd > 0 && (
+                              <span className="rounded border border-green-500/40 bg-green-500/10 px-2 py-0.5 text-[10px] font-bold text-green-400">
+                                TVL: ${fmt(Math.round(enrichedProtocols[item.identifier].tvl_usd))}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 text-[11px]">
+                            {enrichedProtocols[item.identifier].homepage && (
+                              <a
+                                href={enrichedProtocols[item.identifier].homepage}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline"
+                              >
+                                🌐 Website ↗
+                              </a>
+                            )}
+                            {enrichedProtocols[item.identifier].socials?.twitter && (
+                              <a
+                                href={enrichedProtocols[item.identifier].socials.twitter}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline"
+                              >
+                                🐦 X/Twitter ↗
+                              </a>
+                            )}
+                          </div>
+                        </div>
+
+                        {Array.isArray(enrichedProtocols[item.identifier].chains) &&
+                          enrichedProtocols[item.identifier].chains.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="text-[10px] uppercase text-muted-foreground">Chains:</span>
+                              {enrichedProtocols[item.identifier].chains.map((ch: string, ci: number) => (
+                                <span
+                                  key={ci}
+                                  className="rounded border border-border bg-card px-2 py-0.5 text-[10px] text-foreground"
+                                >
+                                  {ch}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                        {/* Discovered GitHub Repositories with 1-Click Scan */}
+                        <div>
+                          <p className="mb-1.5 text-[10px] uppercase tracking-wider text-primary font-bold">
+                            {isRu ? "Найденные GitHub-репозитории протокола:" : "Discovered Protocol GitHub Repositories:"}
+                          </p>
+                          {Array.isArray(enrichedProtocols[item.identifier].github_repos) &&
+                          enrichedProtocols[item.identifier].github_repos.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                              {enrichedProtocols[item.identifier].github_repos.map((gh: string, gi: number) => (
+                                <div
+                                  key={gi}
+                                  className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2"
+                                >
+                                  <a
+                                    href={gh}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="truncate text-[11px] font-semibold text-foreground hover:text-primary"
+                                  >
+                                    📦 {gh.replace("https://github.com/", "")}
+                                  </a>
+                                  <button
+                                    type="button"
+                                    onClick={() => onPrefillScan(gh)}
+                                    className="shrink-0 inline-flex items-center gap-1 rounded bg-primary px-2.5 py-1 text-[10px] font-bold text-primary-foreground hover:bg-primary-dim"
+                                  >
+                                    <Zap size={11} />
+                                    <span>{isRu ? "Скан репо" : "Scan Repo"}</span>
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-[11px] text-muted-foreground">
+                              {isRu ? "Публичные репозитории не привязаны." : "No public GitHub repositories linked."}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Linked On-Chain Contracts */}
+                        {Array.isArray(enrichedProtocols[item.identifier].contracts) &&
+                          enrichedProtocols[item.identifier].contracts.length > 0 && (
+                            <div>
+                              <p className="mb-1.5 text-[10px] uppercase tracking-wider text-primary font-bold">
+                                {isRu ? "Привязанные смарт-контракты:" : "Linked Smart Contracts:"}
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {enrichedProtocols[item.identifier].contracts.map((ca: string, ci: number) => {
+                                  const cleanAddr = ca.includes(":") ? ca.split(":").pop()! : ca;
+                                  return (
+                                    <button
+                                      key={ci}
+                                      type="button"
+                                      onClick={() => onPrefillScan(cleanAddr)}
+                                      className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-card px-3 py-1.5 text-[11px] text-foreground hover:border-primary hover:text-primary"
+                                    >
+                                      <code>{ca}</code>
+                                      <Zap size={11} className="text-primary" />
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                      </>
+                    )}
+                  </div>
+                )}
             </div>
           ))}
         </div>

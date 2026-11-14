@@ -267,6 +267,19 @@ export async function apiUpdateRadarSettings(payload: {
   return data;
 }
 
+export async function apiEnrichDefillama(slug: string): Promise<any> {
+  const token = getSavedToken();
+  if (!token) throw new Error("Not authenticated");
+  const res = await fetch(`${API_BASE}/api/auth/radar-defillama-enrich`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    body: JSON.stringify({ slug }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Failed to enrich DeFiLlama protocol");
+  return data;
+}
+
 export interface BorisReferral {
   code: string;
   link: string;
