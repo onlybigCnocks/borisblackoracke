@@ -280,6 +280,18 @@ export async function apiEnrichDefillama(slug: string): Promise<any> {
   return data;
 }
 
+export async function apiGetHackWriteup(slug: string, title?: string): Promise<any> {
+  const qs = new URLSearchParams();
+  if (slug) qs.set("slug", slug);
+  if (title) qs.set("title", title);
+  const res = await fetch(`${API_BASE}/api/tools/hack-writeup?${qs.toString()}`, {
+    headers: authHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Writeup not found");
+  return data;
+}
+
 export interface BorisReferral {
   code: string;
   link: string;
