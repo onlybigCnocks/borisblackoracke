@@ -573,17 +573,17 @@ export function ResultTeaser({ result, isRu, taskId }: { result: DemoScanResult;
             <Sparkles size={15} className="text-primary shrink-0" />
             <div>
               <span className="font-bold text-primary">
-                🧠 {isRu ? "BORIS Neural Cortex — ИИ-Интерпретатор JSON-досье" : "BORIS Neural Cortex — AI Dossier Interpreter"}
+                🧠 {isRu ? "BORIS Neural Cortex — ИИ-Интерпретатор JSON-досье (с тарифа RAW+)" : "BORIS Neural Cortex — AI Dossier Interpreter (RAW+ Tiers)"}
               </span>
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 {isRu
-                  ? `Детерминированный скан завершён (${activeLayers}/${totalLayers} слоёв, паттернов: ${result.scope?.patterns_total ?? 0}). Автоматический перевод инженерного JSON и сверка с 2,539 эксплойтами на человеческий язык.`
-                  : `Deterministic scan complete (${activeLayers}/${totalLayers} layers, ${result.scope?.patterns_total ?? 0} patterns). Neural synthesis of verified JSON telemetry & 2,539 exploit precedents into human language.`}
+                  ? `Детерминированный отчёт готов (${activeLayers}/${totalLayers} слоёв, паттернов: ${result.scope?.patterns_total ?? 0}). На тарифах GUEST и RADAR выдаётся детерминированная телеметрия; с тарифа RAW+ подключается ИИ-интерпретатор по базе 20,826 аудитов и 2,539 эксплойтов.`
+                  : `Deterministic report ready (${activeLayers}/${totalLayers} layers, ${result.scope?.patterns_total ?? 0} patterns). GUEST & RADAR tiers receive deterministic telemetry; RAW+ tiers unlock AI Cortex synthesis grounded in 20,826 audits & 2,539 exploits.`}
               </p>
             </div>
           </div>
           <span className="rounded-full border border-amber-500/50 bg-amber-500/15 px-3 py-1 font-mono text-[10px] font-black uppercase tracking-wider text-amber-400 shrink-0">
-            ⚡ POWERED BY AI · SOON (v1.4)
+            ⚡ POWERED BY AI · SOON (v1.5)
           </span>
         </div>
 

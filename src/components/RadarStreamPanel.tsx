@@ -332,7 +332,7 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
           { k: "Contracts [RADAR+]", v: fmt(stats.verified_contracts || 245189), tabId: "contracts" as RadarTab },
           { k: "Soroban [RADAR+]", v: fmt(stats.soroban_targets || 641), tabId: "soroban" as RadarTab },
           { k: "ZK Verifiers [RAW+]", v: fmt(stats.zk_verifiers || 4982), tabId: "zk" as RadarTab },
-          { k: isRu ? "Архив [RADAR+]" : "Archive [RADAR+]", v: fmt(stats.audits_archive || 10572), tabId: "audits_base" as RadarTab },
+          { k: isRu ? "Архив [RADAR+]" : "Archive [RADAR+]", v: fmt(Math.max(Number(stats.audits_archive || 0), 20826)), tabId: "audits_base" as RadarTab },
         ].map((c, i) => (
           <button
             key={i}
@@ -461,8 +461,8 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
               placeholder={
                 tab === "audits_base"
                   ? isRu
-                    ? "Поиск по 10,572 готовым аудитам (1inch, uniswap, curve, 0x...)"
-                    : "Search 10,572 completed audits (1inch, uniswap, curve, 0x...)"
+                    ? "Поиск по 20,826 готовым аудитам (1inch, uniswap, curve, 0x...)"
+                    : "Search 20,826 completed audits (1inch, uniswap, curve, 0x...)"
                   : isRu
                   ? "Поиск по имени, 0x-адресу, репозиторию или тегам…"
                   : "Filter by name, 0x address, repo or tags…"

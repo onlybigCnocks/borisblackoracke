@@ -396,8 +396,11 @@ const Dashboard = () => {
                   <span className="rounded border border-primary/40 bg-primary/15 px-2.5 py-0.5 font-mono text-xs font-bold text-primary">
                     {user?.tier || "GUEST"}
                   </span>
+                  <span className="rounded border border-green-500/40 bg-green-500/10 px-2.5 py-0.5 font-mono text-[10px] font-bold text-green-400">
+                    BORIS Beta v1.4
+                  </span>
                   <span className="rounded border border-amber-500/40 bg-amber-500/10 px-2.5 py-0.5 font-mono text-[10px] font-bold text-amber-400">
-                    ⚡ BORIS v1.4 · AI CORTEX [SOON]
+                    ⚡ AI CORTEX & SWARM · SOON v1.5 (RAW+)
                   </span>
                   {user?.tier_expires_at ? (
                     <span className="rounded border border-border bg-background/80 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">

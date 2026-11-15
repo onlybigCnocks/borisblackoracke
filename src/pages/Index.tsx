@@ -20,22 +20,24 @@ const Index = () => {
       <section className="container mx-auto px-4 pb-20 pt-24 md:pt-32">
         <RevealOnScroll>
           <div className="mb-6 flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/90 px-3.5 py-1.5 font-mono text-xs font-semibold text-foreground">
+              <span className="relative flex h-2 w-2">
+                <span className="pulse-dot absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
+              </span>
+              {t("hero.badge")}
+            </span>
             <a
               href="#ai-cortex-showcase"
               className="group inline-flex items-center gap-2.5 rounded-full border border-primary/60 bg-primary/15 px-4 py-1.5 shadow-lg shadow-primary/20 transition-all hover:border-primary hover:bg-primary/25"
             >
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="pulse-dot absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
-              </span>
               <span className="font-mono text-xs font-extrabold uppercase tracking-wider text-primary">
-                ⚡ POWERED BY AI // BORIS NEURAL CORTEX
+                ⚡ POWERED BY AI // BORIS NEURAL CORTEX & SWARM
               </span>
               <span className="rounded bg-primary px-2 py-0.5 font-mono text-[10px] font-black uppercase tracking-wider text-primary-foreground">
-                SOON · v1.4
+                SOON · v1.5
               </span>
             </a>
-            <span className="font-mono text-xs text-muted-foreground">{t("hero.badge")}</span>
           </div>
 
           <h1 className="mb-4 text-5xl font-black leading-tight md:text-7xl lg:text-8xl">
@@ -50,8 +52,8 @@ const Index = () => {
             <span className="font-bold text-primary">🧠 NEURO-SYMBOLIC ARCHITECTURE:</span>
             <span className="text-foreground">
               {isRu
-                ? "130 000+ строк детерминированного ядра (19 слоёв) высекают сухой JSON фактов → ИИ-интерпретатор связывает его с 10 826 аудитами и 2 539 эксплойтами (0% галлюцинаций)."
-                : "130,000+ LOC deterministic core (19 layers) proves hard JSON facts → AI Interpreter grounds them in 10,826 audits & 2,539 exploits (0% hallucinations)."}
+                ? "19 детерминированных слоёв высекают сухой JSON фактов → ИИ-интерпретатор связывает его с 20 826 аудитами и 2 539 эксплойтами (0% галлюцинаций · доступно с тарифа RAW+, младшим тирам — детерминированный отчёт)."
+                : "19 deterministic layers prove hard JSON facts → AI Interpreter grounds them in 20,826 audits & 2,539 exploits (0% hallucinations · available from RAW+ tier; deterministic report on lower tiers)."}
             </span>
           </div>
 
@@ -70,7 +72,7 @@ const Index = () => {
               href="#ai-cortex-showcase"
               className="rounded-lg border border-primary/50 bg-primary/10 px-6 py-3.5 font-mono text-sm font-bold text-primary transition-all duration-200 hover:bg-primary hover:text-primary-foreground"
             >
-              ⚡ {isRu ? "Как работает AI-Интерпретатор [SOON]" : "How AI Cortex Works [SOON]"}
+              ⚡ {isRu ? "AI-Кортекс и Рой Агентов [SOON v1.5]" : "AI Cortex & Agent Swarm [SOON v1.5]"}
             </a>
             <Link
               to="/about"
@@ -82,11 +84,11 @@ const Index = () => {
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
             {[
-              { val: "19", label: isRu ? "Слоёв детерминированного анализа" : "Deterministic Analysis Layers" },
-              { val: "130K+", label: isRu ? "Строк Python · 335 модулей" : "Lines of Python · 335 Modules" },
-              { val: "10,826", label: isRu ? "Готовых аудитов в архиве" : "Archived Engineering Audits" },
+              { val: "19", label: isRu ? "Слоёв перекрёстного анализа" : "Cross-Layer Analysis Modules" },
+              { val: "14", label: isRu ? "Разведывательных движков в терминале" : "Interactive Intelligence Engines" },
+              { val: "20,826", label: isRu ? "Готовых аудитов в архиве" : "Archived Engineering Audits" },
               { val: "2,539", label: isRu ? "Разборов взломов + Foundry PoC" : "Exploit Writeups + Foundry PoCs" },
-              { val: "289K+", label: isRu ? "Целей 24/7 радаров" : "24/7 Live Radar Targets" },
+              { val: "289K+", label: isRu ? "Целей 24/7 радаров (9 сетей)" : "24/7 Radar Targets (9 Chains)" },
             ].map((s) => (
               <div key={s.label} className="rounded-xl border border-border/70 bg-card/50 p-4 text-center">
                 <div className="font-mono text-3xl font-bold text-primary md:text-4xl">{s.val}</div>
@@ -120,22 +122,27 @@ const Index = () => {
           <div className="relative overflow-hidden rounded-2xl border-2 border-primary/50 bg-card p-6 md:p-10 shadow-2xl shadow-primary/10">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/50 bg-primary/15 px-3.5 py-1 font-mono text-xs font-extrabold uppercase tracking-wider text-primary">
-                <span>🧠 POWERED BY AI // BORIS NEURAL CORTEX</span>
+                <span>🧠 POWERED BY AI // BORIS NEURAL CORTEX & AGENT SWARM</span>
               </div>
-              <span className="rounded-full border border-amber-500/50 bg-amber-500/15 px-3.5 py-1 font-mono text-xs font-black uppercase tracking-wider text-amber-400">
-                ⚡ ROLLING OUT IN BETA v1.4 · SOON
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-border bg-background/80 px-3 py-1 font-mono text-[11px] font-semibold text-muted-foreground">
+                  {isRu ? "🔒 AI-Кортекс: с тарифа RAW+ (GUEST / RADAR — детерминированный отчёт)" : "🔒 AI Cortex: RAW+ tiers (GUEST / RADAR receive deterministic report)"}
+                </span>
+                <span className="rounded-full border border-amber-500/50 bg-amber-500/15 px-3.5 py-1 font-mono text-xs font-black uppercase tracking-wider text-amber-400">
+                  ⚡ ROADMAP v1.5 · SOON
+                </span>
+              </div>
             </div>
 
             <h2 className="text-2xl font-black tracking-tight text-foreground md:text-4xl mb-4">
               {isRu
-                ? "Детерминированный молот на 130 000 строк кода обретает ИИ-кортекс"
-                : "The 130,000-Line Deterministic Engine Meets BORIS Neural Cortex"}
+                ? "Детерминированный сканер-молот обретает ИИ-кортекс и управление роем"
+                : "Deterministic Threat Engine Meets Neural Cortex & Autonomous Swarm Control"}
             </h2>
             <p className="max-w-4xl text-sm md:text-base leading-relaxed text-muted-foreground mb-8">
               {isRu
-                ? "В 2024–2025 годах рынок смеялся над «AI-аудиторами», которые скармливали сырой Solidity-код напрямую в LLM и получали галлюцинации. BORIS изначально строился как бескомпромиссный аналоговый сканер-молот (335+ модулей, 19 слоёв), высекающий только доказанные математические и ончейн-факты. В версии v1.4 к этому механическому ядру подключается ИИ-интерпретатор: он никуда не ходит и ничего не додумывает — он берёт готовый JSON-отчёт Бориса, сверяет его с 10 826 архивными аудитами и 2 539 разборами взломов на сервере и переводит сложнейшую телеметрию на человеческий язык."
-                : "Early 'AI security scanners' failed because they fed raw Solidity files straight into LLMs and hallucinated vulnerabilities. BORIS was engineered first as a 130,000-line deterministic 19-layer mechanical hammer that extracts only provable mathematical and on-chain facts. In v1.4, BORIS gains its Neural Cortex: an AI interpreter that never guesses on raw code — instead, it ingests BORIS's verified JSON dossier, cross-references 10,826 archived audits and 2,539 exploit writeups, and translates complex multi-layer telemetry into crystal-clear human intelligence."}
+                ? "В 2024–2025 годах рынок смеялся над «AI-аудиторами», которые скармливали сырой Solidity-код напрямую в LLM и получали выдумки. BORIS изначально строился как бескомпромиссный аналоговый сканер-молот (19 перекрёстных слоёв, 14 спец-движков, 6 круглосуточных радаров), высекающий только доказанные математические и ончейн-факты. В обновлении v1.5 к этому механическому ядру подключается ИИ-интерпретатор и контур управления собственным роем агентов: модель никуда не ходит и ничего не додумывает — она берёт готовый JSON-отчёт Бориса, сверяет его с 20 826 архивными аудитами и 2 539 разборами взломов и переводит инженерную телеметрию на человеческий язык."
+                : "Early 'AI security scanners' failed because they fed raw Solidity files straight into LLMs and hallucinated vulnerabilities. BORIS was engineered first as a deterministic 19-layer mechanical hammer (14 specialized engines and 6 continuous 24/7 radars) that extracts only provable mathematical and on-chain facts. In v1.5, BORIS gains its Neural Cortex and personal Agent Swarm orchestration: an AI interpreter that never guesses on raw code — instead, it ingests BORIS's verified JSON dossier, cross-references 20,826 archived audits and 2,539 exploit writeups, and translates complex multi-layer telemetry into crystal-clear human intelligence."}
             </p>
 
             {/* 3-Step Pipeline */}
@@ -143,45 +150,45 @@ const Index = () => {
               <div className="rounded-xl border border-border bg-background/80 p-5">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-mono text-xs font-bold uppercase text-primary">[01] DETERMINISTIC CORE</span>
-                  <span className="rounded bg-green-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-green-400">LIVE</span>
+                  <span className="rounded bg-green-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-green-400">LIVE · v1.4</span>
                 </div>
                 <h3 className="font-mono text-sm font-bold text-foreground mb-1.5">
                   {isRu ? "🦾 19 слоёв механического анализа" : "🦾 19-Layer Mechanical Execution"}
                 </h3>
                 <p className="text-xs leading-relaxed text-muted-foreground">
                   {isRu
-                    ? "Статанализ 12 языков, чтение EIP-1967 слотов прокси через RPC, математика кривой BN254 для ZK Groth16, граф потоков за 14 дней и стаканы деривативов → строгий JSON фактов."
-                    : "12-language AST analysis, live EIP-1967 RPC storage slot reads, BN254 ZK Groth16 curve math, 14-day funds flow graphs, and derivatives orderbooks → strict verified JSON."}
+                    ? "Статанализ 12 языков, чтение EIP-1967 слотов прокси через RPC, математика кривой BN254 для ZK Groth16, граф потоков за 14 дней и стаканы деривативов → строгий детерминированный отчёт (доступен на всех тарифах)."
+                    : "12-language AST analysis, live EIP-1967 RPC storage slot reads, BN254 ZK Groth16 curve math, 14-day funds flow graphs, and derivatives orderbooks → strict deterministic report (available across all tiers)."}
                 </p>
               </div>
 
               <div className="rounded-xl border border-border bg-background/80 p-5">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-mono text-xs font-bold uppercase text-primary">[02] KNOWLEDGE CORPUS</span>
-                  <span className="rounded bg-green-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-green-400">LIVE</span>
+                  <span className="rounded bg-green-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-green-400">LIVE · v1.4</span>
                 </div>
                 <h3 className="font-mono text-sm font-bold text-foreground mb-1.5">
-                  {isRu ? "📚 10,826 аудитов & 2,539 взломов" : "📚 10,826 Audits & 2,539 Exploits"}
+                  {isRu ? "📚 20,826 аудитов & 2,539 взломов" : "📚 20,826 Audits & 2,539 Exploits"}
                 </h3>
                 <p className="text-xs leading-relaxed text-muted-foreground">
                   {isRu
-                    ? "Локальная память сервера: 1 678 полных инженерных разборов взломов с Foundry PoC, 861 кейс DeFiHackLabs, 10 826 готовых досье AUDITS_BASE и 7 087 подтверждённых REAL утечек OSPEC."
-                    : "Sovereign on-server memory: 1,678 deep exploit post-mortems with Foundry PoCs, 861 DeFiHackLabs cases, 10,826 AUDITS_BASE dossiers, and 7,087 verified REAL OSPEC leaks."}
+                    ? "Локальная память сервера: 1 678 полных инженерных разборов взломов с Foundry PoC, 861 кейс DeFiHackLabs, 20 826 готовых аудиторских досье и 7 087 подтверждённых REAL находок OSPEC."
+                    : "Sovereign on-server memory: 1,678 deep exploit post-mortems with Foundry PoCs, 861 DeFiHackLabs cases, 20,826 audit dossiers, and 7,087 verified REAL OSPEC findings."}
                 </p>
               </div>
 
               <div className="rounded-xl border border-primary/50 bg-primary/10 p-5">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono text-xs font-bold uppercase text-primary">[03] AI CORTEX INTERPRETER</span>
-                  <span className="rounded bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-400">SOON · v1.4</span>
+                  <span className="font-mono text-xs font-bold uppercase text-primary">[03] AI CORTEX & SWARM</span>
+                  <span className="rounded bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-400">SOON · v1.5 (RAW+)</span>
                 </div>
                 <h3 className="font-mono text-sm font-bold text-foreground mb-1.5">
-                  {isRu ? "🧠 Человекочитаемая интерпретация JSON" : "🧠 Zero-Hallucination JSON Briefing"}
+                  {isRu ? "🧠 ИИ-Интерпретатор JSON и свой рой" : "🧠 AI Dossier Interpreter & Agent Swarm"}
                 </h3>
                 <p className="text-xs leading-relaxed text-muted-foreground">
                   {isRu
-                    ? "ИИ не гадает по коду. Он читает доказанный JSON Бориса + найденные прецеденты из базы взломов и выдаёт понятный человеку разбор: где рычаг контроля, в чём риск и какой инвариант нарушен."
-                    : "AI never guesses code. It reads BORIS's verified JSON + matched historical exploit precedents and outputs an executive human breakdown: where control lives, how capital can move, and why."}
+                    ? "От тарифа RAW+: ИИ читает доказанный JSON Бориса + прецеденты взломов и переводит их на человеческий язык, а в v1.5 позволяет запускать собственный рой агентов по выбранным целям."
+                    : "From RAW+ tier: AI reads BORIS's verified JSON + matched exploit precedents to produce an executive human breakdown, with personal Agent Swarm orchestration arriving in v1.5."}
                 </p>
               </div>
             </div>
