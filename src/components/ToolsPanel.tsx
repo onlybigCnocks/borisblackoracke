@@ -77,8 +77,9 @@ const ToolsPanel = () => {
 
   // OSPEC Telegram-style filter states
   const [ospecSeverity, setOspecSeverity] = useState<string>("");
-  const [ospecOnlyReal, setOspecOnlyReal] = useState<boolean>(false);
+  const [ospecOnlyReal, setOspecOnlyReal] = useState<boolean>(true);
   const [ospecOnlyLive, setOspecOnlyLive] = useState<boolean>(false);
+  const [ospecOffset, setOspecOffset] = useState<number>(0);
   const [expandedFindingId, setExpandedFindingId] = useState<number | null>(null);
   const [findingDetail, setFindingDetail] = useState<Record<number, any>>({});
   const [loadingFindingId, setLoadingFindingId] = useState<number | null>(null);
@@ -145,12 +146,15 @@ const ToolsPanel = () => {
     sev?: string;
     real?: boolean;
     live?: boolean;
+    offset?: number;
   }) => {
     if (rank < 1) return;
     const qVal = opts?.q !== undefined ? opts.q : input1.trim();
     const sevVal = opts?.sev !== undefined ? opts.sev : ospecSeverity;
     const realVal = opts?.real !== undefined ? opts.real : ospecOnlyReal;
     const liveVal = opts?.live !== undefined ? opts.live : ospecOnlyLive;
+    const offsetVal = opts?.offset !== undefined ? opts.offset : 0;
+    setOspecOffset(offsetVal);
 
     setError(null);
     setOpenedHistoryBanner(null);
@@ -164,6 +168,7 @@ const ToolsPanel = () => {
           severity: sevVal,
           only_real: realVal,
           only_live: liveVal,
+          offset: offsetVal,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -183,7 +188,7 @@ const ToolsPanel = () => {
       return;
     }
     if (tool === "ospec" && rank >= 1 && !result) {
-      runOspecWithFilters({ q: "", sev: "", real: false, live: false });
+      runOspecWithFilters({ q: "", sev: "", real: true, live: false, offset: 0 });
     }
   }, [tool]);
 
@@ -539,17 +544,17 @@ const ToolsPanel = () => {
                   onClick={() => {
                     setInput1("");
                     setOspecSeverity("");
-                    setOspecOnlyReal(false);
+                    setOspecOnlyReal(true);
                     setOspecOnlyLive(false);
-                    runOspecWithFilters({ q: "", sev: "", real: false, live: false });
+                    runOspecWithFilters({ q: "", sev: "", real: true, live: false, offset: 0 });
                   }}
                   className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
-                    !ospecSeverity && !ospecOnlyReal && !ospecOnlyLive && !input1
+                    !ospecSeverity && ospecOnlyReal && !ospecOnlyLive && !input1
                       ? "border-primary bg-primary/15 text-primary"
                       : "border-border bg-background text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  🔍 {isRu ? "Последние находки" : "Recent Findings"}
+                  🔍 {isRu ? "Последние REAL" : "Recent REAL"}
                 </button>
                 <button
                   type="button"
@@ -1107,15 +1112,40 @@ const ToolsPanel = () => {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             {[
-              { k: isRu ? "Всего секретов" : "Total Secrets", v: fmt(result.db_stats?.indexed_findings, 0) },
-              { k: isRu ? "Репо с утечками" : "Repos w/ Leaks", v: fmt(result.db_stats?.indexed_repos, 0) },
-              { k: "🔴 Critical", v: fmt(result.db_stats?.by_severity?.CRITICAL ?? 0, 0) },
-              { k: "🟠 High", v: fmt(result.db_stats?.by_severity?.HIGH ?? 0, 0) },
-              { k: isRu ? "Радар репо" : "Radar Repos", v: fmt(result.db_stats?.radar_total ?? 0, 0) },
+              {
+                k: isRu ? "🟢 Подтверждённые REAL" : "🟢 Verified REAL",
+                v: fmt(result.db_stats?.real_findings ?? result.db_stats?.indexed_findings, 0),
+                sub: isRu
+                  ? `из ${fmt(result.db_stats?.indexed_findings, 0)} проверенных`
+                  : `of ${fmt(result.db_stats?.indexed_findings, 0)} scanned`,
+              },
+              {
+                k: isRu ? "🔥 Живые ключи (LIVE)" : "🔥 Live Verified Keys",
+                v: fmt(result.db_stats?.live_keys ?? 0, 0),
+                sub: isRu ? "активный баланс / RPC / nonce" : "active on-chain / RPC",
+              },
+              {
+                k: isRu ? "📦 Просканировано репо" : "📦 Scanned Repos",
+                v: fmt(result.db_stats?.indexed_repos, 0),
+                sub: isRu
+                  ? `${fmt(result.db_stats?.real_repos ?? 0, 0)} репо с REAL`
+                  : `${fmt(result.db_stats?.real_repos ?? 0, 0)} repos w/ REAL`,
+              },
+              {
+                k: "🔴 Critical (REAL)",
+                v: fmt(result.db_stats?.by_severity?.CRITICAL ?? 0, 0),
+                sub: isRu ? "приватники / seed / prod" : "privkeys / seeds / prod",
+              },
+              {
+                k: "🟠 High (REAL)",
+                v: fmt(result.db_stats?.by_severity?.HIGH ?? 0, 0),
+                sub: isRu ? `Радар: ${fmt(result.db_stats?.radar_total ?? 0, 0)} репо` : `Radar: ${fmt(result.db_stats?.radar_total ?? 0, 0)} repos`,
+              },
             ].map((c, i) => (
               <div key={i} className="rounded-xl border border-border bg-card p-4">
                 <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{c.k}</p>
                 <p className="mt-1 font-mono text-lg font-bold text-foreground">{c.v}</p>
+                {c.sub && <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">{c.sub}</p>}
               </div>
             ))}
           </div>
@@ -1123,11 +1153,44 @@ const ToolsPanel = () => {
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <p className="font-mono text-[11px] uppercase tracking-wider text-primary font-bold">
-                🔐 {isRu ? "OSPEC — Сгруппированные находки по репозиториям (как в ТГ)" : "OSPEC — Grouped Secret Findings by Repository"}
+                🔐 {isRu ? "OSPEC — Сгруппированные находки по репозиториям (L2.5 Filtered)" : "OSPEC — Grouped Secret Findings by Repository (L2.5 Filtered)"}
               </p>
-              <span className="font-mono text-[11px] text-muted-foreground">
-                Mode: <b className="text-foreground">{result.filter_mode}</b> · {result.findings_returned} groups
-              </span>
+              <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-muted-foreground">
+                <span>
+                  Mode: <b className="text-foreground">{result.filter_mode}</b> ·{" "}
+                  <b className="text-foreground">{fmt(result.total_groups ?? result.findings_returned, 0)}</b> groups
+                </span>
+                {Number(result.total_groups || 0) > Number(result.limit || 15) && (
+                  <div className="flex items-center gap-1 ml-2">
+                    <button
+                      type="button"
+                      disabled={ospecOffset <= 0 || loading}
+                      onClick={() => {
+                        const step = Number(result.limit || 15);
+                        runOspecWithFilters({ offset: Math.max(0, ospecOffset - step) });
+                      }}
+                      className="rounded border border-border bg-background px-2 py-0.5 text-[10px] font-semibold text-foreground hover:border-primary disabled:opacity-40"
+                    >
+                      ⬅️ {isRu ? "Назад" : "Prev"}
+                    </button>
+                    <span className="px-1.5 text-[10px] text-foreground">
+                      {Math.floor(ospecOffset / Number(result.limit || 15)) + 1} /{" "}
+                      {Math.max(1, Math.ceil(Number(result.total_groups || 1) / Number(result.limit || 15)))}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={ospecOffset + Number(result.limit || 15) >= Number(result.total_groups || 0) || loading}
+                      onClick={() => {
+                        const step = Number(result.limit || 15);
+                        runOspecWithFilters({ offset: ospecOffset + step });
+                      }}
+                      className="rounded border border-border bg-background px-2 py-0.5 text-[10px] font-semibold text-foreground hover:border-primary disabled:opacity-40"
+                    >
+                      {isRu ? "Вперёд" : "Next"} ➡️
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {!result.findings || result.findings.length === 0 ? (
@@ -1174,6 +1237,11 @@ const ToolsPanel = () => {
                           {f.balance_eth ? (
                             <span className="rounded bg-green-500/20 px-2 py-0.5 text-[10px] font-bold text-green-400">
                               💰 {f.balance_eth} ETH
+                            </span>
+                          ) : null}
+                          {f.nonce ? (
+                            <span className="rounded bg-cyan-500/15 px-2 py-0.5 text-[10px] font-bold text-cyan-400">
+                              ⚡ nonce {f.nonce}
                             </span>
                           ) : null}
                         </div>
@@ -1273,6 +1341,22 @@ const ToolsPanel = () => {
                                   📄 {occ.path}{occ.line ? `:${occ.line}` : ""} ↗
                                 </a>
                                 <div className="flex items-center gap-2">
+                                  {occ.cls && (
+                                    <span
+                                      className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${
+                                        occ.cls === "REAL"
+                                          ? "bg-green-500/15 text-green-400"
+                                          : "bg-muted text-muted-foreground"
+                                      }`}
+                                    >
+                                      {occ.cls}
+                                    </span>
+                                  )}
+                                  {occ.is_live && (
+                                    <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-bold text-amber-400">
+                                      🔥 LIVE
+                                    </span>
+                                  )}
                                   <code className="rounded bg-card px-2 py-0.5 text-primary select-all">
                                     {occ.secret_preview}
                                   </code>
