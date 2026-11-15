@@ -567,6 +567,26 @@ export function ResultTeaser({ result, isRu, taskId }: { result: DemoScanResult;
       </div>
 
       <div className="p-5 space-y-6">
+        {/* BORIS Neural Cortex AI Interpreter Banner inside Scan Report */}
+        <div className="rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 font-mono text-xs flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Sparkles size={15} className="text-primary shrink-0" />
+            <div>
+              <span className="font-bold text-primary">
+                🧠 {isRu ? "BORIS Neural Cortex — ИИ-Интерпретатор JSON-досье" : "BORIS Neural Cortex — AI Dossier Interpreter"}
+              </span>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {isRu
+                  ? `Детерминированный скан завершён (${activeLayers}/${totalLayers} слоёв, паттернов: ${result.scope?.patterns_total ?? 0}). Автоматический перевод инженерного JSON и сверка с 2,539 эксплойтами на человеческий язык.`
+                  : `Deterministic scan complete (${activeLayers}/${totalLayers} layers, ${result.scope?.patterns_total ?? 0} patterns). Neural synthesis of verified JSON telemetry & 2,539 exploit precedents into human language.`}
+              </p>
+            </div>
+          </div>
+          <span className="rounded-full border border-amber-500/50 bg-amber-500/15 px-3 py-1 font-mono text-[10px] font-black uppercase tracking-wider text-amber-400 shrink-0">
+            ⚡ POWERED BY AI · SOON (v1.4)
+          </span>
+        </div>
+
         {/* Row 2 — Scope stats (horizontal scroll) */}
         <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ flexWrap: "nowrap" }}>
           {(result.scope?.patterns_total ?? 0) > 0 && (

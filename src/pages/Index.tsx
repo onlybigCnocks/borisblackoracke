@@ -19,12 +19,23 @@ const Index = () => {
       {/* Hero */}
       <section className="container mx-auto px-4 pb-20 pt-24 md:pt-32">
         <RevealOnScroll>
-          <div className="flex items-center gap-2 mb-6">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="pulse-dot absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
-            </span>
-            <span className="font-mono text-sm text-muted-foreground">{t("hero.badge")}</span>
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            <a
+              href="#ai-cortex-showcase"
+              className="group inline-flex items-center gap-2.5 rounded-full border border-primary/60 bg-primary/15 px-4 py-1.5 shadow-lg shadow-primary/20 transition-all hover:border-primary hover:bg-primary/25"
+            >
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="pulse-dot absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
+              </span>
+              <span className="font-mono text-xs font-extrabold uppercase tracking-wider text-primary">
+                ⚡ POWERED BY AI // BORIS NEURAL CORTEX
+              </span>
+              <span className="rounded bg-primary px-2 py-0.5 font-mono text-[10px] font-black uppercase tracking-wider text-primary-foreground">
+                SOON · v1.4
+              </span>
+            </a>
+            <span className="font-mono text-xs text-muted-foreground">{t("hero.badge")}</span>
           </div>
 
           <h1 className="mb-4 text-5xl font-black leading-tight md:text-7xl lg:text-8xl">
@@ -33,7 +44,16 @@ const Index = () => {
             <span className="text-foreground animate-hero-pulse">{t("hero.title2")}</span>
           </h1>
 
-          <p className="mb-6 font-mono text-lg text-muted-foreground">{t("hero.subtitle")}</p>
+          <p className="mb-4 font-mono text-lg text-muted-foreground">{t("hero.subtitle")}</p>
+
+          <div className="mb-6 inline-flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-card/80 px-4 py-2.5 font-mono text-xs">
+            <span className="font-bold text-primary">🧠 NEURO-SYMBOLIC ARCHITECTURE:</span>
+            <span className="text-foreground">
+              {isRu
+                ? "130 000+ строк детерминированного ядра (19 слоёв) высекают сухой JSON фактов → ИИ-интерпретатор связывает его с 10 826 аудитами и 2 539 эксплойтами (0% галлюцинаций)."
+                : "130,000+ LOC deterministic core (19 layers) proves hard JSON facts → AI Interpreter grounds them in 10,826 audits & 2,539 exploits (0% hallucinations)."}
+            </span>
+          </div>
 
           <p className="mb-10 max-w-3xl text-base leading-relaxed text-muted-foreground md:text-lg">
             {t("hero.desc")}
@@ -46,6 +66,12 @@ const Index = () => {
             >
               {t("hero.cta1")}
             </button>
+            <a
+              href="#ai-cortex-showcase"
+              className="rounded-lg border border-primary/50 bg-primary/10 px-6 py-3.5 font-mono text-sm font-bold text-primary transition-all duration-200 hover:bg-primary hover:text-primary-foreground"
+            >
+              ⚡ {isRu ? "Как работает AI-Интерпретатор [SOON]" : "How AI Cortex Works [SOON]"}
+            </a>
             <Link
               to="/about"
               className="rounded-lg border border-border px-8 py-3.5 text-base font-semibold text-foreground transition-all duration-200 hover:border-primary hover:text-primary"
@@ -56,13 +82,13 @@ const Index = () => {
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
             {[
-              { val: "19", label: t("hero.stat1") },
-              { val: "500+", label: t("hero.stat2") },
-              { val: "12", label: t("hero.stat3") },
-              { val: "<25m", label: t("hero.stat4") },
-              { val: "9", label: t("hero.stat5") },
+              { val: "19", label: isRu ? "Слоёв детерминированного анализа" : "Deterministic Analysis Layers" },
+              { val: "130K+", label: isRu ? "Строк Python · 335 модулей" : "Lines of Python · 335 Modules" },
+              { val: "10,826", label: isRu ? "Готовых аудитов в архиве" : "Archived Engineering Audits" },
+              { val: "2,539", label: isRu ? "Разборов взломов + Foundry PoC" : "Exploit Writeups + Foundry PoCs" },
+              { val: "289K+", label: isRu ? "Целей 24/7 радаров" : "24/7 Live Radar Targets" },
             ].map((s) => (
-              <div key={s.label} className="text-center">
+              <div key={s.label} className="rounded-xl border border-border/70 bg-card/50 p-4 text-center">
                 <div className="font-mono text-3xl font-bold text-primary md:text-4xl">{s.val}</div>
                 <div className="mt-1 font-mono text-xs text-muted-foreground">{s.label}</div>
               </div>
@@ -87,6 +113,132 @@ const Index = () => {
       <RevealOnScroll>
         <DemoScanner />
       </RevealOnScroll>
+
+      {/* POWERED BY AI — BORIS NEURAL CORTEX SHOWCASE */}
+      <section id="ai-cortex-showcase" className="container mx-auto px-4 py-16">
+        <RevealOnScroll>
+          <div className="relative overflow-hidden rounded-2xl border-2 border-primary/50 bg-card p-6 md:p-10 shadow-2xl shadow-primary/10">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/50 bg-primary/15 px-3.5 py-1 font-mono text-xs font-extrabold uppercase tracking-wider text-primary">
+                <span>🧠 POWERED BY AI // BORIS NEURAL CORTEX</span>
+              </div>
+              <span className="rounded-full border border-amber-500/50 bg-amber-500/15 px-3.5 py-1 font-mono text-xs font-black uppercase tracking-wider text-amber-400">
+                ⚡ ROLLING OUT IN BETA v1.4 · SOON
+              </span>
+            </div>
+
+            <h2 className="text-2xl font-black tracking-tight text-foreground md:text-4xl mb-4">
+              {isRu
+                ? "Детерминированный молот на 130 000 строк кода обретает ИИ-кортекс"
+                : "The 130,000-Line Deterministic Engine Meets BORIS Neural Cortex"}
+            </h2>
+            <p className="max-w-4xl text-sm md:text-base leading-relaxed text-muted-foreground mb-8">
+              {isRu
+                ? "В 2024–2025 годах рынок смеялся над «AI-аудиторами», которые скармливали сырой Solidity-код напрямую в LLM и получали галлюцинации. BORIS изначально строился как бескомпромиссный аналоговый сканер-молот (335+ модулей, 19 слоёв), высекающий только доказанные математические и ончейн-факты. В версии v1.4 к этому механическому ядру подключается ИИ-интерпретатор: он никуда не ходит и ничего не додумывает — он берёт готовый JSON-отчёт Бориса, сверяет его с 10 826 архивными аудитами и 2 539 разборами взломов на сервере и переводит сложнейшую телеметрию на человеческий язык."
+                : "Early 'AI security scanners' failed because they fed raw Solidity files straight into LLMs and hallucinated vulnerabilities. BORIS was engineered first as a 130,000-line deterministic 19-layer mechanical hammer that extracts only provable mathematical and on-chain facts. In v1.4, BORIS gains its Neural Cortex: an AI interpreter that never guesses on raw code — instead, it ingests BORIS's verified JSON dossier, cross-references 10,826 archived audits and 2,539 exploit writeups, and translates complex multi-layer telemetry into crystal-clear human intelligence."}
+            </p>
+
+            {/* 3-Step Pipeline */}
+            <div className="grid gap-4 md:grid-cols-3 mb-8">
+              <div className="rounded-xl border border-border bg-background/80 p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-mono text-xs font-bold uppercase text-primary">[01] DETERMINISTIC CORE</span>
+                  <span className="rounded bg-green-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-green-400">LIVE</span>
+                </div>
+                <h3 className="font-mono text-sm font-bold text-foreground mb-1.5">
+                  {isRu ? "🦾 19 слоёв механического анализа" : "🦾 19-Layer Mechanical Execution"}
+                </h3>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {isRu
+                    ? "Статанализ 12 языков, чтение EIP-1967 слотов прокси через RPC, математика кривой BN254 для ZK Groth16, граф потоков за 14 дней и стаканы деривативов → строгий JSON фактов."
+                    : "12-language AST analysis, live EIP-1967 RPC storage slot reads, BN254 ZK Groth16 curve math, 14-day funds flow graphs, and derivatives orderbooks → strict verified JSON."}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-border bg-background/80 p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-mono text-xs font-bold uppercase text-primary">[02] KNOWLEDGE CORPUS</span>
+                  <span className="rounded bg-green-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-green-400">LIVE</span>
+                </div>
+                <h3 className="font-mono text-sm font-bold text-foreground mb-1.5">
+                  {isRu ? "📚 10,826 аудитов & 2,539 взломов" : "📚 10,826 Audits & 2,539 Exploits"}
+                </h3>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {isRu
+                    ? "Локальная память сервера: 1 678 полных инженерных разборов взломов с Foundry PoC, 861 кейс DeFiHackLabs, 10 826 готовых досье AUDITS_BASE и 7 087 подтверждённых REAL утечек OSPEC."
+                    : "Sovereign on-server memory: 1,678 deep exploit post-mortems with Foundry PoCs, 861 DeFiHackLabs cases, 10,826 AUDITS_BASE dossiers, and 7,087 verified REAL OSPEC leaks."}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-primary/50 bg-primary/10 p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-mono text-xs font-bold uppercase text-primary">[03] AI CORTEX INTERPRETER</span>
+                  <span className="rounded bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-400">SOON · v1.4</span>
+                </div>
+                <h3 className="font-mono text-sm font-bold text-foreground mb-1.5">
+                  {isRu ? "🧠 Человекочитаемая интерпретация JSON" : "🧠 Zero-Hallucination JSON Briefing"}
+                </h3>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {isRu
+                    ? "ИИ не гадает по коду. Он читает доказанный JSON Бориса + найденные прецеденты из базы взломов и выдаёт понятный человеку разбор: где рычаг контроля, в чём риск и какой инвариант нарушен."
+                    : "AI never guesses code. It reads BORIS's verified JSON + matched historical exploit precedents and outputs an executive human breakdown: where control lives, how capital can move, and why."}
+                </p>
+              </div>
+            </div>
+
+            {/* Live Side-by-Side Terminal Preview */}
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="rounded-xl border border-border bg-background p-4 font-mono text-xs">
+                <div className="flex items-center justify-between border-b border-border pb-2 mb-3 text-[11px] text-muted-foreground">
+                  <span>📄 INPUT: BORIS_DETERMINISTIC_DOSSIER.json</span>
+                  <span className="text-green-400 font-bold">19/19 LAYERS VERIFIED</span>
+                </div>
+                <pre className="overflow-x-auto text-[11px] leading-relaxed text-muted-foreground">
+{`{
+  "target": "0x...GovPoolProxy",
+  "eip1967_admin_type": "SINGLE_EOA_NO_TIMELOCK",
+  "uninit_implementation": false,
+  "invariant_chains": [
+    "NO_SNAPSHOT + ARBITRARY_CALL + FLASH_LIQUIDITY"
+  ],
+  "spot_oracle_reads": ["UniV3.slot0 (no TWAP)"],
+  "audit_drift": { "age_days": 549, "new_unreviewed_files": 14 },
+  "holders_top10_corrected_pct": 88.3,
+  "matched_exploit_precedents": ["beanstalk-governance", "uranium-spot"]
+}`}
+                </pre>
+              </div>
+
+              <div className="rounded-xl border border-primary/40 bg-background p-4 font-mono text-xs">
+                <div className="flex items-center justify-between border-b border-border pb-2 mb-3 text-[11px]">
+                  <span className="font-bold text-primary">🧠 OUTPUT: BORIS NEURAL CORTEX BRIEFING</span>
+                  <span className="rounded bg-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary">AI INTERPRETER · SOON</span>
+                </div>
+                <div className="space-y-2.5 text-[11px] leading-relaxed text-foreground">
+                  <p>
+                    <b className="text-primary">{isRu ? "1. Реальный контроль:" : "1. Control Reality:"}</b>{" "}
+                    {isRu
+                      ? "Несмотря на позиционирование DAO, прокси EIP-1967 управляется одиночным EOA-кошельком без Timelock-задержки, а 88.3% очищенного от бирж сапплая сосредоточено у Top-10 адресов."
+                      : "Despite DAO claims, the EIP-1967 proxy admin is a single EOA wallet with zero Timelock delay, and 88.3% of CEX-adjusted supply sits in Top-10 wallets."}
+                  </p>
+                  <p>
+                    <b className="text-primary">{isRu ? "2. Главная цепочка риска:" : "2. Primary Risk Chain:"}</b>{" "}
+                    {isRu
+                      ? "В голосовании отсутствует блок-снэпшот (NO_SNAPSHOT) при наличии функции произвольного вызова (ARBITRARY_CALL). Аналогично прецеденту Beanstalk из нашей базы (2,539 кейсов), это создаёт вектор мгновенного прохождения пропозала через flash-loan."
+                      : "Governance lacks block snapshots (NO_SNAPSHOT) while exposing ARBITRARY_CALL. Matching the Beanstalk precedent in our 2,539-exploit corpus, flash-borrowed tokens can pass and execute a proposal in one block."}
+                  </p>
+                  <p>
+                    <b className="text-primary">{isRu ? "3. Пост-аудитный дрейф:" : "3. Post-Audit Drift:"}</b>{" "}
+                    {isRu
+                      ? "Последний PDF-аудит проведён 549 дней назад; с тех пор в Git изменено 14 контрактов вне периметра проверки, включая чтение спотовой цены UniV3 slot0 без TWAP."
+                      : "Last PDF audit is 549 days old; 14 contracts were modified in Git post-audit, introducing unprotected UniV3 slot0 spot reads without TWAP."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </RevealOnScroll>
+      </section>
 
       {/* Contact CTA */}
       <RevealOnScroll>
