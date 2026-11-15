@@ -322,6 +322,23 @@ export const MODULES = [
       "Мультичейн параллельные воркеры с трекингом прогресса",
     ],
   },
+  {
+    icon: "🗝️",
+    name: "OSPEC — Secret & Leak Intelligence",
+    nameRu: "OSPEC — Разведка утечек секретов и ключей",
+    points: [
+      "Continuous secret harvesting across 31,800+ Web3 repositories (1.14M+ indexed findings)",
+      "Multi-stage cryptographic L2.5 validation (secp256k1, ed25519, BIP-39, EIP-7702, keystore v3)",
+      "Live on-chain balance, nonce, and active RPC/API key verification (Alchemy, Infura, AWS, DB URIs)",
+      "Repository-level aggregation with exact file:line mapping and REAL vs TEST classification",
+    ],
+    pointsRu: [
+      "Непрерывный поиск утечек секретов в 31,800+ Web3-репозиториях (1.14M+ находок в базе)",
+      "Многоступенчатая крипто-валидация L2.5 (secp256k1, ed25519, BIP-39, EIP-7702, keystore v3)",
+      "Проверка живого баланса, nonce и активности RPC/API-ключей (Alchemy, Infura, AWS, СУБД)",
+      "Агрегация по репозиториям с точной привязкой file:line и разделением REAL vs TEST",
+    ],
+  },
 ];
 
 export interface ScanResult {

@@ -52,8 +52,8 @@ const Index = () => {
             <span className="font-bold text-primary">🧠 NEURO-SYMBOLIC ARCHITECTURE:</span>
             <span className="text-foreground">
               {isRu
-                ? "19 детерминированных слоёв высекают сухой JSON фактов → ИИ-интерпретатор связывает его с 20 826 аудитами и 2 539 эксплойтами (0% галлюцинаций · доступно с тарифа RAW+, младшим тирам — детерминированный отчёт)."
-                : "19 deterministic layers prove hard JSON facts → AI Interpreter grounds them in 20,826 audits & 2,539 exploits (0% hallucinations · available from RAW+ tier; deterministic report on lower tiers)."}
+                ? "20 детерминированных слоёв высекают сухой JSON фактов → ИИ-интерпретатор связывает его с 20 826 аудитами и 2 539 эксплойтами (0% галлюцинаций · доступно с тарифа RAW+, младшим тирам — детерминированный отчёт)."
+                : "20 deterministic layers prove hard JSON facts → AI Interpreter grounds them in 20,826 audits & 2,539 exploits (0% hallucinations · available from RAW+ tier; deterministic report on lower tiers)."}
             </span>
           </div>
 
@@ -84,7 +84,7 @@ const Index = () => {
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
             {[
-              { val: "19", label: isRu ? "Слоёв перекрёстного анализа" : "Cross-Layer Analysis Modules" },
+              { val: "20", label: isRu ? "Слоёв перекрёстного анализа (+OSPEC)" : "Cross-Layer Modules (+OSPEC)" },
               { val: "14", label: isRu ? "Разведывательных движков в терминале" : "Interactive Intelligence Engines" },
               { val: "20,826", label: isRu ? "Готовых аудитов в архиве" : "Archived Engineering Audits" },
               { val: "2,539", label: isRu ? "Разборов взломов + Foundry PoC" : "Exploit Writeups + Foundry PoCs" },
@@ -141,8 +141,8 @@ const Index = () => {
             </h2>
             <p className="max-w-4xl text-sm md:text-base leading-relaxed text-muted-foreground mb-8">
               {isRu
-                ? "В 2024–2025 годах рынок смеялся над «AI-аудиторами», которые скармливали сырой Solidity-код напрямую в LLM и получали выдумки. BORIS изначально строился как бескомпромиссный аналоговый сканер-молот (19 перекрёстных слоёв, 14 спец-движков, 6 круглосуточных радаров), высекающий только доказанные математические и ончейн-факты. В обновлении v1.5 к этому механическому ядру подключается ИИ-интерпретатор и контур управления собственным роем агентов: модель никуда не ходит и ничего не додумывает — она берёт готовый JSON-отчёт Бориса, сверяет его с 20 826 архивными аудитами и 2 539 разборами взломов и переводит инженерную телеметрию на человеческий язык."
-                : "Early 'AI security scanners' failed because they fed raw Solidity files straight into LLMs and hallucinated vulnerabilities. BORIS was engineered first as a deterministic 19-layer mechanical hammer (14 specialized engines and 6 continuous 24/7 radars) that extracts only provable mathematical and on-chain facts. In v1.5, BORIS gains its Neural Cortex and personal Agent Swarm orchestration: an AI interpreter that never guesses on raw code — instead, it ingests BORIS's verified JSON dossier, cross-references 20,826 archived audits and 2,539 exploit writeups, and translates complex multi-layer telemetry into crystal-clear human intelligence."}
+                ? "В 2024–2025 годах рынок смеялся над «AI-аудиторами», которые скармливали сырой Solidity-код напрямую в LLM и получали выдумки. BORIS изначально строился как бескомпромиссный аналоговый сканер-молот (20 перекрёстных слоёв, включая OSPEC-разведку секретов, 14 спец-движков и 6 круглосуточных радаров), высекающий только доказанные математические и ончейн-факты. В обновлении v1.5 к этому механическому ядру подключается ИИ-интерпретатор и контур управления собственным роем агентов: модель никуда не ходит и ничего не додумывает — она берёт готовый JSON-отчёт Бориса, сверяет его с 20 826 архивными аудитами и 2 539 разборами взломов и переводит инженерную телеметрию на человеческий язык."
+                : "Early 'AI security scanners' failed because they fed raw Solidity files straight into LLMs and hallucinated vulnerabilities. BORIS was engineered first as a deterministic 20-layer mechanical hammer (including OSPEC secret intelligence, 14 specialized engines, and 6 continuous 24/7 radars) that extracts only provable mathematical and on-chain facts. In v1.5, BORIS gains its Neural Cortex and personal Agent Swarm orchestration: an AI interpreter that never guesses on raw code — instead, it ingests BORIS's verified JSON dossier, cross-references 20,826 archived audits and 2,539 exploit writeups, and translates complex multi-layer telemetry into crystal-clear human intelligence."}
             </p>
 
             {/* 3-Step Pipeline */}
@@ -153,12 +153,12 @@ const Index = () => {
                   <span className="rounded bg-green-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-green-400">LIVE · v1.4</span>
                 </div>
                 <h3 className="font-mono text-sm font-bold text-foreground mb-1.5">
-                  {isRu ? "🦾 19 слоёв механического анализа" : "🦾 19-Layer Mechanical Execution"}
+                  {isRu ? "🦾 20 слоёв механического анализа" : "🦾 20-Layer Mechanical Execution"}
                 </h3>
                 <p className="text-xs leading-relaxed text-muted-foreground">
                   {isRu
-                    ? "Статанализ 12 языков, чтение EIP-1967 слотов прокси через RPC, математика кривой BN254 для ZK Groth16, граф потоков за 14 дней и стаканы деривативов → строгий детерминированный отчёт (доступен на всех тарифах)."
-                    : "12-language AST analysis, live EIP-1967 RPC storage slot reads, BN254 ZK Groth16 curve math, 14-day funds flow graphs, and derivatives orderbooks → strict deterministic report (available across all tiers)."}
+                    ? "Статанализ 12 языков, чтение EIP-1967 слотов прокси через RPC, математика кривой BN254 для ZK Groth16, OSPEC-сканер секретов, граф потоков за 14 дней и стаканы деривативов → строгий детерминированный отчёт (на всех тарифах)."
+                    : "12-language AST analysis, live EIP-1967 RPC storage slot reads, BN254 ZK Groth16 curve math, OSPEC secret scanner, 14-day funds flow graphs, and derivatives orderbooks → strict deterministic report (across all tiers)."}
                 </p>
               </div>
 
@@ -198,17 +198,17 @@ const Index = () => {
               <div className="rounded-xl border border-border bg-background p-4 font-mono text-xs">
                 <div className="flex items-center justify-between border-b border-border pb-2 mb-3 text-[11px] text-muted-foreground">
                   <span>📄 INPUT: BORIS_DETERMINISTIC_DOSSIER.json</span>
-                  <span className="text-green-400 font-bold">19/19 LAYERS VERIFIED</span>
+                  <span className="text-green-400 font-bold">20/20 LAYERS VERIFIED</span>
                 </div>
                 <pre className="overflow-x-auto text-[11px] leading-relaxed text-muted-foreground">
 {`{
   "target": "0x...GovPoolProxy",
   "eip1967_admin_type": "SINGLE_EOA_NO_TIMELOCK",
-  "uninit_implementation": false,
   "invariant_chains": [
     "NO_SNAPSHOT + ARBITRARY_CALL + FLASH_LIQUIDITY"
   ],
   "spot_oracle_reads": ["UniV3.slot0 (no TWAP)"],
+  "ospec_leaks_detected": { "cls": "REAL", "kind": "hex_privkey", "is_live": true },
   "audit_drift": { "age_days": 549, "new_unreviewed_files": 14 },
   "holders_top10_corrected_pct": 88.3,
   "matched_exploit_precedents": ["beanstalk-governance", "uranium-spot"]
