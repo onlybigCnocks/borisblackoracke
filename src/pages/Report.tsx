@@ -15,12 +15,17 @@ const Report = () => {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`${API_BASE}/api/report/${id}`)
+    fetch(`${API_BASE}/api/auth/scan/${id}`)
       .then(async (r) => {
-        const j = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(j.detail || `HTTP ${r.status}`);
-        setData(j);
+        if (!r.ok) {
+          const fallback = await fetch(`${API_BASE}/api/report/${id}`);
+          const fj = await fallback.json().catch(() => ({}));
+          if (!fallback.ok) throw new Error(fj.detail || `HTTP ${fallback.status}`);
+          return fj;
+        }
+        return r.json();
       })
+      .then((j) => setData(j))
       .catch((e) => setError(e.message));
   }, [id]);
 
@@ -52,11 +57,25 @@ const Report = () => {
     );
   }
 
-  const r = data.report || {};
+  const r = data.report || data || {};
   const sc = r.scope || {};
-  const label = (v: any) => (typeof v === "string" ? v : v?.[lang] || v?.en || "");
+  const label = (v: any) => (typeof v === "string" ? v : v?.[lang] || v?.en || v?.ru || "");
+  const liqDisplay =
+    typeof sc.liquidity === "string"
+      ? sc.liquidity
+      : sc.liquidity?.total_usd
+      ? `$${Number(sc.liquidity.total_usd).toLocaleString()}`
+      : r.market?.total_liquidity || "—";
+  const disclaimerText =
+    typeof r.disclaimer === "string"
+      ? r.disclaimer
+      : label(r.disclaimer?.main) || "BORIS — structural analysis, not an investment recommendation.";
   const verdictColor =
-    r.verdict === "SIGNIFICANT_SURFACE" ? "text-destructive border-destructive/40" : "text-primary border-primary/40";
+    r.verdict === "SIGNIFICANT_SURFACE"
+      ? "text-destructive border-destructive/40"
+      : r.verdict === "MODERATE_SURFACE"
+      ? "text-amber-400 border-amber-500/40"
+      : "text-primary border-primary/40";
 
   return (
     <div className="container mx-auto min-h-screen px-4 py-24">
@@ -100,14 +119,14 @@ const Report = () => {
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { k: lang === "ru" ? "Паттерны" : "Patterns", v: sc.patterns_total ?? 0 },
-            { k: "Critical", v: sc.patterns_critical ?? 0 },
-            { k: "High", v: sc.patterns_high ?? 0 },
-            { k: lang === "ru" ? "Ликвидность" : "Liquidity", v: sc.liquidity || "—" },
+            { k: lang === "ru" ? "Паттерны" : "Patterns", v: sc.patterns_total ?? r.patterns_total ?? 0 },
+            { k: "Critical", v: sc.patterns_critical ?? r.patterns_critical ?? 0 },
+            { k: "High", v: sc.patterns_high ?? r.patterns_high ?? 0 },
+            { k: lang === "ru" ? "Ликвидность" : "Liquidity", v: liqDisplay },
           ].map((c, i) => (
             <div key={i} className="rounded-xl border border-border bg-card p-4">
               <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{c.k}</p>
-              <p className="mt-1 font-mono text-lg font-bold text-foreground">{c.v}</p>
+              <p className="mt-1 font-mono text-lg font-bold text-foreground">{String(c.v)}</p>
             </div>
           ))}
         </div>
@@ -122,7 +141,7 @@ const Report = () => {
                 <div key={i} className="rounded-lg border border-border bg-background p-3">
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-mono text-xs font-bold text-foreground">
-                      {f.title || f.name || f.pattern}
+                      {f.type || f.title || f.name || f.pattern || "Pattern"}
                     </span>
                     <span className="font-mono text-[10px] text-muted-foreground">
                       {f.severity} {f.file ? `· ${f.file}` : ""}
@@ -134,7 +153,7 @@ const Report = () => {
             </div>
             {r.more_count ? (
               <p className="mt-2 font-mono text-[11px] text-primary">
-                +{r.more_count} {lang === "ru" ? "паттернов скрыто" : "patterns hidden"}
+                +{r.more_count} {lang === "ru" ? "паттернов в полном отчёте" : "more patterns in full report"}
               </p>
             ) : null}
           </div>
@@ -168,7 +187,7 @@ const Report = () => {
         </div>
 
         <p className="text-center font-mono text-[10px] text-muted-foreground">
-          {r.disclaimer || "BORIS — structural analysis, not an investment recommendation."}
+          {disclaimerText}
         </p>
       </div>
     </div>
