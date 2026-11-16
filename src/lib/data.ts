@@ -378,7 +378,7 @@ export interface MarketScan {
 
 export const MOCK_SCAN: ScanResult = {
   id: "demo-001",
-  target: "uniswap/v3-core",
+  target: "aave/aave-v3-core",
   targetType: "github",
   riskLevel: "MEDIUM",
   date: new Date().toISOString(),
@@ -396,11 +396,11 @@ export const MOCK_SCAN: ScanResult = {
     { name: "Notes", score: 2.1 },
   ],
   findingsList: [
-    { id: "f1", severity: "HIGH", type: "Privileged Function", file: "src/UniswapV3Pool.sol", line: 142, description: "Owner can modify fee parameters without timelock" },
-    { id: "f2", severity: "HIGH", type: "Upgrade Surface", file: "src/UniswapV3Factory.sol", line: 89, description: "Factory owner can deploy arbitrary pool implementations" },
-    { id: "f3", severity: "MEDIUM", type: "Oracle Dependency", file: "src/libraries/Oracle.sol", line: 56, description: "TWAP oracle manipulation window of 30 minutes" },
-    { id: "f4", severity: "MEDIUM", type: "Reentrancy", file: "src/UniswapV3Pool.sol", line: 312, description: "Potential reentrancy in flash callback" },
-    { id: "f5", severity: "LOW", type: "Gas Optimization", file: "src/libraries/TickMath.sol", line: 24, description: "Redundant storage reads in tick calculation" },
+    { id: "f1", severity: "HIGH", type: "Privileged Function", file: "contracts/protocol/pool/PoolConfigurator.sol", line: 142, description: "PoolAdmin can modify reserve parameters without timelock" },
+    { id: "f2", severity: "HIGH", type: "Upgrade Surface", file: "contracts/protocol/libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol", line: 89, description: "Proxy admin can upgrade pool implementation" },
+    { id: "f3", severity: "MEDIUM", type: "Oracle Dependency", file: "contracts/misc/AaveOracle.sol", line: 56, description: "Fallback oracle configuration requires strict access control" },
+    { id: "f4", severity: "MEDIUM", type: "FlashLoan Callback", file: "contracts/protocol/pool/logic/FlashLoanLogic.sol", line: 312, description: "External flashLoanSimple callback execution surface" },
+    { id: "f5", severity: "LOW", type: "Gas Optimization", file: "contracts/protocol/libraries/math/WadRayMath.sol", line: 24, description: "Redundant division check in rayDiv" },
   ],
 };
 

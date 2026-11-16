@@ -461,8 +461,8 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
               placeholder={
                 tab === "audits_base"
                   ? isRu
-                    ? "Поиск по 20,826 готовым аудитам (1inch, uniswap, curve, 0x...)"
-                    : "Search 20,826 completed audits (1inch, uniswap, curve, 0x...)"
+                    ? "Поиск по 20,826 готовым аудитам (1inch, aave, curve, lido, 0x...)"
+                    : "Search 20,826 completed audits (1inch, aave, curve, lido, 0x...)"
                   : isRu
                   ? "Поиск по имени, 0x-адресу, репозиторию или тегам…"
                   : "Filter by name, 0x address, repo or tags…"

@@ -209,9 +209,9 @@ const ToolsPanel = () => {
     { id: "hacks", labelRu: "База 2,539 взломов (1,678 разборов + PoC)", labelEn: "2,539 Exploits DB (1,678 Writeups + PoC)", icon: Flame, minRank: 1, placeholder: "0x... контракт ИЛИ поиск по 1,678 разборам: uranium, euler, curve, slot0, reentrancy" },
     { id: "deployer", labelRu: "Деплоер & Профайлер Адреса", labelEn: "Deployer & Address Profiler", icon: UserCheck, minRank: 1, placeholder: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 (1 или несколько 0x-адресов)" },
     { id: "proxy", labelRu: "Proxy & EIP-1967 Инспектор", labelEn: "Proxy & EIP-1967 Inspector", icon: Layers, minRank: 1, placeholder: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" },
-    { id: "flash", labelRu: "Flash-Loan & Spot-Оракул", labelEn: "Flash-Loan & Spot Oracle", icon: Zap, minRank: 1, placeholder: "0x1F98431c8aD98523631AE4a59f267346ea31F984" },
-    { id: "surface", labelRu: "Web3 Surface Mapper (Домен)", labelEn: "Web3 Surface Mapper (Domain)", icon: Radar, minRank: 1, placeholder: "across.to / rhino.fi / app.uniswap.org" },
-    { id: "drift", labelRu: "Audit Drift (Репозиторий)", labelEn: "Audit Drift (Repo Audits)", icon: GitCompare, minRank: 1, placeholder: "https://github.com/Uniswap/v4-core или org/repo" },
+    { id: "flash", labelRu: "Flash-Loan & Spot-Оракул", labelEn: "Flash-Loan & Spot Oracle", icon: Zap, minRank: 1, placeholder: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2" },
+    { id: "surface", labelRu: "Web3 Surface Mapper (Домен)", labelEn: "Web3 Surface Mapper (Domain)", icon: Radar, minRank: 1, placeholder: "across.to / rhino.fi / app.aave.com" },
+    { id: "drift", labelRu: "Audit Drift (Репозиторий)", labelEn: "Audit Drift (Repo Audits)", icon: GitCompare, minRank: 1, placeholder: "https://github.com/aave/aave-v3-core или org/repo" },
     { id: "zk", labelRu: "ZK / Groth16 аудит", labelEn: "ZK Groth16 Audit", icon: ShieldCheck, minRank: 2, placeholder: "0x... verifier" },
     { id: "sandbox", labelRu: "Matrix Sandbox v16.2", labelEn: "Matrix Sandbox v16.2", icon: Terminal, minRank: 2, placeholder: "import requests, subprocess..." },
   ];
@@ -498,9 +498,9 @@ const ToolsPanel = () => {
                 { label: "Uranium ($50M K-Check)", val: "uranium" },
                 { label: "Euler Finance", val: "euler" },
                 { label: "Curve / Vyper Reentrancy", val: "curve" },
-                { label: "UniV3 slot0 Oracle", val: "slot0" },
+                { label: "TWAP / Spot Oracle", val: "slot0" },
                 { label: "Cross-Chain Bridges", val: "vuln/bridge" },
-                { label: "0x1F98...F984 (UniV3 Factory)", val: "0x1F98431c8aD98523631AE4a59f267346ea31F984" },
+                { label: "0x8787...A4E2 (Aave V3 Pool)", val: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2" },
               ].map((p) => (
                 <button
                   key={p.val}
@@ -519,9 +519,9 @@ const ToolsPanel = () => {
             <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[11px]">
               <span className="text-muted-foreground">{isRu ? "Быстрые репо с аудитами:" : "Quick audited repos:"}</span>
               {[
-                "https://github.com/Uniswap/v4-core",
                 "https://github.com/aave/aave-v3-core",
                 "https://github.com/OpenZeppelin/openzeppelin-contracts",
+                "https://github.com/curvefi/curve-stablecoin",
               ].map((preset) => (
                 <button
                   key={preset}

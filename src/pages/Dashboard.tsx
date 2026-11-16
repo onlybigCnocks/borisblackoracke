@@ -318,7 +318,7 @@ const Dashboard = () => {
       .catch(() => {});
   };
 
-  const handleOpenSavedScan = async (taskId: string) => {
+  const handleOpenSavedScan = async (taskId: string, fallbackTarget?: string) => {
     setLoadingScanId(taskId);
     try {
       const archived = await apiGetArchivedScan(taskId);
@@ -329,7 +329,14 @@ const Dashboard = () => {
       );
       document.getElementById("demo-scanner")?.scrollIntoView({ behavior: "smooth" });
     } catch {
-      // ignore
+      if (fallbackTarget) {
+        window.dispatchEvent(
+          new CustomEvent("boris-quick-scan", {
+            detail: { target: fallbackTarget },
+          })
+        );
+        document.getElementById("demo-scanner")?.scrollIntoView({ behavior: "smooth" });
+      }
     } finally {
       setLoadingScanId(null);
     }
@@ -1235,7 +1242,7 @@ const Dashboard = () => {
                               </div>
 
                               <button
-                                onClick={() => handleOpenSavedScan(s.task_id)}
+                                onClick={() => handleOpenSavedScan(s.task_id, s.target)}
                                 disabled={loadingScanId === s.task_id}
                                 className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-50"
                               >

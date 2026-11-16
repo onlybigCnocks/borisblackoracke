@@ -20,9 +20,9 @@ const QUICK_TARGETS = [
     target: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
   },
   {
-    label: "Uniswap V3 Factory",
-    badge: "DEX",
-    target: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
+    label: "Aave V3 Pool",
+    badge: "Lending",
+    target: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
   },
   {
     label: "Curve 3Pool",
@@ -35,9 +35,9 @@ const QUICK_TARGETS = [
     target: "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",
   },
   {
-    label: "Uniswap/v4-core",
+    label: "aave/aave-v3-core",
     badge: "GitHub",
-    target: "https://github.com/Uniswap/v4-core",
+    target: "https://github.com/aave/aave-v3-core",
   },
 ];
 
