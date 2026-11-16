@@ -217,13 +217,17 @@ export async function apiRotateKey(): Promise<string> {
 }
 
 export async function apiGetArchivedScan(taskId: string) {
-  const res = await fetch(`${API_BASE}/api/auth/scan/${taskId}`);
+  const res = await fetch(`${API_BASE}/api/auth/scan/${taskId}`, {
+    headers: authHeaders(),
+  });
   if (!res.ok) throw new Error("Scan report not found");
   return res.json();
 }
 
 export function getScanExportUrl(taskId: string): string {
-  return `${API_BASE}/api/auth/scan/${taskId}/export`;
+  const tk = getSavedToken();
+  const qs = tk ? `?token=${encodeURIComponent(tk)}` : "";
+  return `${API_BASE}/api/auth/scan/${taskId}/export${qs}`;
 }
 
 export async function apiAddWatchlist(target: string, label?: string): Promise<BorisWatchlistItem[]> {

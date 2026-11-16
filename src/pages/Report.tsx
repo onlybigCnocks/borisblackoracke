@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle, ArrowUpRight, Share2, Loader2, Shield } from "lucide-react";
+import { authHeaders } from "@/lib/auth";
 
 const API_BASE = "https://api.black-oracle.com";
 
@@ -15,10 +16,10 @@ const Report = () => {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`${API_BASE}/api/auth/scan/${id}`)
+    fetch(`${API_BASE}/api/auth/scan/${id}`, { headers: authHeaders() })
       .then(async (r) => {
         if (!r.ok) {
-          const fallback = await fetch(`${API_BASE}/api/report/${id}`);
+          const fallback = await fetch(`${API_BASE}/api/report/${id}`, { headers: authHeaders() });
           const fj = await fallback.json().catch(() => ({}));
           if (!fallback.ok) throw new Error(fj.detail || `HTTP ${fallback.status}`);
           return fj;

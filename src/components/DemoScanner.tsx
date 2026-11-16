@@ -973,6 +973,72 @@ export function ResultTeaser({ result, isRu, taskId }: { result: DemoScanResult;
                           {ch.impact}
                         </p>
                       )}
+                      {ch.requires && ch.requires.length > 0 && (
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px]">
+                          <span className="text-muted-foreground font-semibold">Requires:</span>
+                          {ch.requires.map((rq, rIdx) => (
+                            <span key={rIdx} className="rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-amber-200">
+                              {rq}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {ch.patch && (
+                        <p className="mt-2 rounded border border-emerald-500/25 bg-emerald-500/5 px-2.5 py-1.5 text-[11px] text-emerald-300/90">
+                          <span className="font-semibold text-emerald-400">Remediation: </span>
+                          {ch.patch}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 3b. Full Code Findings & Snippets (RAW / BLACKBOX) */}
+            {result.deep_dossier.findings_full && result.deep_dossier.findings_full.length > 0 && (
+              <div className="rounded-xl border border-border bg-background/60 p-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    {isRu
+                      ? `4️⃣ Трассировка паттернов и исходного кода (${result.deep_dossier.findings_full.length})`
+                      : `4️⃣ Pattern & Source Code Trace (${result.deep_dossier.findings_full.length})`}
+                  </h4>
+                  <span className="font-mono text-[10px] text-primary">
+                    {result.deep_dossier.viewer_tier || "GUEST"} TIER
+                  </span>
+                </div>
+                <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
+                  {result.deep_dossier.findings_full.map((fn, fIdx) => (
+                    <div key={fIdx} className="rounded-lg border border-border bg-card p-3 font-mono text-xs">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                              fn.severity === "CRITICAL"
+                                ? "bg-red-500/20 text-red-400 border border-red-500/40"
+                                : fn.severity === "HIGH"
+                                ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                                : "bg-blue-500/15 text-blue-300 border border-blue-500/30"
+                            }`}
+                          >
+                            {fn.severity}
+                          </span>
+                          <span className="font-bold text-foreground">{fn.type}</span>
+                        </div>
+                        <span className="text-[11px] text-primary">
+                          {fn.file}
+                          {fn.line > 0 ? `:${fn.line}` : ""}
+                        </span>
+                      </div>
+                      {fn.description && (
+                        <p className="mt-1.5 text-[11px] text-muted-foreground leading-relaxed">{fn.description}</p>
+                      )}
+                      {fn.code_snippet && (
+                        <pre className="mt-2 overflow-x-auto rounded border border-border bg-background/80 p-2 text-[11px] text-emerald-300/90">
+                          {fn.code_snippet}
+                        </pre>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1039,27 +1105,59 @@ export function ResultTeaser({ result, isRu, taskId }: { result: DemoScanResult;
         )}
 
         {/* CTA */}
-        <div className="rounded-xl border border-primary/40 bg-radial-red p-5 text-center">
-          <p className="font-mono text-xs text-foreground mb-1 font-semibold">
-            {isRu
-              ? "Полная расшифровка уязвимостей, точные строки кода, граф транзакций и проверка контракта в 1 клик:"
-              : "Full vulnerability breakdown, exact code lines, transaction graph & deep audit in 1 click:"}
-          </p>
-          <p className="font-mono text-[11px] text-muted-foreground mb-4">
-            {isRu
-              ? "Заберите полный отчёт (RADAR / RAW / BLACKBOX) в официальном Telegram-терминале BORIS"
-              : "Unlock the complete report (RADAR / RAW / BLACKBOX) in the official BORIS Telegram terminal"}
-          </p>
-          <a
-            href="https://t.me/BlackOracleBORIS_bot"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow text-sm"
-          >
-            <Send size={16} />
-            {isRu ? "Открыть полный отчёт в Telegram" : "Unlock Full Report in Telegram"}
-          </a>
-        </div>
+        {result.deep_dossier?.viewer_tier === "BLACKBOX" || result.deep_dossier?.viewer_tier === "RAW" ? (
+          <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/5 p-5 text-center">
+            <p className="font-mono text-xs text-emerald-300 mb-1 font-semibold">
+              {isRu
+                ? `⚡ Полный инженерный доступ (${result.deep_dossier.viewer_tier}) активен — все цепочки условий, ABI-привилегии, file:line и кодовые сниппеты разблокированы.`
+                : `⚡ Full Engineering Access (${result.deep_dossier.viewer_tier}) Active — all condition chains, ABI privileges, file:line traces & snippets unlocked.`}
+            </p>
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
+              {taskId && (
+                <a
+                  href={getScanExportUrl(taskId)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 font-semibold text-primary-foreground transition-all hover:bg-primary-dim text-xs font-mono"
+                >
+                  <Download size={14} />
+                  {isRu ? "Скачать полное JSON-досье" : "Download Full JSON Dossier"}
+                </a>
+              )}
+              <a
+                href="https://t.me/BlackOracleBORIS_bot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-2.5 font-semibold text-foreground transition-all hover:border-primary text-xs font-mono"
+              >
+                <Send size={14} />
+                {isRu ? "Открыть в Telegram-боте BORIS" : "Open in BORIS Telegram Bot"}
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-primary/40 bg-radial-red p-5 text-center">
+            <p className="font-mono text-xs text-foreground mb-1 font-semibold">
+              {isRu
+                ? "Полная расшифровка уязвимостей, точные строки кода, граф транзакций и проверка контракта в 1 клик:"
+                : "Full vulnerability breakdown, exact code lines, transaction graph & deep audit in 1 click:"}
+            </p>
+            <p className="font-mono text-[11px] text-muted-foreground mb-4">
+              {isRu
+                ? "Заберите полный отчёт (RADAR / RAW / BLACKBOX) в официальном Telegram-терминале BORIS"
+                : "Unlock the complete report (RADAR / RAW / BLACKBOX) in the official BORIS Telegram terminal"}
+            </p>
+            <a
+              href="https://t.me/BlackOracleBORIS_bot"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow text-sm"
+            >
+              <Send size={16} />
+              {isRu ? "Открыть полный отчёт в Telegram" : "Unlock Full Report in Telegram"}
+            </a>
+          </div>
+        )}
 
         {/* Single clean disclaimer at bottom */}
         <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-4 py-2.5 flex items-center justify-between gap-2 flex-wrap">
