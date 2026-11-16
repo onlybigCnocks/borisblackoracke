@@ -30,7 +30,25 @@ const Auth = () => {
 
   const googleBtnRef = useRef<HTMLDivElement>(null);
 
+  const handleGuestDemoLogin = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      await apiLogin("demo@black-oracle.com", "boris_demo_guest");
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.message || (isRu ? "Ошибка гостевого демо-входа" : "Guest demo login error"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("demo") === "1") {
+      handleGuestDemoLogin();
+      return;
+    }
     if (getSavedToken()) {
       navigate("/dashboard");
     }
@@ -189,6 +207,21 @@ const Auth = () => {
             {isRu ? "Регистрация" : "Register"}
           </button>
         </div>
+
+        {/* 1-Click Guest Demo Login Button */}
+        <button
+          type="button"
+          disabled={loading}
+          onClick={handleGuestDemoLogin}
+          className="mb-3 flex w-full items-center justify-center gap-2.5 rounded-xl border border-green-500/50 bg-green-500/15 py-3 px-4 font-mono text-xs font-bold text-green-400 transition-all hover:bg-green-500/25 disabled:opacity-50"
+        >
+          <Terminal size={14} className="shrink-0" />
+          <span>
+            {isRu
+              ? "👁️ Гостевой Демо-Кабинет в 1 клик (без регистрации)"
+              : "👁️ 1-Click Guest Demo Cabinet (No Registration)"}
+          </span>
+        </button>
 
         {/* Google Sign-In Button (Custom Cyber Styled) */}
         <button

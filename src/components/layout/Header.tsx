@@ -69,6 +69,7 @@ const Header = () => {
 
   const navLinks = [
     { type: "action" as const, action: scrollToScanner, label: t("nav.scanner") },
+    { type: "link" as const, to: "/dashboard", label: isRu ? "Терминал / Радары" : "Terminal / Radars" },
     { type: "link" as const, to: "/market", label: isRu ? "Рынок" : "Market" },
     { type: "link" as const, to: "/pricing", label: t("nav.pricing") },
     { type: "link" as const, to: "/about", label: t("nav.about") },
@@ -158,18 +159,18 @@ const Header = () => {
           {user ? (
             <Link
               to="/dashboard"
-              className="hidden items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3.5 py-1.5 font-mono text-xs font-semibold text-primary transition-all hover:bg-primary/20 md:inline-flex"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1.5 font-mono text-xs font-semibold text-primary transition-all hover:bg-primary/20 md:px-3.5"
             >
               <User size={14} />
-              <span className="max-w-[120px] truncate">{user.name || user.email}</span>
+              <span className="max-w-[90px] truncate md:max-w-[120px]">{user.name || user.email}</span>
             </Link>
           ) : (
             <Link
               to="/auth"
-              className="hidden items-center gap-1.5 rounded-lg border border-border px-3.5 py-1.5 font-mono text-xs font-semibold text-foreground transition-all hover:border-primary hover:text-primary md:inline-flex"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1.5 font-mono text-xs font-semibold text-primary transition-all hover:border-primary hover:bg-primary/20 md:px-3.5"
             >
               <User size={14} />
-              <span>{isRu ? "Кабинет" : "Sign In"}</span>
+              <span>{isRu ? "Кабинет" : "Cabinet"}</span>
             </Link>
           )}
 

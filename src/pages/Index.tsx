@@ -68,6 +68,12 @@ const Index = () => {
             >
               {t("hero.cta1")}
             </button>
+            <Link
+              to="/auth?demo=1"
+              className="rounded-lg border border-green-500/50 bg-green-500/15 px-6 py-3.5 font-mono text-sm font-bold text-green-400 transition-all duration-200 hover:bg-green-500/25"
+            >
+              👁️ {isRu ? "Гостевой Демо-Кабинет (1 клик)" : "1-Click Guest Demo Cabinet"}
+            </Link>
             <a
               href="#ai-cortex-showcase"
               className="rounded-lg border border-primary/50 bg-primary/10 px-6 py-3.5 font-mono text-sm font-bold text-primary transition-all duration-200 hover:bg-primary hover:text-primary-foreground"
