@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Shield, Mail, Lock, User, ArrowRight, Terminal, AlertCircle } from "lucide-react";
 import BorisLogo from "@/components/BorisLogo";
-import { apiLogin, apiRegister, apiGoogleAuth, getSavedToken } from "@/lib/auth";
+import { apiLogin, apiRegister, apiGoogleAuth, getSavedToken, saveAuthSession } from "@/lib/auth";
 
 const GOOGLE_CLIENT_ID =
   import.meta.env.VITE_GOOGLE_CLIENT_ID ||
@@ -36,8 +36,21 @@ const Auth = () => {
     try {
       await apiLogin("demo@black-oracle.com", "boris_demo_guest");
       navigate("/dashboard");
-    } catch (err: any) {
-      setError(err.message || (isRu ? "Ошибка гостевого демо-входа" : "Guest demo login error"));
+    } catch {
+      // Offline / QUIC fallback so embedded corporate browsers in RU always enter the Guest Demo Cabinet
+      saveAuthSession("boris_guest_demo_offline_token", {
+        id: "guest-demo-operator",
+        email: "demo@black-oracle.com",
+        name: "Guest Demo Operator",
+        tier: "GUEST",
+        api_key: "boris_demo_fae6c34eb1581245e9b0ed103ac48031",
+        scans_total: 6,
+        scans_today: 0,
+        daily_limit: 3,
+        auth_provider: "email",
+        created_at: Math.floor(Date.now() / 1000) - 86400 * 14,
+      });
+      navigate("/dashboard");
     } finally {
       setLoading(false);
     }
@@ -45,7 +58,8 @@ const Auth = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("demo") === "1") {
+    const demoParam = (params.get("demo") || "").trim();
+    if (demoParam.startsWith("1") || window.location.search.includes("demo=1")) {
       handleGuestDemoLogin();
       return;
     }

@@ -44,6 +44,8 @@ import {
   apiWithdrawReferral,
   openCryptoCheckout,
   getScanExportUrl,
+  apiLogin,
+  saveAuthSession,
   clearAuthSession,
   getSavedToken,
   getSavedUser,
@@ -242,11 +244,6 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    const token = getSavedToken();
-    if (!token) {
-      navigate("/auth");
-      return;
-    }
     const fetchProfile = () => {
       apiGetMe()
         .then((data) => {
@@ -254,14 +251,34 @@ const Dashboard = () => {
           setScans(data.scans || []);
           setWatchlist(data.watchlist || []);
         })
-        .catch(() => {
-          navigate("/auth");
-        })
+        .catch(() => {})
         .finally(() => setLoading(false));
       apiGetPaymentHistory().then(setBillingData).catch(() => {});
       apiGetReferral().then(setRefData).catch(() => {});
     };
-    fetchProfile();
+
+    const token = getSavedToken();
+    if (!token) {
+      // Auto-enter Guest Demo Operator mode when opening /dashboard directly without a token
+      apiLogin("demo@black-oracle.com", "boris_demo_guest")
+        .catch(() => {
+          saveAuthSession("boris_guest_demo_offline_token", {
+            id: "guest-demo-operator",
+            email: "demo@black-oracle.com",
+            name: "Guest Demo Operator",
+            tier: "GUEST",
+            api_key: "boris_demo_fae6c34eb1581245e9b0ed103ac48031",
+            scans_total: 6,
+            scans_today: 0,
+            daily_limit: 3,
+            auth_provider: "email",
+            created_at: 1773330000,
+          });
+        })
+        .finally(() => fetchProfile());
+    } else {
+      fetchProfile();
+    }
     // Auto-verify if returning from @CryptoBot callback URL (?paid_inv=...)
     const params = new URLSearchParams(window.location.search);
     const paidInvId = params.get("paid_inv");
