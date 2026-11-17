@@ -260,6 +260,8 @@ export async function apiGetRadarFeed(params?: {
   chain?: string;
   vertical?: string;
   ospec_filter?: string;
+  language?: string;
+  sort?: string;
   q?: string;
   min_score?: number;
   page?: number;
@@ -271,6 +273,8 @@ export async function apiGetRadarFeed(params?: {
   if (params?.chain) qs.set("chain", params.chain);
   if (params?.vertical && params.vertical !== "ALL") qs.set("vertical", params.vertical);
   if (params?.ospec_filter && params.ospec_filter !== "ALL") qs.set("ospec_filter", params.ospec_filter);
+  if (params?.language && params.language !== "all") qs.set("language", params.language);
+  if (params?.sort && params.sort !== "newest") qs.set("sort", params.sort);
   if (params?.q) qs.set("q", params.q);
   if (params?.min_score) qs.set("min_score", String(params.min_score));
   if (params?.page) qs.set("page", String(params.page));
@@ -284,13 +288,22 @@ export async function apiGetRadarFeed(params?: {
   return res.json();
 }
 
-export async function apiRunGithubOmniHarvest(vertical: string = "ALL"): Promise<any> {
+export async function apiRunGithubOmniHarvest(
+  vertical: string = "ALL",
+  customQuery: string = "",
+  language: string = ""
+): Promise<any> {
   const token = getSavedToken();
   if (!token) throw new Error("Not authenticated");
   const res = await fetch(`${API_BASE}/api/tools/github-omni-harvest`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-    body: JSON.stringify({ vertical, queries_per_vertical: vertical === "ALL" ? 2 : 3 }),
+    body: JSON.stringify({
+      vertical,
+      queries_per_vertical: vertical === "ALL" ? 2 : 3,
+      custom_query: customQuery || "",
+      language: language && language !== "all" ? language : "",
+    }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.detail || "Failed to run GitHub Omni-Harvester");

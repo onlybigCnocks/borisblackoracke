@@ -40,6 +40,8 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
   const [chain, setChain] = useState<string>("all");
   const [ghVertical, setGhVertical] = useState<string>("ALL");
   const [ospecFilter, setOspecFilter] = useState<string>("ALL");
+  const [ghLanguage, setGhLanguage] = useState<string>("all");
+  const [ghSort, setGhSort] = useState<string>("newest");
   const [omniRunning, setOmniRunning] = useState<boolean>(false);
   const [omniBanner, setOmniBanner] = useState<string | null>(null);
   const [query, setQuery] = useState<string>("");
@@ -104,6 +106,8 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
     c?: string;
     v?: string;
     of?: string;
+    lang?: string;
+    srt?: string;
     q?: string;
     ms?: number;
     p?: number;
@@ -116,6 +120,8 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
         chain: override?.c ?? chain,
         vertical: override?.v ?? ghVertical,
         ospec_filter: override?.of ?? ospecFilter,
+        language: override?.lang ?? ghLanguage,
+        sort: override?.srt ?? ghSort,
         q: override?.q ?? query,
         min_score: override?.ms ?? minScore,
         page: override?.p ?? page,
@@ -128,8 +134,8 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
   };
 
   useEffect(() => {
-    loadFeed({ t: tab, c: chain, v: ghVertical, of: ospecFilter, p: page, pp: perPage });
-  }, [tab, chain, ghVertical, ospecFilter, page, perPage]);
+    loadFeed({ t: tab, c: chain, v: ghVertical, of: ospecFilter, lang: ghLanguage, srt: ghSort, ms: minScore, p: page, pp: perPage });
+  }, [tab, chain, ghVertical, ospecFilter, ghLanguage, ghSort, minScore, page, perPage]);
 
   const handleRunOmniHarvest = async () => {
     if (!isPaid) {
@@ -139,16 +145,16 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
     setOmniRunning(true);
     setOmniBanner(null);
     try {
-      const res = await apiRunGithubOmniHarvest(ghVertical);
+      const res = await apiRunGithubOmniHarvest(ghVertical, query.trim(), ghLanguage);
       const added = Number(res?.harvest?.total_new || 0);
       const qPending = Number(res?.pipeline_stats?.ospec_pending || 0);
       setOmniBanner(
         isRu
-          ? `✅ Omni-Harvester завершил прогон (${ghVertical}): +${added} новых репо отсортировано и передано в конвейер OSPEC (в очереди OSPEC: ${qPending})`
-          : `✅ Omni-Harvester pass complete (${ghVertical}): +${added} new repos classified & queued into OSPEC (OSPEC queue: ${qPending})`
+          ? `✅ Omni-Harvester завершил прогон (${ghVertical}${query.trim() ? ` · запрос: "${query.trim()}"` : ""}): +${added} новых репо отсортировано и передано в конвейер OSPEC (в очереди OSPEC: ${qPending})`
+          : `✅ Omni-Harvester pass complete (${ghVertical}${query.trim() ? ` · query: "${query.trim()}"` : ""}): +${added} new repos classified & queued into OSPEC (OSPEC queue: ${qPending})`
       );
       setPage(1);
-      await loadFeed({ t: "github", v: ghVertical, of: ospecFilter, p: 1 });
+      await loadFeed({ t: "github", v: ghVertical, of: ospecFilter, lang: ghLanguage, srt: ghSort, ms: minScore, p: 1 });
     } catch (e: any) {
       setOmniBanner(`⚠️ ${e.message}`);
     } finally {
@@ -611,6 +617,56 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
               className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 font-mono text-xs text-foreground outline-none focus:border-primary"
             />
           </div>
+
+          {tab === "github" && (
+            <>
+              <select
+                value={ghLanguage}
+                onChange={(e) => {
+                  setGhLanguage(e.target.value);
+                  setPage(1);
+                }}
+                className="rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-primary"
+              >
+                <option value="all">{isRu ? "🌐 Все языки" : "🌐 All Languages"}</option>
+                <option value="python">🐍 Python</option>
+                <option value="typescript">🟦 TypeScript</option>
+                <option value="solidity">💎 Solidity</option>
+                <option value="rust">🦀 Rust</option>
+                <option value="go">🐹 Go</option>
+                <option value="javascript">🟨 JavaScript</option>
+                <option value="move">⚡ Move</option>
+                <option value="hcl">☁️ HCL / Terraform</option>
+              </select>
+
+              <select
+                value={minScore}
+                onChange={(e) => {
+                  setMinScore(Number(e.target.value) || 0);
+                  setPage(1);
+                }}
+                className="rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-primary"
+              >
+                <option value={0}>{isRu ? "Любой скор (0+)" : "Any Score (0+)"}</option>
+                <option value={50}>{isRu ? "Скор ≥ 50" : "Score ≥ 50"}</option>
+                <option value={70}>{isRu ? "Скор ≥ 70 (High)" : "Score ≥ 70 (High)"}</option>
+                <option value={85}>{isRu ? "Скор ≥ 85 (Top)" : "Score ≥ 85 (Top)"}</option>
+              </select>
+
+              <select
+                value={ghSort}
+                onChange={(e) => {
+                  setGhSort(e.target.value);
+                  setPage(1);
+                }}
+                className="rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-primary"
+              >
+                <option value="newest">{isRu ? "🕒 Сначала новые" : "🕒 Newest First"}</option>
+                <option value="score">{isRu ? "🔥 По приоритету (Score ↓)" : "🔥 By Priority (Score ↓)"}</option>
+                <option value="findings">{isRu ? "🔑 По числу секретов в OSPEC ↓" : "🔑 By OSPEC Secrets ↓"}</option>
+              </select>
+            </>
+          )}
 
           {(tab === "contracts" || tab === "zk") && (
             <select
