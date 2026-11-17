@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { CheckCircle, Send, ShieldAlert, Lock, Sparkles, Terminal, Download, Layers, Users, Code, Activity } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { getSavedToken, getScanExportUrl } from "@/lib/auth";
+import { getSavedToken, getSavedUser, getScanExportUrl } from "@/lib/auth";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://api.black-oracle.com";
 
@@ -12,6 +12,16 @@ const TIMEOUT_MS = 20 * 60 * 1000;
 const LS_TASK_ID = "boris_demo_taskId";
 const LS_INPUT = "boris_demo_input";
 const LS_START_TIME = "boris_demo_startTime";
+const LS_ACTIVE_SCANS = "boris_active_scans_v2";
+
+interface ActiveScanSlot {
+  taskId: string;
+  target: string;
+  startTime: number;
+  step: string;
+  progress: number;
+  tail: string[];
+}
 
 const QUICK_TARGETS = [
   {
@@ -232,16 +242,29 @@ const DemoScanner = () => {
   const { i18n } = useTranslation();
   const isRu = i18n.language === "ru";
 
+  const [userTier, setUserTier] = useState<string>(() => (getSavedUser()?.tier || "GUEST").toUpperCase());
+  const maxWorkers = userTier === "BLACKBOX" || userTier === "RAW" ? 2 : 1;
+
   const [input, setInput] = useState("");
   const [state, setState] = useState<ScanState>("idle");
   const [result, setResult] = useState<DemoScanResult | null>(null);
+  const [completedScans, setCompletedScans] = useState<Array<{ taskId: string; target: string; result: DemoScanResult }>>([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [validationError, setValidationError] = useState("");
   const [taskId, setTaskId] = useState<string | null>(null);
-  const [progressValue, setProgressValue] = useState(0);
-  const [tail, setTail] = useState<string[]>([]);
-  const [currentStep, setCurrentStep] = useState("");
-  const scanStartTime = useRef<number>(0);
+  const [activeScans, setActiveScans] = useState<ActiveScanSlot[]>([]);
+
+  useEffect(() => {
+    const syncTier = () => {
+      setUserTier((getSavedUser()?.tier || "GUEST").toUpperCase());
+    };
+    window.addEventListener("boris-auth-change", syncTier);
+    window.addEventListener("storage", syncTier);
+    return () => {
+      window.removeEventListener("boris-auth-change", syncTier);
+      window.removeEventListener("storage", syncTier);
+    };
+  }, []);
 
   const getStepText = useCallback((step: string): string => {
     switch (step) {
@@ -253,7 +276,16 @@ const DemoScanner = () => {
     }
   }, [isRu]);
 
-  // Restore persisted scan or prefilled target on mount
+  const saveActiveScans = useCallback((slots: ActiveScanSlot[]) => {
+    if (slots.length === 0) {
+      localStorage.removeItem(LS_ACTIVE_SCANS);
+      clearPersistence();
+    } else {
+      localStorage.setItem(LS_ACTIVE_SCANS, JSON.stringify(slots));
+    }
+  }, []);
+
+  // Restore persisted scan(s) or prefilled target on mount
   useEffect(() => {
     const prefill = localStorage.getItem("boris_prefill_target");
     if (prefill) {
@@ -268,17 +300,39 @@ const DemoScanner = () => {
       }
     };
     window.addEventListener("boris-prefill-target", onPrefillEvent);
+
+    try {
+      const rawSlots = localStorage.getItem(LS_ACTIVE_SCANS);
+      if (rawSlots) {
+        const parsed = (JSON.parse(rawSlots) as ActiveScanSlot[]).filter(
+          (s) => s && s.taskId && Date.now() - (s.startTime || 0) <= TIMEOUT_MS
+        );
+        if (parsed.length > 0) {
+          setActiveScans(parsed);
+          setState("scanning");
+          return () => window.removeEventListener("boris-prefill-target", onPrefillEvent);
+        }
+      }
+    } catch {
+      // fallback to legacy single-slot persistence below
+    }
+
     const savedTaskId = localStorage.getItem(LS_TASK_ID);
     const savedInput = localStorage.getItem(LS_INPUT);
     const savedStartTime = localStorage.getItem(LS_START_TIME);
     if (savedTaskId && savedInput) {
       const startTime = savedStartTime ? parseInt(savedStartTime, 10) : Date.now();
       if (Date.now() - startTime > TIMEOUT_MS) { clearPersistence(); return; }
-      setInput(savedInput);
-      setTaskId(savedTaskId);
+      const initialSlot: ActiveScanSlot = {
+        taskId: savedTaskId,
+        target: savedInput,
+        startTime,
+        step: isRu ? "⏳ Ожидание в очереди..." : "⏳ Waiting in queue...",
+        progress: 0,
+        tail: [],
+      };
+      setActiveScans([initialSlot]);
       setState("scanning");
-      scanStartTime.current = startTime;
-      setCurrentStep(isRu ? "⏳ Ожидание в очереди..." : "⏳ Waiting in queue...");
     }
     return () => {
       window.removeEventListener("boris-prefill-target", onPrefillEvent);
@@ -289,9 +343,27 @@ const DemoScanner = () => {
     const raw = typeof overrideTarget === "string" ? overrideTarget : input;
     const trimmed = raw.trim();
     if (!trimmed) return;
-    if (typeof overrideTarget === "string") {
-      setInput(trimmed);
+
+    if (activeScans.length >= maxWorkers) {
+      setValidationError(
+        isRu
+          ? maxWorkers === 2
+            ? "Заняты оба параллельных воркера (2/2). Дождитесь завершения одного из сканов."
+            : `На тарифе ${userTier} доступен 1 воркер одновременно. 2 параллельных воркера открываются с тарифа RAW / BLACKBOX.`
+          : maxWorkers === 2
+          ? "Both parallel workers (2/2) are busy. Wait for one scan to finish."
+          : `${userTier} tier allows 1 active scan at a time. Upgrade to RAW / BLACKBOX for 2 parallel workers.`
+      );
+      return;
     }
+
+    if (activeScans.some((s) => s.target.toLowerCase() === trimmed.toLowerCase())) {
+      setValidationError(
+        isRu ? "Эта цель уже сканируется в активном воркере." : "This target is already being scanned in an active worker."
+      );
+      return;
+    }
+
     if (!isValidTarget(trimmed)) {
       setValidationError(isRu
         ? "Введите адрес контракта (0x...) или ссылку на GitHub репозиторий"
@@ -299,13 +371,7 @@ const DemoScanner = () => {
       return;
     }
     setValidationError("");
-    setState("scanning");
-    setResult(null);
     setErrorMsg("");
-    setProgressValue(0);
-    setTail([]);
-    setCurrentStep(isRu ? "⏳ Ожидание в очереди..." : "⏳ Waiting in queue...");
-    scanStartTime.current = Date.now();
 
     try {
       const authToken = getSavedToken();
@@ -323,60 +389,124 @@ const DemoScanner = () => {
         setErrorMsg(
           errData.detail ||
             (isRu
-              ? "Суточный лимит сканов исчерпан (GUEST: 3 в сутки). Повысьте тариф для расширения квоты."
-              : "Daily scan quota reached (GUEST: 3 per 24h). Upgrade tier for more scans.")
+              ? "Лимит сканов или параллельных воркеров исчерпан. Повысьте тариф для расширения квоты."
+              : "Scan quota or parallel worker limit reached. Upgrade tier for more capacity.")
         );
-        setState("error"); return;
+        if (activeScans.length === 0) setState("error");
+        return;
       }
       if (!res.ok) throw new Error("API error");
       const data = await res.json();
       const newTaskId = data.task_id;
-      setTaskId(newTaskId);
-      localStorage.setItem(LS_TASK_ID, newTaskId);
-      localStorage.setItem(LS_INPUT, trimmed);
-      localStorage.setItem(LS_START_TIME, String(scanStartTime.current));
+      const newSlot: ActiveScanSlot = {
+        taskId: newTaskId,
+        target: trimmed,
+        startTime: Date.now(),
+        step: isRu ? "⏳ Ожидание в очереди..." : "⏳ Waiting in queue...",
+        progress: 0,
+        tail: [],
+      };
+      setActiveScans((prev) => {
+        const updated = [...prev, newSlot];
+        saveActiveScans(updated);
+        return updated;
+      });
+      setState("scanning");
+      // Clear input if a second parallel slot is still available so user can immediately type the 2nd target
+      if (maxWorkers > 1) {
+        setInput("");
+      }
       window.dispatchEvent(new Event("boris-scan-started"));
     } catch {
       setErrorMsg(isRu ? "⚠️ Сервер анализа недоступен. Telegram: @BlackOracleBORIS_bot" : "⚠️ Analysis server unavailable. Telegram: @BlackOracleBORIS_bot");
-      setState("error");
+      if (activeScans.length === 0) setState("error");
     }
-  }, [input, isRu]);
+  }, [input, isRu, activeScans, maxWorkers, userTier, saveActiveScans]);
 
-  // Poll for results
+  // Listen to boris-quick-scan from Dashboard
   useEffect(() => {
-    if (!taskId || state !== "scanning") return;
-    const interval = setInterval(async () => {
-      if (Date.now() - scanStartTime.current > TIMEOUT_MS) {
-        setErrorMsg(isRu ? "Сканирование занимает больше времени, чем ожидалось. Проверьте результат в Telegram: @BlackOracleBORIS_bot" : "Scan is taking longer than expected. Check Telegram bot for results: @BlackOracleBORIS_bot");
-        setState("error"); clearPersistence(); clearInterval(interval); return;
+    const onQuickScan = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.target) {
+        startScan(detail.target);
       }
-      try {
-        const authToken = getSavedToken();
-        const pollHeaders: Record<string, string> = {};
-        if (authToken) pollHeaders["Authorization"] = `Bearer ${authToken}`;
-        const res = await fetch(`${API_BASE}/api/demo-scan/status/${taskId}`, { headers: pollHeaders });
-        if (res.status === 429) {
-          setErrorMsg(isRu ? "Лимит бесплатных сканов: 3 в час. Используйте Telegram-бот для полного доступа." : "Free scan limit: 3 per hour. Use Telegram bot for full access.");
-          setState("error"); clearPersistence(); clearInterval(interval); return;
+    };
+    window.addEventListener("boris-quick-scan", onQuickScan);
+    return () => window.removeEventListener("boris-quick-scan", onQuickScan);
+  }, [startScan]);
+
+  // Poll all active parallel scan slots concurrently
+  useEffect(() => {
+    if (activeScans.length === 0) return;
+    const interval = setInterval(async () => {
+      const authToken = getSavedToken();
+      const pollHeaders: Record<string, string> = {};
+      if (authToken) pollHeaders["Authorization"] = `Bearer ${authToken}`;
+
+      let changed = false;
+      const remaining: ActiveScanSlot[] = [];
+
+      for (const slot of activeScans) {
+        if (Date.now() - slot.startTime > TIMEOUT_MS) {
+          changed = true;
+          setErrorMsg(
+            isRu
+              ? `Сканирование ${slot.target} занимает больше времени, чем ожидалось. Проверьте результат в Telegram: @BlackOracleBORIS_bot`
+              : `Scan for ${slot.target} is taking longer than expected. Check Telegram: @BlackOracleBORIS_bot`
+          );
+          continue;
         }
-        if (!res.ok) throw new Error("Poll error");
-        const data = await res.json();
-        if (data.status === "done") {
-          setResult(data as DemoScanResult);
-          setState("done"); clearPersistence(); clearInterval(interval);
-          window.dispatchEvent(new Event("boris-scan-done"));
-        } else if (data.status === "error") {
-          setErrorMsg(data.message || "Unknown error");
-          setState("error"); clearPersistence(); clearInterval(interval);
-        } else if (data.status === "scanning") {
-          if (typeof data.progress === "number") setProgressValue(data.progress);
-          if (Array.isArray(data.tail)) setTail(data.tail);
-          if (data.step) setCurrentStep(getStepText(data.step));
+        try {
+          const res = await fetch(`${API_BASE}/api/demo-scan/status/${slot.taskId}`, { headers: pollHeaders });
+          if (!res.ok) {
+            remaining.push(slot);
+            continue;
+          }
+          const data = await res.json();
+          if (data.status === "done") {
+            changed = true;
+            const doneRes = data as DemoScanResult;
+            setResult(doneRes);
+            setTaskId(slot.taskId);
+            setCompletedScans((prev) => {
+              const filtered = prev.filter((x) => x.taskId !== slot.taskId);
+              return [{ taskId: slot.taskId, target: slot.target, result: doneRes }, ...filtered].slice(0, 4);
+            });
+            window.dispatchEvent(new Event("boris-scan-done"));
+          } else if (data.status === "error") {
+            changed = true;
+            setErrorMsg(data.message || "Unknown error");
+          } else if (data.status === "scanning") {
+            const nextStep = data.step ? getStepText(data.step) : slot.step;
+            const nextProg = typeof data.progress === "number" ? data.progress : slot.progress;
+            const nextTail = Array.isArray(data.tail) ? data.tail : slot.tail;
+            if (nextStep !== slot.step || nextProg !== slot.progress || nextTail.length !== slot.tail.length) {
+              changed = true;
+            }
+            remaining.push({
+              ...slot,
+              step: nextStep,
+              progress: nextProg,
+              tail: nextTail,
+            });
+          } else {
+            remaining.push(slot);
+          }
+        } catch {
+          remaining.push(slot);
         }
-      } catch { /* keep polling */ }
+      }
+
+      if (changed || remaining.length !== activeScans.length) {
+        setActiveScans(remaining);
+        saveActiveScans(remaining);
+        if (remaining.length === 0) {
+          setState((prev) => (prev === "scanning" ? "done" : prev));
+        }
+      }
     }, POLL_INTERVAL);
     return () => clearInterval(interval);
-  }, [taskId, state, isRu, getStepText]);
+  }, [activeScans, isRu, getStepText, saveActiveScans]);
 
   // Listen to custom event from Cabinet History ("Open Report")
   useEffect(() => {
@@ -386,12 +516,14 @@ const DemoScanner = () => {
         setInput(detail.result.target || "");
         setTaskId(detail.taskId || null);
         setResult(detail.result as DemoScanResult);
-        setState("done");
+        if (activeScans.length === 0) {
+          setState("done");
+        }
       }
     };
     window.addEventListener("boris-load-archived-scan", onLoadArchived);
     return () => window.removeEventListener("boris-load-archived-scan", onLoadArchived);
-  }, []);
+  }, [activeScans.length]);
 
   // Clear validation error when input changes
   useEffect(() => {
@@ -399,11 +531,28 @@ const DemoScanner = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [input]);
 
+  const isInputLocked = activeScans.length >= maxWorkers;
+
   return (
     <section id="demo-scanner" className="container mx-auto px-4 py-20">
-      <div className="mb-2 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-primary">
-        <Terminal size={14} />
-        <span>{isRu ? "Интерактивный песочный скан" : "Interactive Live Sandbox"}</span>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-primary">
+          <Terminal size={14} />
+          <span>{isRu ? "Интерактивный песочный скан" : "Interactive Live Sandbox"}</span>
+        </div>
+        <div className="flex items-center gap-2 font-mono text-xs">
+          <span
+            className={`rounded-full border px-3 py-1 font-semibold ${
+              maxWorkers === 2
+                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                : "border-border bg-card text-muted-foreground"
+            }`}
+          >
+            {isRu
+              ? `⚡ Воркеры (${userTier}): ${activeScans.length}/${maxWorkers} параллельно`
+              : `⚡ Workers (${userTier}): ${activeScans.length}/${maxWorkers} parallel`}
+          </span>
+        </div>
       </div>
       <h2 className="mb-2 text-3xl font-bold text-foreground md:text-4xl">
         {isRu ? "Проверь проект" : "Scan a Project"}
@@ -412,23 +561,45 @@ const DemoScanner = () => {
         {isRu ? "Вставь ссылку на GitHub репозиторий или адрес смарт-контракта (EVM / Solana / Tron)" : "Paste a GitHub repo URL or smart contract address (EVM / Solana / Tron)"}
       </p>
 
-      {/* Input */}
+      {/* Input — stays UNLOCKED for RAW & BLACKBOX when 1 scan is running so a 2nd scan can be launched in parallel! */}
       <div className="flex flex-col gap-3 sm:flex-row">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && startScan()}
-          placeholder={isRu ? "github.com/protocol/repo или 0x1234...abcd" : "github.com/protocol/repo or 0x1234...abcd"}
-          disabled={state === "scanning"}
+          onKeyDown={(e) => e.key === "Enter" && !isInputLocked && startScan()}
+          placeholder={
+            activeScans.length === 1 && maxWorkers === 2
+              ? isRu
+                ? "Воркер #1 занят — введите 2-ю цель для параллельного запуска (RAW / BLACKBOX)..."
+                : "Worker #1 busy — enter a 2nd target to launch in parallel (RAW / BLACKBOX)..."
+              : isRu
+              ? "github.com/protocol/repo или 0x1234...abcd"
+              : "github.com/protocol/repo or 0x1234...abcd"
+          }
+          disabled={isInputLocked}
           className="flex-1 rounded-xl border border-border bg-card py-4 px-5 font-mono text-sm text-foreground outline-none transition-all focus:border-primary focus:shadow-[0_0_20px_hsl(var(--primary)/0.3)] disabled:opacity-50"
         />
         <button
           onClick={() => startScan()}
-          disabled={state === "scanning" || !input.trim()}
+          disabled={isInputLocked || !input.trim()}
           className="rounded-xl bg-primary px-8 py-4 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow disabled:opacity-50 whitespace-nowrap"
         >
-          {state === "scanning" ? (isRu ? "Анализ..." : "Analyzing...") : (isRu ? "Запустить анализ" : "Run Analysis")}
+          {isInputLocked
+            ? isRu
+              ? maxWorkers === 2
+                ? "Воркеры заняты (2/2)..."
+                : "Анализ (1/1)..."
+              : maxWorkers === 2
+              ? "Workers busy (2/2)..."
+              : "Analyzing (1/1)..."
+            : activeScans.length === 1 && maxWorkers === 2
+            ? isRu
+              ? "⚡ Запустить 2-й воркер (1/2)"
+              : "⚡ Launch 2nd Worker (1/2)"
+            : isRu
+            ? "Запустить анализ"
+            : "Run Analysis"}
         </button>
       </div>
 
@@ -442,11 +613,12 @@ const DemoScanner = () => {
         </span>
         {QUICK_TARGETS.map((p) => {
           const active = input.trim().toLowerCase() === p.target.toLowerCase();
+          const alreadyRunning = activeScans.some((s) => s.target.toLowerCase() === p.target.toLowerCase());
           return (
             <button
               key={p.label}
               type="button"
-              disabled={state === "scanning"}
+              disabled={isInputLocked || alreadyRunning}
               onClick={() => setInput(p.target)}
               className={`group inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 font-mono text-xs transition-all disabled:opacity-40 ${
                 active
@@ -464,54 +636,73 @@ const DemoScanner = () => {
       </div>
 
       <p className="mt-2.5 font-mono text-xs text-muted-foreground">
-        {isRu ? "Бесплатный GUEST-тизер (поверхность риска и ключевые сигналы). ~1–5 мин на скан." : "Free GUEST teaser (risk surface & top signals). ~1–5 min per scan."}
+        {maxWorkers === 2
+          ? isRu
+            ? `⚡ Тариф ${userTier}: активно до 2 параллельных воркеров одновременно (строка ввода остаётся открытой во время первого скана).`
+            : `⚡ ${userTier} Tier: up to 2 parallel workers simultaneously (input stays unlocked while Worker #1 is scanning).`
+          : isRu
+          ? `Тариф ${userTier}: 1 активный воркер одновременно (2 параллельных воркера доступны на тарифах RAW и BLACKBOX). ~1–5 мин на скан.`
+          : `${userTier} Tier: 1 active worker at a time (2 parallel workers unlocked on RAW & BLACKBOX tiers). ~1–5 min per scan.`}
       </p>
 
-      {/* Scanning State */}
-      {state === "scanning" && (
-        <div className="mt-8 rounded-xl border border-primary/30 bg-card p-6 shadow-[0_0_30px_hsl(var(--primary)/0.08)]">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="relative flex h-3 w-3">
-                <span className="pulse-dot absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                <span className="relative inline-flex h-3 w-3 rounded-full bg-primary" />
-              </span>
-              <span className="font-mono text-sm font-semibold text-foreground">
-                {isRu ? "БОРИС сканирует цель..." : "BORIS is scanning target..."}
-              </span>
+      {/* Active Parallel Workers Progress Grid */}
+      {activeScans.length > 0 && (
+        <div className={`mt-8 grid gap-4 ${activeScans.length > 1 ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}>
+          {activeScans.map((slot, idx) => (
+            <div
+              key={slot.taskId}
+              className="rounded-xl border border-primary/30 bg-card p-6 shadow-[0_0_30px_hsl(var(--primary)/0.08)]"
+            >
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="relative flex h-3 w-3">
+                    <span className="pulse-dot absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                    <span className="relative inline-flex h-3 w-3 rounded-full bg-primary" />
+                  </span>
+                  <span className="font-mono text-sm font-semibold text-foreground">
+                    {isRu
+                      ? `Воркер #${idx + 1}: БОРИС сканирует цель...`
+                      : `Worker #${idx + 1}: BORIS is scanning target...`}
+                  </span>
+                </div>
+                <span className="rounded border border-border bg-background px-2 py-0.5 font-mono text-[11px] text-muted-foreground truncate max-w-[240px]">
+                  {slot.target}
+                </span>
+              </div>
+              <div className="mb-3 flex items-center gap-3 font-mono text-sm">
+                <CheckCircle size={14} className="text-green-500 shrink-0" />
+                <span className="text-muted-foreground">{slot.step}</span>
+              </div>
+              {slot.progress > 0 && (
+                <div className="mb-3">
+                  <Progress value={slot.progress * 100} className="h-2" />
+                  <p className="mt-1 font-mono text-xs text-muted-foreground text-right">
+                    {Math.round(slot.progress * 100)}%
+                  </p>
+                </div>
+              )}
+              {slot.tail.length > 0 && (
+                <div className="mt-3 rounded-lg border border-border bg-background/90 p-3.5 max-h-36 overflow-y-auto font-mono text-[11px] text-muted-foreground space-y-1">
+                  {slot.tail.map((line, i) => (
+                    <p key={i} className="leading-relaxed">
+                      <span className="text-primary/70 mr-2">›</span>
+                      {line}
+                    </p>
+                  ))}
+                </div>
+              )}
+              <p className="mt-4 font-mono text-xs text-muted-foreground">
+                {isRu
+                  ? "Запущены реальные анализаторы (AST, Slither/Semgrep, On-Chain Граф). Подождите завершения."
+                  : "Real engines active (AST, Slither/Semgrep, On-Chain Graph). Please wait."}
+              </p>
             </div>
-            <span className="rounded border border-border bg-background px-2 py-0.5 font-mono text-[11px] text-muted-foreground truncate max-w-[240px]">
-              {input}
-            </span>
-          </div>
-          <div className="mb-3 flex items-center gap-3 font-mono text-sm">
-            <CheckCircle size={14} className="text-green-500 shrink-0" />
-            <span className="text-muted-foreground">{currentStep}</span>
-          </div>
-          {progressValue > 0 && (
-            <div className="mb-3">
-              <Progress value={progressValue * 100} className="h-2" />
-              <p className="mt-1 font-mono text-xs text-muted-foreground text-right">{Math.round(progressValue * 100)}%</p>
-            </div>
-          )}
-          {tail.length > 0 && (
-            <div className="mt-3 rounded-lg border border-border bg-background/90 p-3.5 max-h-36 overflow-y-auto font-mono text-[11px] text-muted-foreground space-y-1">
-              {tail.map((line, i) => (
-                <p key={i} className="leading-relaxed">
-                  <span className="text-primary/70 mr-2">›</span>
-                  {line}
-                </p>
-              ))}
-            </div>
-          )}
-          <p className="mt-4 font-mono text-xs text-muted-foreground">
-            {isRu ? "Запущены реальные анализаторы (AST, Slither/Semgrep, On-Chain Граф). Подождите завершения." : "Real engines active (AST, Slither/Semgrep, On-Chain Graph). Please wait."}
-          </p>
+          ))}
         </div>
       )}
 
       {/* Error State */}
-      {state === "error" && (
+      {errorMsg && (
         <div className="mt-8 rounded-xl border-l-[3px] p-5" style={{ borderColor: '#F59E0B', background: 'rgba(245, 158, 11, 0.08)' }}>
           <p className="font-mono text-sm" style={{ color: '#F59E0B' }}>{errorMsg}</p>
           <a href="https://t.me/BlackOracleBORIS_bot" target="_blank" rel="noopener noreferrer"
@@ -521,8 +712,37 @@ const DemoScanner = () => {
         </div>
       )}
 
+      {/* Switcher when multiple parallel scans finished in this session */}
+      {completedScans.length > 1 && (
+        <div className="mt-8 flex flex-wrap items-center gap-2">
+          <span className="font-mono text-xs text-muted-foreground mr-1">
+            {isRu ? "Готовые отчёты воркеров:" : "Completed worker reports:"}
+          </span>
+          {completedScans.map((item, idx) => {
+            const isSelected = taskId === item.taskId;
+            return (
+              <button
+                key={item.taskId}
+                type="button"
+                onClick={() => {
+                  setTaskId(item.taskId);
+                  setResult(item.result);
+                }}
+                className={`rounded-lg border px-3 py-1.5 font-mono text-xs transition-all ${
+                  isSelected
+                    ? "border-primary bg-primary/15 text-primary font-semibold"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                }`}
+              >
+                #{idx + 1}: {item.result.project || item.target}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Result — Compact Teaser + Deep Dossier */}
-      {state === "done" && result && <ResultTeaser result={result} isRu={isRu} taskId={taskId} />}
+      {result && <ResultTeaser result={result} isRu={isRu} taskId={taskId} />}
     </section>
   );
 };
