@@ -258,6 +258,8 @@ export async function apiRemoveWatchlist(id: number): Promise<void> {
 export async function apiGetRadarFeed(params?: {
   tab?: string;
   chain?: string;
+  vertical?: string;
+  ospec_filter?: string;
   q?: string;
   min_score?: number;
   page?: number;
@@ -267,6 +269,8 @@ export async function apiGetRadarFeed(params?: {
   const qs = new URLSearchParams();
   if (params?.tab) qs.set("tab", params.tab);
   if (params?.chain) qs.set("chain", params.chain);
+  if (params?.vertical && params.vertical !== "ALL") qs.set("vertical", params.vertical);
+  if (params?.ospec_filter && params.ospec_filter !== "ALL") qs.set("ospec_filter", params.ospec_filter);
   if (params?.q) qs.set("q", params.q);
   if (params?.min_score) qs.set("min_score", String(params.min_score));
   if (params?.page) qs.set("page", String(params.page));
@@ -278,6 +282,19 @@ export async function apiGetRadarFeed(params?: {
   });
   if (!res.ok) return { status: "error", items: [], stats: {} };
   return res.json();
+}
+
+export async function apiRunGithubOmniHarvest(vertical: string = "ALL"): Promise<any> {
+  const token = getSavedToken();
+  if (!token) throw new Error("Not authenticated");
+  const res = await fetch(`${API_BASE}/api/tools/github-omni-harvest`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    body: JSON.stringify({ vertical, queries_per_vertical: vertical === "ALL" ? 2 : 3 }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Failed to run GitHub Omni-Harvester");
+  return data;
 }
 
 export async function apiUpdateRadarSettings(payload: {

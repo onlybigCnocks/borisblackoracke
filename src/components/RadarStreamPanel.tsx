@@ -20,6 +20,7 @@ import {
   apiGetRadarFeed,
   apiUpdateRadarSettings,
   apiEnrichDefillama,
+  apiRunGithubOmniHarvest,
   type BorisUser,
 } from "@/lib/auth";
 
@@ -37,6 +38,10 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
 
   const [tab, setTab] = useState<RadarTab>("github");
   const [chain, setChain] = useState<string>("all");
+  const [ghVertical, setGhVertical] = useState<string>("ALL");
+  const [ospecFilter, setOspecFilter] = useState<string>("ALL");
+  const [omniRunning, setOmniRunning] = useState<boolean>(false);
+  const [omniBanner, setOmniBanner] = useState<string | null>(null);
   const [query, setQuery] = useState<string>("");
   const [minScore, setMinScore] = useState<number>(0);
 
@@ -97,6 +102,8 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
   const loadFeed = async (override?: {
     t?: RadarTab;
     c?: string;
+    v?: string;
+    of?: string;
     q?: string;
     ms?: number;
     p?: number;
@@ -107,6 +114,8 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
       const data = await apiGetRadarFeed({
         tab: override?.t ?? tab,
         chain: override?.c ?? chain,
+        vertical: override?.v ?? ghVertical,
+        ospec_filter: override?.of ?? ospecFilter,
         q: override?.q ?? query,
         min_score: override?.ms ?? minScore,
         page: override?.p ?? page,
@@ -119,8 +128,33 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
   };
 
   useEffect(() => {
-    loadFeed({ t: tab, c: chain, p: page, pp: perPage });
-  }, [tab, chain, page, perPage]);
+    loadFeed({ t: tab, c: chain, v: ghVertical, of: ospecFilter, p: page, pp: perPage });
+  }, [tab, chain, ghVertical, ospecFilter, page, perPage]);
+
+  const handleRunOmniHarvest = async () => {
+    if (!isPaid) {
+      window.dispatchEvent(new CustomEvent("boris-open-checkout", { detail: { tier: "radar" } }));
+      return;
+    }
+    setOmniRunning(true);
+    setOmniBanner(null);
+    try {
+      const res = await apiRunGithubOmniHarvest(ghVertical);
+      const added = Number(res?.harvest?.total_new || 0);
+      const qPending = Number(res?.pipeline_stats?.ospec_pending || 0);
+      setOmniBanner(
+        isRu
+          ? `✅ Omni-Harvester завершил прогон (${ghVertical}): +${added} новых репо отсортировано и передано в конвейер OSPEC (в очереди OSPEC: ${qPending})`
+          : `✅ Omni-Harvester pass complete (${ghVertical}): +${added} new repos classified & queued into OSPEC (OSPEC queue: ${qPending})`
+      );
+      setPage(1);
+      await loadFeed({ t: "github", v: ghVertical, of: ospecFilter, p: 1 });
+    } catch (e: any) {
+      setOmniBanner(`⚠️ ${e.message}`);
+    } finally {
+      setOmniRunning(false);
+    }
+  };
 
   const handleToggleAlert = async (field: "gh" | "defi" | "expl") => {
     if (!user?.tg_id) return;
@@ -443,6 +477,113 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
         ))}
       </div>
 
+      {/* GitHub Omni-Harvester 6-Vertical Selector & OSPEC Pipeline Bar */}
+      {tab === "github" && !feed?.locked && (
+        <div className="space-y-3 rounded-xl border border-primary/30 bg-card p-3.5 font-mono text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 pb-2.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                OMNI-HARVESTER v2.0 ⇄ OSPEC
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                {isRu
+                  ? "Широкополосный сбор, классификация по 6 вертикалям и прямая передача в OSPEC Secret Scanner"
+                  : "Wide-spectrum GitHub harvesting across 6 verticals with direct handoff to OSPEC Secret Scanner"}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleRunOmniHarvest}
+              disabled={omniRunning}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-primary/50 bg-primary/15 px-3 py-1.5 text-[11px] font-bold text-primary transition-all hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
+            >
+              {omniRunning ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
+              <span>
+                {isRu
+                  ? `⚡ Прогнать Omni-Harvester (${ghVertical === "ALL" ? "Все 6 вертикалей" : ghVertical})`
+                  : `⚡ Run Omni-Harvester (${ghVertical === "ALL" ? "All 6 Verticals" : ghVertical})`}
+              </span>
+              {!isPaid && <span className="ml-1 rounded bg-black/30 px-1 py-0.5 text-[9px]">🔒 RADAR+</span>}
+            </button>
+          </div>
+
+          {omniBanner && (
+            <div className="rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-[11px] text-foreground">
+              {omniBanner}
+            </div>
+          )}
+
+          {/* 6 Vertical Filter Pills */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="mr-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+              {isRu ? "Вертикаль:" : "Vertical:"}
+            </span>
+            {[
+              { id: "ALL", labelRu: "🌐 Все репо", labelEn: "🌐 All Repos", cnt: stats?.omni_stats?.total_github_repos || stats?.github_repos },
+              { id: "WEB3_DEFI", labelRu: "⛓️ Web3 & DeFi", labelEn: "⛓️ Web3 & DeFi", cnt: stats?.omni_stats?.by_vertical?.WEB3_DEFI },
+              { id: "AI_AGENTS", labelRu: "🤖 AI Agents & MCP", labelEn: "🤖 AI Agents & MCP", cnt: stats?.omni_stats?.by_vertical?.AI_AGENTS },
+              { id: "INFRA_CLOUD", labelRu: "☁️ Infra & Cloud", labelEn: "☁️ Infra & Cloud", cnt: stats?.omni_stats?.by_vertical?.INFRA_CLOUD },
+              { id: "STARTUP_SAAS", labelRu: "🚀 Startups & SaaS", labelEn: "🚀 Startups & SaaS", cnt: stats?.omni_stats?.by_vertical?.STARTUP_SAAS },
+              { id: "QUANT_HFT", labelRu: "📈 Quant & HFT", labelEn: "📈 Quant & HFT", cnt: stats?.omni_stats?.by_vertical?.QUANT_HFT },
+              { id: "DORK_LEAKS", labelRu: "🔑 Code Dorks", labelEn: "🔑 Code Dorks", cnt: stats?.omni_stats?.by_vertical?.DORK_LEAKS },
+            ].map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                onClick={() => {
+                  setGhVertical(v.id);
+                  setPage(1);
+                }}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-all ${
+                  ghVertical === v.id
+                    ? "border-primary bg-primary text-primary-foreground shadow"
+                    : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                }`}
+              >
+                <span>{isRu ? v.labelRu : v.labelEn}</span>
+                {v.cnt !== undefined && (
+                  <span className={`rounded px-1 py-0.2 text-[9px] ${ghVertical === v.id ? "bg-black/25 text-primary-foreground" : "bg-card text-muted-foreground"}`}>
+                    {fmt(v.cnt)}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* OSPEC Chain Status Filter Pills */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <span className="mr-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+              {isRu ? "Конвейер OSPEC:" : "OSPEC Chain:"}
+            </span>
+            {[
+              { id: "ALL", labelRu: "Все статусы", labelEn: "All Statuses", cnt: stats?.omni_stats?.total_github_repos },
+              { id: "FINDINGS", labelRu: "🔥 Утечки в OSPEC", labelEn: "🔥 OSPEC Leaks Found", cnt: stats?.omni_stats?.ospec_with_findings },
+              { id: "PENDING", labelRu: "⏳ В очереди OSPEC", labelEn: "⏳ Queued for OSPEC", cnt: stats?.omni_stats?.ospec_pending },
+              { id: "CLEAN", labelRu: "🟢 Проверено (Clean)", labelEn: "🟢 OSPEC Clean", cnt: stats?.omni_stats?.ospec_clean },
+            ].map((st) => (
+              <button
+                key={st.id}
+                type="button"
+                onClick={() => {
+                  setOspecFilter(st.id);
+                  setPage(1);
+                }}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[10px] font-semibold transition-all ${
+                  ospecFilter === st.id
+                    ? "border-primary bg-primary/20 text-primary"
+                    : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                }`}
+              >
+                <span>{isRu ? st.labelRu : st.labelEn}</span>
+                {st.cnt !== undefined && (
+                  <span className="opacity-80">({fmt(st.cnt)})</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Search & Chain Filter Bar */}
       {!feed?.locked && (
         <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-border bg-card p-3.5">
@@ -570,10 +711,76 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
                       {item.chain}
                     </span>
                   )}
+                  {item.vertical && (
+                    <span
+                      className={`rounded border px-2 py-0.5 text-[10px] font-bold uppercase ${
+                        item.vertical === "AI_AGENTS"
+                          ? "border-purple-500/40 bg-purple-500/15 text-purple-300"
+                          : item.vertical === "INFRA_CLOUD"
+                          ? "border-cyan-500/40 bg-cyan-500/15 text-cyan-300"
+                          : item.vertical === "STARTUP_SAAS"
+                          ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+                          : item.vertical === "QUANT_HFT"
+                          ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
+                          : item.vertical === "DORK_LEAKS"
+                          ? "border-red-500/50 bg-red-500/15 text-red-400"
+                          : "border-blue-500/40 bg-blue-500/15 text-blue-300"
+                      }`}
+                    >
+                      {item.vertical === "AI_AGENTS"
+                        ? "🤖 AI & MCP"
+                        : item.vertical === "INFRA_CLOUD"
+                        ? "☁️ INFRA"
+                        : item.vertical === "STARTUP_SAAS"
+                        ? "🚀 STARTUP"
+                        : item.vertical === "QUANT_HFT"
+                        ? "📈 QUANT/HFT"
+                        : item.vertical === "DORK_LEAKS"
+                        ? "🔑 DORK LEAK"
+                        : "⛓️ WEB3/DEFI"}
+                    </span>
+                  )}
+                  {item.ospec_status && (
+                    <span
+                      className={`rounded border px-2 py-0.5 text-[10px] font-bold ${
+                        item.ospec_status === "findings"
+                          ? "border-red-500/50 bg-red-500/15 text-red-400"
+                          : item.ospec_status === "clean"
+                          ? "border-green-500/40 bg-green-500/10 text-green-400"
+                          : item.ospec_status === "pending"
+                          ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-300"
+                          : "border-border bg-background text-muted-foreground"
+                      }`}
+                    >
+                      {item.ospec_status === "findings"
+                        ? isRu
+                          ? `🔥 OSPEC: ${item.ospec_findings_count || 1} секретов`
+                          : `🔥 OSPEC: ${item.ospec_findings_count || 1} secrets`
+                        : item.ospec_status === "clean"
+                        ? isRu
+                          ? "🟢 OSPEC: Чисто"
+                          : "🟢 OSPEC: Clean"
+                        : item.ospec_status === "pending"
+                        ? isRu
+                          ? "⏳ В очереди OSPEC"
+                          : "⏳ OSPEC Queued"
+                        : item.ospec_status}
+                    </span>
+                  )}
                   <span className="truncate text-sm font-bold text-foreground">{item.name}</span>
                   {item.score ? (
                     <span className="rounded bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
                       Score: <b className="text-foreground">{item.score}</b>
+                    </span>
+                  ) : null}
+                  {item.language ? (
+                    <span className="rounded border border-primary/30 bg-background px-1.5 py-0.5 text-[10px] uppercase text-primary">
+                      {item.language}
+                    </span>
+                  ) : null}
+                  {item.stars > 0 ? (
+                    <span className="rounded border border-border bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                      ⭐ {item.stars}
                     </span>
                   ) : null}
                   {Array.isArray(item.tags) &&
