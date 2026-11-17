@@ -69,6 +69,9 @@ const ToolsPanel = () => {
   const [chain, setChain] = useState("ethereum");
   const [fundsMode, setFundsMode] = useState<"auto" | "address" | "pool">("auto");
   const [fundsDays, setFundsDays] = useState<number>(14);
+  const [marketMode, setMarketMode] = useState<"single" | "trending">("single");
+  const [trendingCount, setTrendingCount] = useState<number>(10);
+  const [selectedTrendingDossier, setSelectedTrendingDossier] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<any>(null);
@@ -218,11 +221,206 @@ const ToolsPanel = () => {
     { id: "sandbox", labelRu: "Matrix Sandbox v16.2", labelEn: "Matrix Sandbox v16.2", icon: Terminal, minRank: 2, placeholder: "import requests, subprocess..." },
   ];
 
+  const validateToolInput = (tId: ToolId, rawVal: string): string | null => {
+    const val = (rawVal || "").trim();
+    const hasCyrillic = /[А-Яа-яЁё]/.test(val);
+    const hasMash = /(asdf|qwerty|zxcv|йцук|фыва|ячсм|1234567)/i.test(val) || /(.)\1{6,}/i.test(val);
+    const isEvm = /^0x[a-fA-F0-9]{40}$/.test(val);
+    const isGarbageEvm =
+      isEvm &&
+      (/^0x0{40}$/i.test(val) ||
+        /^0xf{40}$/i.test(val) ||
+        val.slice(2, 6) === "0000" ||
+        val.slice(10, 34) === "0".repeat(24) ||
+        new Set(val.slice(2).toLowerCase().split("")).size <= 3);
+
+    if (tId !== "sandbox" && (val.includes("\n") || val.includes("\r") || val.length > 160)) {
+      return isRu
+        ? "Защита от каши: обнаружена многострочная вставка или слишком длинный текст. Введите точный идентификатор."
+        : "Invalid multi-line or oversized input pasted. Enter a valid target identifier.";
+    }
+    if (hasMash) {
+      return isRu
+        ? "Защита от каши: обнаружена случайная комбинация символов. Введите реальный адрес, тикер или репозиторий."
+        : "Garbage input detected. Please enter a real contract address, ticker, or repository.";
+    }
+
+    if (tId === "holders" || tId === "funds" || tId === "proxy" || tId === "flash" || tId === "zk") {
+      if (!isEvm) {
+        return isRu
+          ? "Для этого инструмента требуется валидный EVM-адрес смарт-контракта (42 символа: 0x + 40 hex-символов без пробелов)."
+          : "This tool requires a valid 42-character 0x EVM contract address.";
+      }
+      if (isGarbageEvm) {
+        return isRu
+          ? "Указанный 0x-адрес является нулевым, тестовым плейсхолдером или обрезком ABI."
+          : "The provided 0x address is a zero address, test placeholder, or ABI selector fragment.";
+      }
+      return null;
+    }
+
+    if (tId === "deployer") {
+      if (!val || hasCyrillic) {
+        return isRu
+          ? "Укажите один или несколько 42-символьных 0x-адресов через пробел или запятую."
+          : "Enter one or more 42-character 0x addresses separated by comma or space.";
+      }
+      const parts = val.split(/[\s,;]+/).filter(Boolean);
+      for (const p of parts) {
+        if (!/^0x[a-fA-F0-9]{40}$/.test(p)) {
+          return isRu
+            ? `Некорректный фрагмент '${p.slice(0, 20)}': в Профайлер Адреса можно вставлять только 42-символьные 0x-адреса.`
+            : `Invalid token '${p.slice(0, 20)}': only 42-character 0x addresses are allowed.`;
+        }
+      }
+      return null;
+    }
+
+    if (tId === "market") {
+      if (marketMode === "trending") return null;
+      const cleanSym = val.replace(/^\$/, "");
+      if (!cleanSym || hasCyrillic || /\s/.test(cleanSym)) {
+        return isRu
+          ? "Введите тикер монеты латиницей без пробелов (например BTC, ETH, DOGE, SOL, AAVE)."
+          : "Enter an alphanumeric coin ticker without spaces (e.g. BTC, ETH, DOGE, SOL, AAVE).";
+      }
+      if (cleanSym.toLowerCase().startsWith("0x") && cleanSym.length >= 20) {
+        return isRu
+          ? "Вы вставили 0x-адрес вместо тикера монеты. Введите короткий биржевой тикер (например AAVE, USDT, DOGE)."
+          : "You pasted a 0x address instead of a coin ticker. Enter a ticker symbol (e.g. AAVE, USDT, DOGE).";
+      }
+      if (!/^[A-Za-z0-9]{2,12}$/.test(cleanSym)) {
+        return isRu
+          ? `Недопустимый формат тикера '${cleanSym.slice(0, 16)}': используйте от 2 до 12 латинских букв/цифр.`
+          : `Invalid ticker format '${cleanSym.slice(0, 16)}': use 2–12 alphanumeric characters.`;
+      }
+      return null;
+    }
+
+    if (tId === "surface") {
+      if (!val || hasCyrillic || /\s/.test(val)) {
+        return isRu
+          ? "Укажите веб-домен протокола без пробелов (например aave.com, dexe.network, across.to)."
+          : "Enter a protocol domain without spaces (e.g. aave.com, dexe.network, across.to).";
+      }
+      if (val.toLowerCase().startsWith("0x")) {
+        return isRu
+          ? "Вы вставили 0x-адрес вместо веб-домена. Для Web3 Surface Mapper нужен домен сайта (например aave.com)."
+          : "You pasted a 0x address instead of a domain. Enter a website domain (e.g. aave.com).";
+      }
+      if (val.toLowerCase().includes("github.com/") || (!val.startsWith("http") && val.includes("/"))) {
+        return isRu
+          ? "Вы вставили ссылку на GitHub-репозиторий вместо веб-домена протокола. Укажите домен сайта (например aave.com)."
+          : "You pasted a repository path instead of a website domain. Enter a domain (e.g. aave.com).";
+      }
+      if (!/^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,24}(\/.*)?$/.test(val)) {
+        return isRu
+          ? "Некорректный формат домена. Пример: aave.com или https://app.aave.com"
+          : "Invalid domain format. Example: aave.com or https://app.aave.com";
+      }
+      return null;
+    }
+
+    if (tId === "drift") {
+      if (!val || hasCyrillic || /\s/.test(val) || !/^(https?:\/\/(www\.)?github\.com\/)?[A-Za-z0-9_.-]{2,50}\/[A-Za-z0-9_.-]{2,80}(\.git)?\/?$/.test(val)) {
+        return isRu
+          ? "Укажите ссылку на GitHub-репозиторий или org/repo (например aave/aave-v3-core)."
+          : "Enter a valid GitHub repository URL or org/repo (e.g. aave/aave-v3-core).";
+      }
+      return null;
+    }
+
+    if (tId === "soroban") {
+      if (!val || hasCyrillic || /\s/.test(val) || val.toLowerCase().startsWith("0x")) {
+        return isRu
+          ? "Укажите ассет Stellar (USDC, AQUA, CODE:ISSUER) или 56-символьный контракт Soroban (C...)."
+          : "Enter a Stellar asset (USDC, AQUA, CODE:ISSUER) or a 56-char Soroban C... contract.";
+      }
+      if (!(/^[GC][A-Z2-7]{55}$/.test(val) || /^[A-Za-z0-9]{1,12}:G[A-Z2-7]{55}$/.test(val) || /^[A-Za-z0-9]{2,12}$/.test(val))) {
+        return isRu
+          ? "Недопустимый формат Stellar/Soroban цели. Используйте тикер (USDC), CODE:ISSUER или адрес G.../C... (56 символов)."
+          : "Invalid Stellar/Soroban format.";
+      }
+      return null;
+    }
+
+    if (tId === "social") {
+      if (!val || hasCyrillic || val.split(/\s+/).length > 3) {
+        return isRu
+          ? "Введите @handle, название проекта латиницей (до 3 слов) или ссылку на X / Telegram / GitHub."
+          : "Enter @handle, project name (up to 3 words), or an X / Telegram / GitHub URL.";
+      }
+      return null;
+    }
+
+    if (tId === "ospec") {
+      if (val && (hasCyrillic || val.split(/\s+/).length > 3)) {
+        return isRu
+          ? "В фильтре OSPEC укажите тип секрета (private_key, mnemonic, aws, alchemy) или org/repo латиницей."
+          : "Enter a secret kind (private_key, mnemonic, aws, alchemy) or org/repo.";
+      }
+      return null;
+    }
+
+    if (tId === "hacks") {
+      if (val && (hasCyrillic || val.split(/\s+/).length > 4 || (val.startsWith("0x") && !isEvm))) {
+        return isRu
+          ? "Введите валидный 0x-адрес контракта (42 символа) ИЛИ поисковый запрос латиницей (например euler, curve, slot0)."
+          : "Enter a valid 42-char 0x address OR a search keyword (e.g. euler, curve, slot0).";
+      }
+      return null;
+    }
+
+    if (tId === "sandbox") {
+      if (!val || val.length < 5 || (!val.includes("(") && !val.includes("=") && !val.includes("import "))) {
+        return isRu
+          ? "Вставьте реальный Python / Web3 код или PoC-скрипт (произвольный текст без инструкций Python отклонён)."
+          : "Paste valid Python / Web3 script code (plain text without Python statements is rejected).";
+      }
+      return null;
+    }
+
+    return null;
+  };
+
+  const runTrendingScan = async (cntOverride?: number) => {
+    const cnt = cntOverride ?? trendingCount;
+    setError(null);
+    setResult(null);
+    setSelectedTrendingDossier(null);
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/tools/market/trending`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ count: cnt }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+      setResult(data);
+      loadHistory(historyFilter);
+    } catch (e: any) {
+      setError(e.message || "Trending Scanner error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const run = async () => {
+    const valErr = validateToolInput(tool, input1);
+    if (valErr) {
+      setError(valErr);
+      return;
+    }
     if (tool === "ospec") {
       await runOspecWithFilters();
       return;
     }
+    if (tool === "market" && marketMode === "trending") {
+      await runTrendingScan(trendingCount);
+      return;
+    }
+    setSelectedTrendingDossier(null);
     setError(null);
     setResult(null);
     setLoading(true);
@@ -481,7 +679,7 @@ const ToolsPanel = () => {
               )}
               <button
                 onClick={run}
-                disabled={loading || (tool !== "ospec" && tool !== "hacks" && !input1)}
+                disabled={loading || (tool !== "ospec" && tool !== "hacks" && !(tool === "market" && marketMode === "trending") && !input1)}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-40 btn-glow"
               >
                 {loading ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
@@ -513,20 +711,87 @@ const ToolsPanel = () => {
             </div>
           )}
 
-          {/* Quick presets for Market & Derivatives */}
+          {/* Mode Switcher (Single Token vs Trending Scanner) + Quick presets for Market & Derivatives */}
           {tool === "market" && (
-            <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[11px]">
-              <span className="text-muted-foreground">{isRu ? "Быстрые тикеры:" : "Quick tickers:"}</span>
-              {["DOGE", "BTC", "ETH", "SOL", "AAVE", "PEPE", "ENA", "ARB"].map((sym) => (
-                <button
-                  key={sym}
-                  type="button"
-                  onClick={() => setInput1(sym)}
-                  className="rounded-lg border border-border bg-background px-2.5 py-1 text-muted-foreground hover:border-primary hover:text-primary"
-                >
-                  ${sym}
-                </button>
-              ))}
+            <div className="space-y-2.5 pt-1 font-mono text-[11px]">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-muted-foreground">{isRu ? "Режим Market Engine:" : "Market Engine Mode:"}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMarketMode("single");
+                      setSelectedTrendingDossier(null);
+                    }}
+                    className={`rounded-lg border px-3 py-1 font-semibold transition-all ${
+                      marketMode === "single"
+                        ? "border-primary bg-primary/15 text-primary"
+                        : "border-border bg-background text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    🔍 {isRu ? "Скан тикера (Single Token)" : "Single Token Scan"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMarketMode("trending");
+                      runTrendingScan(trendingCount);
+                    }}
+                    disabled={loading}
+                    className={`rounded-lg border px-3 py-1 font-semibold transition-all ${
+                      marketMode === "trending"
+                        ? "border-primary bg-primary text-primary-foreground shadow"
+                        : "border-primary/40 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground"
+                    }`}
+                  >
+                    🔥 {isRu ? "Трендовый сканер (CoinGecko Trending)" : "Trending Scanner (CoinGecko)"}
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-muted-foreground">{isRu ? "Монет в тренде:" : "Trending batch:"}</span>
+                  {[
+                    { cnt: 5, label: "Quick (5)" },
+                    { cnt: 10, label: "Normal (10)" },
+                    { cnt: 15, label: "Full (15)" },
+                  ].map((b) => (
+                    <button
+                      key={b.cnt}
+                      type="button"
+                      disabled={loading}
+                      onClick={() => {
+                        setTrendingCount(b.cnt);
+                        setMarketMode("trending");
+                        runTrendingScan(b.cnt);
+                      }}
+                      className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
+                        marketMode === "trending" && trendingCount === b.cnt
+                          ? "border-primary bg-primary/20 text-primary"
+                          : "border-border bg-background text-muted-foreground hover:border-primary hover:text-primary"
+                      }`}
+                    >
+                      {b.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-muted-foreground">{isRu ? "Быстрые тикеры:" : "Quick tickers:"}</span>
+                {["DOGE", "BTC", "ETH", "SOL", "AAVE", "PEPE", "ENA", "ARB"].map((sym) => (
+                  <button
+                    key={sym}
+                    type="button"
+                    onClick={() => {
+                      setMarketMode("single");
+                      setInput1(sym);
+                    }}
+                    className="rounded-lg border border-border bg-background px-2.5 py-1 text-muted-foreground hover:border-primary hover:text-primary"
+                  >
+                    ${sym}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -769,7 +1034,149 @@ const ToolsPanel = () => {
       )}
 
       {/* RESULTS */}
-      {result && tool === "market" && (
+      {result && tool === "market" && result.mode === "trending_scan" && (
+        <div className="space-y-4 font-mono">
+          <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="rounded-full border border-primary/40 bg-primary/15 px-3.5 py-1 text-xs font-bold text-primary">
+                  🔥 TRENDING SCAN RESULTS ({result.count_scanned} COINS)
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Coins: <b className="text-foreground">{(result.trending_symbols || []).join(", ")}</b>
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 text-xs">
+                <span className="rounded border border-border bg-background px-2.5 py-1">
+                  Avg Score: <b className="text-foreground">{result.avg_score}/100</b>
+                </span>
+                <span className="rounded border border-border bg-background px-2.5 py-1">
+                  High Risk: <b className={Number(result.high_risk_pct) > 0 ? "text-destructive" : "text-emerald-400"}>{result.high_risk_pct}%</b>
+                </span>
+              </div>
+            </div>
+
+            {Array.isArray(result.alerts) && result.alerts.length > 0 && (
+              <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 space-y-1.5 text-xs">
+                <p className="font-bold text-destructive uppercase text-[11px]">
+                  ⚠️ {result.alerts.length} HIGH+ MANIPULATION / CROWD ALERTS DETECTED:
+                </p>
+                {result.alerts.map((al: any, ali: number) => (
+                  <p key={ali} className="text-foreground">
+                    <b className="text-destructive">→ ${al.symbol} ({al.score}/100 · {al.level}):</b> {al.conclusion}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-border text-[10px] uppercase text-muted-foreground">
+                    <th className="py-2.5 px-3">#</th>
+                    <th className="py-2.5 px-3">Symbol</th>
+                    <th className="py-2.5 px-3">Risk Score</th>
+                    <th className="py-2.5 px-3">Price / 24h Δ</th>
+                    <th className="py-2.5 px-3">MCap / Vol 24h</th>
+                    <th className="py-2.5 px-3">OI Total / Funding</th>
+                    <th className="py-2.5 px-3">Manip / Crowd / Org</th>
+                    <th className="py-2.5 px-3">Top Signals</th>
+                    <th className="py-2.5 px-3 text-right">Dossier</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {(result.results || []).map((row: any, rIdx: number) => {
+                    const isSelected = selectedTrendingDossier?.symbol === row.symbol;
+                    const lvlTone =
+                      row.level === "CRITICAL" || row.level === "HIGH"
+                        ? "border-destructive/40 bg-destructive/15 text-destructive"
+                        : row.level === "MEDIUM"
+                        ? "border-amber-500/40 bg-amber-500/15 text-amber-400"
+                        : "border-emerald-500/40 bg-emerald-500/15 text-emerald-400";
+                    return (
+                      <tr
+                        key={row.symbol}
+                        onClick={() => setSelectedTrendingDossier(isSelected ? null : row.dossier)}
+                        className={`cursor-pointer transition-colors hover:bg-background/80 ${
+                          isSelected ? "bg-primary/10" : ""
+                        }`}
+                      >
+                        <td className="py-2.5 px-3 text-muted-foreground">{rIdx + 1}</td>
+                        <td className="py-2.5 px-3 font-bold text-foreground">${row.symbol}</td>
+                        <td className="py-2.5 px-3">
+                          <span className={`rounded border px-2 py-0.5 text-[10px] font-bold ${lvlTone}`}>
+                            {row.score}/100 · {row.level}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <div className="font-bold text-foreground">
+                            {row.price_usd !== null && row.price_usd !== undefined
+                              ? `$${Number(row.price_usd) < 1 ? Number(row.price_usd).toFixed(5) : fmt(row.price_usd)}`
+                              : "—"}
+                          </div>
+                          {row.price_change_24h !== null && row.price_change_24h !== undefined && (
+                            <div className={`text-[10px] ${Number(row.price_change_24h) >= 0 ? "text-emerald-400" : "text-destructive"}`}>
+                              {Number(row.price_change_24h) >= 0 ? "+" : ""}
+                              {Number(row.price_change_24h).toFixed(1)}%
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 text-[11px]">
+                          <div>MCap: {row.market_cap ? `$${fmt(row.market_cap)}` : "—"}</div>
+                          <div className="text-muted-foreground">Vol: {row.volume_24h ? `$${fmt(row.volume_24h)}` : "—"}</div>
+                        </td>
+                        <td className="py-2.5 px-3 text-[11px]">
+                          <div>OI: {row.oi_total ? `$${fmt(row.oi_total)}` : "—"}</div>
+                          <div className="text-muted-foreground">
+                            Fund: {row.funding_rate !== null && row.funding_rate !== undefined ? Number(row.funding_rate).toFixed(6) : "—"}
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3 text-[11px]">
+                          <span className="text-destructive">M:{row.manipulation_risk}</span> ·{" "}
+                          <span className="text-amber-400">C:{row.crowd_overcrowding}</span> ·{" "}
+                          <span className="text-emerald-400">O:{row.organic_probability}%</span>
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <div className="flex flex-wrap gap-1 max-w-[220px]">
+                            {(row.top_signals || []).length === 0 ? (
+                              <span className="text-muted-foreground">CLEAN</span>
+                            ) : (
+                              (row.top_signals || []).map((sg: string, sgi: number) => (
+                                <span key={sgi} className="rounded border border-border bg-background px-1.5 py-0.5 text-[9px] text-primary">
+                                  {sg}
+                                </span>
+                              ))
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3 text-right">
+                          <button
+                            type="button"
+                            onClick={(ev) => {
+                              ev.stopPropagation();
+                              setSelectedTrendingDossier(isSelected ? null : row.dossier);
+                            }}
+                            className="rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary hover:bg-primary hover:text-primary-foreground"
+                          >
+                            {isSelected ? (isRu ? "Скрыть" : "Hide") : isRu ? "📊 Досье" : "📊 Dossier"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Single Token Dossier OR Selected Trending Coin Dossier */}
+      {(() => {
+        const mktData = tool === "market" ? (result?.mode === "trending_scan" ? selectedTrendingDossier : result) : null;
+        if (!mktData) return null;
+        const result = mktData;
+        return (
         <div className="space-y-4 font-mono">
           {/* CLI Header Banner */}
           <div className="rounded-xl border border-border bg-card p-5 space-y-4">
@@ -1142,7 +1549,8 @@ const ToolsPanel = () => {
             )}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {result && tool === "holders" && (
         <div className="space-y-4 font-mono">

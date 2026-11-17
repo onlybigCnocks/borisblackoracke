@@ -184,22 +184,46 @@ type ScanState = "idle" | "scanning" | "done" | "error";
 
 const PATTERNS = {
   ethAddress: /^0x[0-9a-fA-F]{40}$/,
+  moveAddress: /^0x[0-9a-fA-F]{64}(::[a-zA-Z0-9_]+){0,2}$/,
   tronAddress: /^T[1-9A-HJ-NP-Za-km-z]{33}$/,
+  stellarAddress: /^[GC][A-Z2-7]{55}$/,
   solanaAddress: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
-  githubUrl: /^(https?:\/\/)?(www\.)?github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+/,
-  githubShort: /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/,
+  githubUrl: /^(https?:\/\/)?(www\.)?github\.com\/[a-zA-Z0-9][a-zA-Z0-9_.-]{0,48}\/[a-zA-Z0-9][a-zA-Z0-9_.-]{0,78}\/?$/,
+  githubShort: /^[a-zA-Z0-9][a-zA-Z0-9_.-]{1,48}\/[a-zA-Z0-9][a-zA-Z0-9_.-]{1,78}$/,
 };
+
+function looksLikeMashOrGarbage(s: string): boolean {
+  if (!s || /\s/.test(s) || /[А-Яа-яЁё]/.test(s)) return true;
+  const low = s.toLowerCase();
+  if (/(asdf|qwerty|zxcv|1234567|abcdefg)/.test(low)) return true;
+  if (/(.)\1{7,}/.test(low)) return true;
+  return false;
+}
+
+function isGarbageEvmAddress(addr: string): boolean {
+  const body = addr.slice(2).toLowerCase();
+  if (body === "0".repeat(40) || body === "f".repeat(40) || body === "e".repeat(40)) return true;
+  if (body.slice(0, 4) === "0000" || body.slice(8, 32) === "0".repeat(24)) return true;
+  if (new Set(body.split("")).size <= 3) return true;
+  return false;
+}
 
 function isValidTarget(input: string): boolean {
   const trimmed = input.trim();
-  if (!trimmed) return false;
-  return (
-    PATTERNS.ethAddress.test(trimmed) ||
-    PATTERNS.tronAddress.test(trimmed) ||
-    PATTERNS.solanaAddress.test(trimmed) ||
-    PATTERNS.githubUrl.test(trimmed) ||
-    PATTERNS.githubShort.test(trimmed)
-  );
+  if (!trimmed || looksLikeMashOrGarbage(trimmed)) return false;
+  if (PATTERNS.ethAddress.test(trimmed)) {
+    return !isGarbageEvmAddress(trimmed);
+  }
+  if (PATTERNS.moveAddress.test(trimmed) || PATTERNS.tronAddress.test(trimmed) || PATTERNS.stellarAddress.test(trimmed)) {
+    return true;
+  }
+  if (PATTERNS.githubUrl.test(trimmed) || PATTERNS.githubShort.test(trimmed)) {
+    return !trimmed.includes("..") && !trimmed.includes("--");
+  }
+  if (PATTERNS.solanaAddress.test(trimmed)) {
+    return /[A-Z]/.test(trimmed) && /[a-z]/.test(trimmed) && /[0-9]/.test(trimmed);
+  }
+  return false;
 }
 
 function clearPersistence() {
@@ -395,7 +419,14 @@ const DemoScanner = () => {
         if (activeScans.length === 0) setState("error");
         return;
       }
-      if (!res.ok) throw new Error("API error");
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        if (res.status === 400 && errBody.detail) {
+          setValidationError(errBody.detail);
+          return;
+        }
+        throw new Error(errBody.detail || "API error");
+      }
       const data = await res.json();
       const newTaskId = data.task_id;
       const newSlot: ActiveScanSlot = {
