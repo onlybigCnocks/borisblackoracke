@@ -188,6 +188,36 @@ const ToolsPanel = () => {
   };
 
   useEffect(() => {
+    const pendingRepo = sessionStorage.getItem("boris_pending_ospec_repo");
+    if (pendingRepo && rank >= 1) {
+      sessionStorage.removeItem("boris_pending_ospec_repo");
+      skipAutoOspecRef.current = true;
+      setTool("ospec");
+      setInput1(pendingRepo);
+      setOspecSeverity("");
+      setOspecOnlyReal(true);
+      setOspecOnlyLive(false);
+      runOspecWithFilters({ q: pendingRepo, sev: "", real: true, live: false, offset: 0 });
+    }
+    const onOpenOspecEvent = (ev: Event) => {
+      const ce = ev as CustomEvent<{ repo?: string }>;
+      const targetRepo = ce?.detail?.repo || sessionStorage.getItem("boris_pending_ospec_repo") || "";
+      if (targetRepo && rank >= 1) {
+        sessionStorage.removeItem("boris_pending_ospec_repo");
+        skipAutoOspecRef.current = true;
+        setTool("ospec");
+        setInput1(targetRepo);
+        setOspecSeverity("");
+        setOspecOnlyReal(true);
+        setOspecOnlyLive(false);
+        runOspecWithFilters({ q: targetRepo, sev: "", real: true, live: false, offset: 0 });
+      }
+    };
+    window.addEventListener("boris-open-ospec-repo", onOpenOspecEvent);
+    return () => window.removeEventListener("boris-open-ospec-repo", onOpenOspecEvent);
+  }, [rank]);
+
+  useEffect(() => {
     if (skipAutoOspecRef.current) {
       skipAutoOspecRef.current = false;
       return;

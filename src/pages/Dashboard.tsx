@@ -81,6 +81,18 @@ const Dashboard = () => {
   const [radarAudits, setRadarAudits] = useState<BorisRadarAudit[]>([]);
   const [activeTab, setActiveTab] = useState<"history" | "tools" | "watchlist" | "radar" | "referral" | "billing">("history");
 
+  useEffect(() => {
+    const onOpenOspecRepo = (ev: Event) => {
+      const ce = ev as CustomEvent<{ repo?: string }>;
+      if (ce?.detail?.repo) {
+        sessionStorage.setItem("boris_pending_ospec_repo", ce.detail.repo);
+      }
+      setActiveTab("tools");
+    };
+    window.addEventListener("boris-open-ospec-repo", onOpenOspecRepo);
+    return () => window.removeEventListener("boris-open-ospec-repo", onOpenOspecRepo);
+  }, []);
+
   // Billing & Referral Payout states
   const [billingData, setBillingData] = useState<any>(null);
   const [wdNet, setWdNet] = useState<string>("arbitrum");

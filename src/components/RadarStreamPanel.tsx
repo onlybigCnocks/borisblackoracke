@@ -741,21 +741,32 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
                     </span>
                   )}
                   {item.ospec_status && (
-                    <span
-                      className={`rounded border px-2 py-0.5 text-[10px] font-bold ${
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (item.ospec_status === "findings" && item.identifier) {
+                          if (!isPaid) {
+                            window.dispatchEvent(new CustomEvent("boris-open-checkout", { detail: { tier: "radar" } }));
+                            return;
+                          }
+                          sessionStorage.setItem("boris_pending_ospec_repo", item.identifier);
+                          window.dispatchEvent(new CustomEvent("boris-open-ospec-repo", { detail: { repo: item.identifier } }));
+                        }
+                      }}
+                      className={`rounded border px-2 py-0.5 text-[10px] font-bold transition-all ${
                         item.ospec_status === "findings"
-                          ? "border-red-500/50 bg-red-500/15 text-red-400"
+                          ? "cursor-pointer border-red-500/50 bg-red-500/15 text-red-400 hover:bg-red-500 hover:text-white"
                           : item.ospec_status === "clean"
-                          ? "border-green-500/40 bg-green-500/10 text-green-400"
+                          ? "cursor-default border-green-500/40 bg-green-500/10 text-green-400"
                           : item.ospec_status === "pending"
-                          ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-300"
-                          : "border-border bg-background text-muted-foreground"
+                          ? "cursor-default border-yellow-500/40 bg-yellow-500/10 text-yellow-300"
+                          : "cursor-default border-border bg-background text-muted-foreground"
                       }`}
                     >
                       {item.ospec_status === "findings"
                         ? isRu
-                          ? `🔥 OSPEC: ${item.ospec_findings_count || 1} секретов`
-                          : `🔥 OSPEC: ${item.ospec_findings_count || 1} secrets`
+                          ? `🔥 OSPEC: ${item.ospec_findings_count || 1} секретов ↗`
+                          : `🔥 OSPEC: ${item.ospec_findings_count || 1} secrets ↗`
                         : item.ospec_status === "clean"
                         ? isRu
                           ? "🟢 OSPEC: Чисто"
@@ -765,7 +776,7 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
                           ? "⏳ В очереди OSPEC"
                           : "⏳ OSPEC Queued"
                         : item.ospec_status}
-                    </span>
+                    </button>
                   )}
                   <span className="truncate text-sm font-bold text-foreground">{item.name}</span>
                   {item.score ? (
@@ -821,6 +832,23 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
                         ? isRu ? "Скрыть профиль" : "Hide Profile"
                         : isRu ? "Найти GitHub / TVL" : "Enrich GitHub / TVL"}
                     </span>
+                  </button>
+                )}
+
+                {item.source === "github" && item.ospec_status === "findings" && item.identifier && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isPaid) {
+                        window.dispatchEvent(new CustomEvent("boris-open-checkout", { detail: { tier: "radar" } }));
+                        return;
+                      }
+                      sessionStorage.setItem("boris_pending_ospec_repo", item.identifier);
+                      window.dispatchEvent(new CustomEvent("boris-open-ospec-repo", { detail: { repo: item.identifier } }));
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/50 bg-red-500/15 px-3 py-2 font-semibold text-red-400 hover:bg-red-500 hover:text-white transition-colors"
+                  >
+                    <span>🔑 {isRu ? "В OSPEC" : "Open in OSPEC"}</span>
                   </button>
                 )}
 
