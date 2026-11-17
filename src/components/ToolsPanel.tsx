@@ -82,6 +82,7 @@ const ToolsPanel = () => {
 
   // OSPEC Telegram-style filter states
   const [ospecSeverity, setOspecSeverity] = useState<string>("");
+  const [ospecVertical, setOspecVertical] = useState<string>("ALL");
   const [ospecOnlyReal, setOspecOnlyReal] = useState<boolean>(true);
   const [ospecOnlyLive, setOspecOnlyLive] = useState<boolean>(false);
   const [ospecOffset, setOspecOffset] = useState<number>(0);
@@ -149,6 +150,7 @@ const ToolsPanel = () => {
   const runOspecWithFilters = async (opts?: {
     q?: string;
     sev?: string;
+    vert?: string;
     real?: boolean;
     live?: boolean;
     offset?: number;
@@ -156,6 +158,7 @@ const ToolsPanel = () => {
     if (rank < 1) return;
     const qVal = opts?.q !== undefined ? opts.q : input1.trim();
     const sevVal = opts?.sev !== undefined ? opts.sev : ospecSeverity;
+    const vertVal = opts?.vert !== undefined ? opts.vert : ospecVertical;
     const realVal = opts?.real !== undefined ? opts.real : ospecOnlyReal;
     const liveVal = opts?.live !== undefined ? opts.live : ospecOnlyLive;
     const offsetVal = opts?.offset !== undefined ? opts.offset : 0;
@@ -171,6 +174,7 @@ const ToolsPanel = () => {
         body: JSON.stringify({
           query: qVal,
           severity: sevVal,
+          vertical: vertVal,
           only_real: realVal,
           only_live: liveVal,
           offset: offsetVal,
@@ -1056,6 +1060,39 @@ const ToolsPanel = () => {
                 >
                   🔥 {isRu ? "LIVE / С балансом" : "LIVE / Funded"}
                 </button>
+              </div>
+
+              {/* 6 Vertical Filters for OSPEC Leaked Secrets */}
+              <div className="flex flex-wrap items-center gap-1.5 font-mono text-[10px] pt-0.5">
+                <span className="text-muted-foreground">{isRu ? "Вертикаль репо:" : "Repo vertical:"}</span>
+                {[
+                  { id: "ALL", labelRu: "🌐 Все", labelEn: "🌐 All" },
+                  { id: "WEB3_DEFI", labelRu: "⛓️ Web3 & DeFi", labelEn: "⛓️ Web3 & DeFi" },
+                  { id: "AI_AGENTS", labelRu: "🤖 AI & MCP", labelEn: "🤖 AI & MCP" },
+                  { id: "STARTUP_SAAS", labelRu: "🚀 Startups & SaaS", labelEn: "🚀 Startups & SaaS" },
+                  { id: "INFRA_CLOUD", labelRu: "☁️ Infra & Cloud", labelEn: "☁️ Infra & Cloud" },
+                  { id: "QUANT_HFT", labelRu: "📈 Quant & HFT", labelEn: "📈 Quant & HFT" },
+                ].map((vf) => {
+                  const cnt = vf.id === "ALL" ? undefined : result?.db_stats?.by_vertical?.[vf.id];
+                  return (
+                    <button
+                      key={vf.id}
+                      type="button"
+                      onClick={() => {
+                        setOspecVertical(vf.id);
+                        runOspecWithFilters({ vert: vf.id, offset: 0 });
+                      }}
+                      className={`rounded-lg border px-2 py-0.5 font-semibold transition-all ${
+                        ospecVertical === vf.id
+                          ? "border-primary bg-primary text-primary-foreground shadow"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                      }`}
+                    >
+                      {isRu ? vf.labelRu : vf.labelEn}
+                      {cnt !== undefined ? ` (${fmt(cnt, 0)})` : ""}
+                    </button>
+                  );
+                })}
               </div>
 
               {result?.kind_stats?.length > 0 && (
@@ -2712,6 +2749,31 @@ const ToolsPanel = () => {
                           >
                             {isReal ? "🟢 REAL" : `🧪 ${f.cls || "TEST"}`}
                           </span>
+                          {f.vertical && (
+                            <span
+                              className={`rounded border px-2 py-0.5 text-[10px] font-bold uppercase ${
+                                f.vertical === "AI_AGENTS"
+                                  ? "border-purple-500/40 bg-purple-500/15 text-purple-300"
+                                  : f.vertical === "INFRA_CLOUD"
+                                  ? "border-cyan-500/40 bg-cyan-500/15 text-cyan-300"
+                                  : f.vertical === "STARTUP_SAAS"
+                                  ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+                                  : f.vertical === "QUANT_HFT"
+                                  ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
+                                  : "border-blue-500/40 bg-blue-500/15 text-blue-300"
+                              }`}
+                            >
+                              {f.vertical === "AI_AGENTS"
+                                ? "🤖 AI & MCP"
+                                : f.vertical === "INFRA_CLOUD"
+                                ? "☁️ INFRA"
+                                : f.vertical === "STARTUP_SAAS"
+                                ? "🚀 STARTUP"
+                                : f.vertical === "QUANT_HFT"
+                                ? "📈 QUANT/HFT"
+                                : "⛓️ WEB3/DEFI"}
+                            </span>
+                          )}
                           <span className="font-bold text-foreground">
                             {f.kind} <span className="text-primary">×{f.hits}</span>
                           </span>
