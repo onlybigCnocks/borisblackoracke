@@ -1172,10 +1172,8 @@ const ToolsPanel = () => {
       )}
 
       {/* Single Token Dossier OR Selected Trending Coin Dossier */}
-      {(() => {
-        const mktData = tool === "market" ? (result?.mode === "trending_scan" ? selectedTrendingDossier : result) : null;
-        if (!mktData) return null;
-        const result = mktData;
+      {((result: any) => {
+        if (!result) return null;
         return (
         <div className="space-y-4 font-mono">
           {/* CLI Header Banner */}
@@ -1550,7 +1548,7 @@ const ToolsPanel = () => {
           </div>
         </div>
         );
-      })()}
+      })(tool === "market" ? (result?.mode === "trending_scan" ? selectedTrendingDossier : result) : null)}
 
       {result && tool === "holders" && (
         <div className="space-y-4 font-mono">
