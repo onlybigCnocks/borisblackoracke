@@ -310,6 +310,21 @@ export async function apiRunGithubOmniHarvest(
   return data;
 }
 
+export async function apiControlOspecDaemon(
+  action: "toggle_watcher" | "toggle_backfill" | "run_batch" | "status"
+): Promise<any> {
+  const token = getSavedToken();
+  if (!token) throw new Error("Not authenticated");
+  const res = await fetch(`${API_BASE}/api/tools/ospec-daemon-control`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    body: JSON.stringify({ action }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Failed to control OSPEC daemon");
+  return data;
+}
+
 export async function apiUpdateRadarSettings(payload: {
   radar_alerts_enabled?: boolean;
   radar_min_score?: number;

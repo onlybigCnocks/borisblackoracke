@@ -21,6 +21,7 @@ import {
   apiUpdateRadarSettings,
   apiEnrichDefillama,
   apiRunGithubOmniHarvest,
+  apiControlOspecDaemon,
   type BorisUser,
 } from "@/lib/auth";
 
@@ -155,6 +156,24 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
       );
       setPage(1);
       await loadFeed({ t: "github", v: ghVertical, of: ospecFilter, lang: ghLanguage, srt: ghSort, ms: minScore, p: 1 });
+    } catch (e: any) {
+      setOmniBanner(`⚠️ ${e.message}`);
+    } finally {
+      setOmniRunning(false);
+    }
+  };
+
+  const handleControlDaemon = async (action: "toggle_watcher" | "toggle_backfill" | "run_batch") => {
+    if (!isPaid) {
+      window.dispatchEvent(new CustomEvent("boris-open-checkout", { detail: { tier: "radar" } }));
+      return;
+    }
+    setOmniRunning(true);
+    setOmniBanner(null);
+    try {
+      const res = await apiControlOspecDaemon(action);
+      setOmniBanner(`✅ ${res.message || "Статус демона обновлён"}`);
+      await loadFeed({ t: "github", v: ghVertical, of: ospecFilter, lang: ghLanguage, srt: ghSort, ms: minScore, p: page });
     } catch (e: any) {
       setOmniBanner(`⚠️ ${e.message}`);
     } finally {
@@ -497,20 +516,46 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
                   : "Wide-spectrum GitHub harvesting across 6 verticals with direct handoff to OSPEC Secret Scanner"}
               </span>
             </div>
-            <button
-              type="button"
-              onClick={handleRunOmniHarvest}
-              disabled={omniRunning}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-primary/50 bg-primary/15 px-3 py-1.5 text-[11px] font-bold text-primary transition-all hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
-            >
-              {omniRunning ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
-              <span>
-                {isRu
-                  ? `⚡ Прогнать Omni-Harvester (${ghVertical === "ALL" ? "Все 6 вертикалей" : ghVertical})`
-                  : `⚡ Run Omni-Harvester (${ghVertical === "ALL" ? "All 6 Verticals" : ghVertical})`}
-              </span>
-              {!isPaid && <span className="ml-1 rounded bg-black/30 px-1 py-0.5 text-[9px]">🔒 RADAR+</span>}
-            </button>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => handleControlDaemon("toggle_watcher")}
+                disabled={omniRunning}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-green-500/50 bg-green-500/15 px-3 py-1.5 text-[11px] font-bold text-green-400 transition-all hover:bg-green-500 hover:text-black disabled:opacity-50"
+              >
+                <span>{isRu ? "▶️ Вкл / ⏸ Пауза Авто-Скан OSPEC" : "▶️ Toggle OSPEC Auto-Scan"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleControlDaemon("run_batch")}
+                disabled={omniRunning}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/50 bg-amber-500/15 px-3 py-1.5 text-[11px] font-bold text-amber-300 transition-all hover:bg-amber-500 hover:text-black disabled:opacity-50"
+              >
+                <span>{isRu ? "⚡ Скан 50 репо (Турбо)" : "⚡ Scan 50 Repos Now"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleControlDaemon("toggle_backfill")}
+                disabled={omniRunning}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-purple-500/50 bg-purple-500/15 px-3 py-1.5 text-[11px] font-bold text-purple-300 transition-all hover:bg-purple-500 hover:text-white disabled:opacity-50"
+              >
+                <span>{isRu ? "🚀 6M Backfill (4 потока)" : "🚀 6M Backfill (4 workers)"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleRunOmniHarvest}
+                disabled={omniRunning}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-primary/50 bg-primary/15 px-3 py-1.5 text-[11px] font-bold text-primary transition-all hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
+              >
+                {omniRunning ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
+                <span>
+                  {isRu
+                    ? `⚡ Прогнать Omni-Harvester (${ghVertical === "ALL" ? "Все 6 вертикалей" : ghVertical})`
+                    : `⚡ Run Omni-Harvester (${ghVertical === "ALL" ? "All 6 Verticals" : ghVertical})`}
+                </span>
+                {!isPaid && <span className="ml-1 rounded bg-black/30 px-1 py-0.5 text-[9px]">🔒 RADAR+</span>}
+              </button>
+            </div>
           </div>
 
           {omniBanner && (

@@ -1060,6 +1060,45 @@ const ToolsPanel = () => {
                 >
                   🔥 {isRu ? "LIVE / С балансом" : "LIVE / Funded"}
                 </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(`${API_BASE}/api/tools/ospec-daemon-control`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", ...authHeaders() },
+                        body: JSON.stringify({ action: "toggle_watcher" }),
+                      });
+                      const d = await res.json().catch(() => ({}));
+                      setOpenedHistoryBanner(d.message || (isRu ? "Статус Авто-Скана OSPEC переключён" : "OSPEC Auto-Scan toggled"));
+                      runOspecWithFilters();
+                    } catch (e: any) {
+                      setError(e.message);
+                    }
+                  }}
+                  className="rounded-lg border border-green-500/60 bg-green-500/15 px-2.5 py-1 font-semibold text-green-400 transition-all hover:bg-green-500 hover:text-black"
+                >
+                  ▶️ {isRu ? "Вкл / ⏸ Пауза Авто-Скан OSPEC" : "Toggle OSPEC Auto-Scan"}
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(`${API_BASE}/api/tools/ospec-daemon-control`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", ...authHeaders() },
+                        body: JSON.stringify({ action: "run_batch" }),
+                      });
+                      const d = await res.json().catch(() => ({}));
+                      setOpenedHistoryBanner(d.message || (isRu ? "Запущен ручной Турбо-скан (50 репо в /dev/shm)" : "Manual 50-repo Turbo scan started"));
+                    } catch (e: any) {
+                      setError(e.message);
+                    }
+                  }}
+                  className="rounded-lg border border-amber-500/60 bg-amber-500/15 px-2.5 py-1 font-semibold text-amber-300 transition-all hover:bg-amber-500 hover:text-black"
+                >
+                  ⚡ {isRu ? "Ручной Турбо-Скан (50 репо)" : "Manual Scan (50 repos)"}
+                </button>
               </div>
 
               {/* 6 Vertical Filters for OSPEC Leaked Secrets */}
