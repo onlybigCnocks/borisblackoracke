@@ -67,7 +67,7 @@ const ToolsPanel = () => {
   const [input1, setInput1] = useState("");
   const [input2, setInput2] = useState("");
   const [chain, setChain] = useState("ethereum");
-  const [fundsMode, setFundsMode] = useState<"auto" | "address" | "pool">("auto");
+  const [fundsMode, setFundsMode] = useState<"auto" | "address" | "pool" | "multichain">("auto");
   const [fundsDays, setFundsDays] = useState<number>(14);
   const [marketMode, setMarketMode] = useState<"single" | "trending">("single");
   const [trendingCount, setTrendingCount] = useState<number>(10);
@@ -734,6 +734,14 @@ const ToolsPanel = () => {
                   <button
                     type="button"
                     onClick={() => {
+                      if (rank < 2) {
+                        setError(
+                          isRu
+                            ? "🔥 Трендовый сканер (Поиск по трендам CoinGecko) доступен на тарифах RAW и BLACKBOX (как и в Telegram-боте)."
+                            : "🔥 Trending Scanner (CoinGecko Trend Search) requires RAW or BLACKBOX tier."
+                        );
+                        return;
+                      }
                       setMarketMode("trending");
                       runTrendingScan(trendingCount);
                     }}
@@ -760,6 +768,14 @@ const ToolsPanel = () => {
                       type="button"
                       disabled={loading}
                       onClick={() => {
+                        if (rank < 2) {
+                          setError(
+                            isRu
+                              ? "🔥 Трендовый сканер (5 / 10 / 15 монет) доступен на тарифах RAW и BLACKBOX."
+                              : "🔥 Trending Scanner requires RAW or BLACKBOX tier."
+                          );
+                          return;
+                        }
                         setTrendingCount(b.cnt);
                         setMarketMode("trending");
                         runTrendingScan(b.cnt);
@@ -801,14 +817,26 @@ const ToolsPanel = () => {
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-muted-foreground">{isRu ? "Режим цели:" : "Target Mode:"}</span>
                 {[
-                  { id: "auto", label: isRu ? "⚡ Авто (Пул / Адрес)" : "⚡ Auto" },
-                  { id: "address", label: isRu ? "📜 Контракт / Кошелёк" : "📜 Contract / EOA" },
-                  { id: "pool", label: isRu ? "💧 Ликвидность (LP Pool)" : "💧 LP Pool" },
+                  { id: "auto", label: isRu ? "⚡ Авто" : "⚡ Auto", minR: 1 },
+                  { id: "address", label: isRu ? "📜 Контракт / Кошелёк [RADAR+]" : "📜 Contract / EOA [RADAR+]", minR: 1 },
+                  { id: "pool", label: isRu ? "💧 LP Pool [RAW+]" : "💧 LP Pool [RAW+]", minR: 2 },
+                  { id: "multichain", label: isRu ? "🌐 Мультичейн [BLACKBOX]" : "🌐 Multichain [BLACKBOX]", minR: 3 },
                 ].map((m) => (
                   <button
                     key={m.id}
                     type="button"
-                    onClick={() => setFundsMode(m.id as any)}
+                    onClick={() => {
+                      if (rank < m.minR) {
+                        setError(
+                          isRu
+                            ? `Режим «${m.label}» доступен начиная с тарифа ${m.minR === 3 ? "BLACKBOX" : "RAW"}.`
+                            : `Mode "${m.label}" requires ${m.minR === 3 ? "BLACKBOX" : "RAW"} tier.`
+                        );
+                        return;
+                      }
+                      setError(null);
+                      setFundsMode(m.id as any);
+                    }}
                     className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
                       fundsMode === m.id
                         ? "border-primary bg-primary/15 text-primary"
@@ -1058,14 +1086,30 @@ const ToolsPanel = () => {
                   {result.pump_verdict || "✅ No significant pump indicators"}
                 </span>
                 {result.github_repo && (
-                  <a
-                    href={`https://github.com/${result.github_repo}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] text-primary hover:underline"
-                  >
-                    📦 {result.github_repo} ↗
-                  </a>
+                  <>
+                    <a
+                      href={`https://github.com/${result.github_repo}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] text-primary hover:underline"
+                    >
+                      📦 {result.github_repo} ↗
+                    </a>
+                    {result.audit_button_unlocked && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          window.dispatchEvent(
+                            new CustomEvent("boris-quick-scan", { detail: { target: `https://github.com/${result.github_repo}` } })
+                          );
+                          document.getElementById("demo-scanner")?.scrollIntoView({ behavior: "smooth" });
+                        }}
+                        className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-primary-foreground hover:bg-primary-dim"
+                      >
+                        🔧 {isRu ? `Аудит ${result.github_repo.split("/").pop()}` : `Audit ${result.github_repo.split("/").pop()}`}
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
               <div className="flex items-center gap-2 text-xs">
@@ -1323,34 +1367,69 @@ const ToolsPanel = () => {
                     </div>
                   </div>
 
-                  {/* Card 2: Cross-Exchange Matrix (BN | OKX | BB) */}
+                  {/* Card 2: Cross-Exchange Matrix (BN | OKX | BB) & Temporal ETM — BLACKBOX Exclusive */}
                   <div className="rounded-xl border border-border bg-background p-4 space-y-2.5 text-xs">
-                    <p className="text-[10px] uppercase text-primary font-bold">Cross-Exchange Matrix (BN · OKX · BB)</p>
-                    <div className="rounded-lg border border-border bg-card p-2.5 space-y-1.5 text-[11px]">
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">F.xchg:</span>
-                        <span className="font-bold text-foreground">
-                          BN {result.snapshot?.funding_binance !== null && result.snapshot?.funding_binance !== undefined ? Number(result.snapshot.funding_binance).toFixed(6) : "—"} | OKX{" "}
-                          {result.snapshot?.funding_okx !== null && result.snapshot?.funding_okx !== undefined ? Number(result.snapshot.funding_okx).toFixed(6) : "—"} | BB{" "}
-                          {result.snapshot?.funding_bybit !== null && result.snapshot?.funding_bybit !== undefined ? Number(result.snapshot.funding_bybit).toFixed(6) : "—"}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">OI xchg:</span>
-                        <span className="font-bold text-foreground">
-                          BN ${fmt(result.snapshot?.oi_binance)} | OKX ${fmt(result.snapshot?.oi_okx)} | BB ${fmt(result.snapshot?.oi_bybit)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between border-t border-border/60 pt-1.5">
-                        <span className="text-muted-foreground">OI Total / Div:</span>
-                        <span className="font-bold text-primary">
-                          ${fmt(result.snapshot?.oi_total_multi)} · div:{" "}
-                          {result.snapshot?.oi_exchange_divergence !== null && result.snapshot?.oi_exchange_divergence !== undefined
-                            ? Number(result.snapshot.oi_exchange_divergence).toFixed(2)
-                            : "—"}
-                        </span>
-                      </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] uppercase text-primary font-bold">Cross-Exchange (BN · OKX · BB) & Temporal</p>
+                      <span className="rounded border border-primary/40 bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary">
+                        BLACKBOX
+                      </span>
                     </div>
+                    {result.cross_exchange_unlocked ? (
+                      <>
+                        <div className="rounded-lg border border-border bg-card p-2.5 space-y-1.5 text-[11px]">
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">F.xchg:</span>
+                            <span className="font-bold text-foreground">
+                              BN {result.snapshot?.funding_binance !== null && result.snapshot?.funding_binance !== undefined ? Number(result.snapshot.funding_binance).toFixed(6) : "—"} | OKX{" "}
+                              {result.snapshot?.funding_okx !== null && result.snapshot?.funding_okx !== undefined ? Number(result.snapshot.funding_okx).toFixed(6) : "—"} | BB{" "}
+                              {result.snapshot?.funding_bybit !== null && result.snapshot?.funding_bybit !== undefined ? Number(result.snapshot.funding_bybit).toFixed(6) : "—"}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">OI xchg:</span>
+                            <span className="font-bold text-foreground">
+                              BN ${fmt(result.snapshot?.oi_binance)} | OKX ${fmt(result.snapshot?.oi_okx)} | BB ${fmt(result.snapshot?.oi_bybit)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between border-t border-border/60 pt-1.5">
+                            <span className="text-muted-foreground">OI Total / Div:</span>
+                            <span className="font-bold text-primary">
+                              ${fmt(result.snapshot?.oi_total_multi)} · div:{" "}
+                              {result.snapshot?.oi_exchange_divergence !== null && result.snapshot?.oi_exchange_divergence !== undefined
+                                ? Number(result.snapshot.oi_exchange_divergence).toFixed(2)
+                                : "—"}
+                            </span>
+                          </div>
+                        </div>
+                        {result.temporal && (
+                          <div className="rounded-lg border border-primary/30 bg-primary/5 p-2.5 space-y-1 text-[11px]">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-primary">
+                                📊 Temporal ({result.temporal.scan_count} scans / {result.temporal.span_hours}h)
+                              </span>
+                              <span className="text-foreground font-bold">{result.temporal.regime}</span>
+                            </div>
+                            {Array.isArray(result.temporal.scores) && result.temporal.scores.length > 0 && (
+                              <div className="text-muted-foreground">
+                                Score: <b className="text-foreground">{result.temporal.scores.join(" → ")}</b> ({result.temporal.score_trend})
+                              </div>
+                            )}
+                            {result.temporal.etm_confidence >= 30 && result.temporal.etm_hours_low !== null && (
+                              <div className="text-amber-400 font-bold">
+                                ⏰ ETM: {result.temporal.etm_hours_low}h–{result.temporal.etm_hours_high}h | {result.temporal.etm_direction} ({result.temporal.etm_confidence}%)
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-[11px] text-muted-foreground">
+                        🔒 {isRu
+                          ? "Кросс-биржевое сравнение OI и фандинга (Binance · OKX · Bybit) и темпоральный ETM-анализ доступны на тарифе BLACKBOX."
+                          : "Cross-Exchange OI & Funding (Binance · OKX · Bybit) and Temporal ETM analysis require BLACKBOX tier."}
+                      </div>
+                    )}
                   </div>
 
                   {/* Card 3: Supply & Data Sources + Score Breakdown */}
