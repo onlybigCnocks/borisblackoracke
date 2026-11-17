@@ -1034,148 +1034,11 @@ const ToolsPanel = () => {
       )}
 
       {/* RESULTS */}
-      {result && tool === "market" && result.mode === "trending_scan" && (
-        <div className="space-y-4 font-mono">
-          <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <span className="rounded-full border border-primary/40 bg-primary/15 px-3.5 py-1 text-xs font-bold text-primary">
-                  🔥 TRENDING SCAN RESULTS ({result.count_scanned} COINS)
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  Coins: <b className="text-foreground">{(result.trending_symbols || []).join(", ")}</b>
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-3 text-xs">
-                <span className="rounded border border-border bg-background px-2.5 py-1">
-                  Avg Score: <b className="text-foreground">{result.avg_score}/100</b>
-                </span>
-                <span className="rounded border border-border bg-background px-2.5 py-1">
-                  High Risk: <b className={Number(result.high_risk_pct) > 0 ? "text-destructive" : "text-emerald-400"}>{result.high_risk_pct}%</b>
-                </span>
-              </div>
-            </div>
-
-            {Array.isArray(result.alerts) && result.alerts.length > 0 && (
-              <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 space-y-1.5 text-xs">
-                <p className="font-bold text-destructive uppercase text-[11px]">
-                  ⚠️ {result.alerts.length} HIGH+ MANIPULATION / CROWD ALERTS DETECTED:
-                </p>
-                {result.alerts.map((al: any, ali: number) => (
-                  <p key={ali} className="text-foreground">
-                    <b className="text-destructive">→ ${al.symbol} ({al.score}/100 · {al.level}):</b> {al.conclusion}
-                  </p>
-                ))}
-              </div>
-            )}
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-border text-[10px] uppercase text-muted-foreground">
-                    <th className="py-2.5 px-3">#</th>
-                    <th className="py-2.5 px-3">Symbol</th>
-                    <th className="py-2.5 px-3">Risk Score</th>
-                    <th className="py-2.5 px-3">Price / 24h Δ</th>
-                    <th className="py-2.5 px-3">MCap / Vol 24h</th>
-                    <th className="py-2.5 px-3">OI Total / Funding</th>
-                    <th className="py-2.5 px-3">Manip / Crowd / Org</th>
-                    <th className="py-2.5 px-3">Top Signals</th>
-                    <th className="py-2.5 px-3 text-right">Dossier</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {(result.results || []).map((row: any, rIdx: number) => {
-                    const isSelected = selectedTrendingDossier?.symbol === row.symbol;
-                    const lvlTone =
-                      row.level === "CRITICAL" || row.level === "HIGH"
-                        ? "border-destructive/40 bg-destructive/15 text-destructive"
-                        : row.level === "MEDIUM"
-                        ? "border-amber-500/40 bg-amber-500/15 text-amber-400"
-                        : "border-emerald-500/40 bg-emerald-500/15 text-emerald-400";
-                    return (
-                      <tr
-                        key={row.symbol}
-                        onClick={() => setSelectedTrendingDossier(isSelected ? null : row.dossier)}
-                        className={`cursor-pointer transition-colors hover:bg-background/80 ${
-                          isSelected ? "bg-primary/10" : ""
-                        }`}
-                      >
-                        <td className="py-2.5 px-3 text-muted-foreground">{rIdx + 1}</td>
-                        <td className="py-2.5 px-3 font-bold text-foreground">${row.symbol}</td>
-                        <td className="py-2.5 px-3">
-                          <span className={`rounded border px-2 py-0.5 text-[10px] font-bold ${lvlTone}`}>
-                            {row.score}/100 · {row.level}
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-3">
-                          <div className="font-bold text-foreground">
-                            {row.price_usd !== null && row.price_usd !== undefined
-                              ? `$${Number(row.price_usd) < 1 ? Number(row.price_usd).toFixed(5) : fmt(row.price_usd)}`
-                              : "—"}
-                          </div>
-                          {row.price_change_24h !== null && row.price_change_24h !== undefined && (
-                            <div className={`text-[10px] ${Number(row.price_change_24h) >= 0 ? "text-emerald-400" : "text-destructive"}`}>
-                              {Number(row.price_change_24h) >= 0 ? "+" : ""}
-                              {Number(row.price_change_24h).toFixed(1)}%
-                            </div>
-                          )}
-                        </td>
-                        <td className="py-2.5 px-3 text-[11px]">
-                          <div>MCap: {row.market_cap ? `$${fmt(row.market_cap)}` : "—"}</div>
-                          <div className="text-muted-foreground">Vol: {row.volume_24h ? `$${fmt(row.volume_24h)}` : "—"}</div>
-                        </td>
-                        <td className="py-2.5 px-3 text-[11px]">
-                          <div>OI: {row.oi_total ? `$${fmt(row.oi_total)}` : "—"}</div>
-                          <div className="text-muted-foreground">
-                            Fund: {row.funding_rate !== null && row.funding_rate !== undefined ? Number(row.funding_rate).toFixed(6) : "—"}
-                          </div>
-                        </td>
-                        <td className="py-2.5 px-3 text-[11px]">
-                          <span className="text-destructive">M:{row.manipulation_risk}</span> ·{" "}
-                          <span className="text-amber-400">C:{row.crowd_overcrowding}</span> ·{" "}
-                          <span className="text-emerald-400">O:{row.organic_probability}%</span>
-                        </td>
-                        <td className="py-2.5 px-3">
-                          <div className="flex flex-wrap gap-1 max-w-[220px]">
-                            {(row.top_signals || []).length === 0 ? (
-                              <span className="text-muted-foreground">CLEAN</span>
-                            ) : (
-                              (row.top_signals || []).map((sg: string, sgi: number) => (
-                                <span key={sgi} className="rounded border border-border bg-background px-1.5 py-0.5 text-[9px] text-primary">
-                                  {sg}
-                                </span>
-                              ))
-                            )}
-                          </div>
-                        </td>
-                        <td className="py-2.5 px-3 text-right">
-                          <button
-                            type="button"
-                            onClick={(ev) => {
-                              ev.stopPropagation();
-                              setSelectedTrendingDossier(isSelected ? null : row.dossier);
-                            }}
-                            className="rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary hover:bg-primary hover:text-primary-foreground"
-                          >
-                            {isSelected ? (isRu ? "Скрыть" : "Hide") : isRu ? "📊 Досье" : "📊 Dossier"}
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Single Token Dossier OR Selected Trending Coin Dossier */}
-      {((result: any) => {
-        if (!result) return null;
-        return (
-        <div className="space-y-4 font-mono">
+      {(() => {
+        const renderMarketDossier = (result: any, onClose?: () => void) => {
+          if (!result) return null;
+          return (
+            <div className="space-y-4 font-mono">
           {/* CLI Header Banner */}
           <div className="rounded-xl border border-border bg-card p-5 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
@@ -1214,6 +1077,15 @@ const ToolsPanel = () => {
                   />
                 </div>
                 <b className="text-foreground">{result.confidence ?? 100}%</b>
+                {onClose && (
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="ml-2 rounded-lg border border-primary/40 bg-primary/15 px-2.5 py-1 text-[11px] font-bold text-primary hover:bg-primary hover:text-primary-foreground"
+                  >
+                    ✕ {isRu ? "Свернуть досье" : "Close Dossier"}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1547,8 +1419,168 @@ const ToolsPanel = () => {
             )}
           </div>
         </div>
-        );
-      })(tool === "market" ? (result?.mode === "trending_scan" ? selectedTrendingDossier : result) : null)}
+          );
+        };
+
+        if (!result || tool !== "market") return null;
+
+        if (result.mode === "trending_scan") {
+          return (
+            <div className="space-y-4 font-mono">
+              <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <span className="rounded-full border border-primary/40 bg-primary/15 px-3.5 py-1 text-xs font-bold text-primary">
+                      🔥 TRENDING SCAN RESULTS ({result.count_scanned} COINS)
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Coins: <b className="text-foreground">{(result.trending_symbols || []).join(", ")}</b>
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-xs">
+                    <span className="rounded border border-border bg-background px-2.5 py-1">
+                      Avg Score: <b className="text-foreground">{result.avg_score}/100</b>
+                    </span>
+                    <span className="rounded border border-border bg-background px-2.5 py-1">
+                      High Risk: <b className={Number(result.high_risk_pct) > 0 ? "text-destructive" : "text-emerald-400"}>{result.high_risk_pct}%</b>
+                    </span>
+                  </div>
+                </div>
+
+                {Array.isArray(result.alerts) && result.alerts.length > 0 && (
+                  <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 space-y-1.5 text-xs">
+                    <p className="font-bold text-destructive uppercase text-[11px]">
+                      ⚠️ {result.alerts.length} HIGH+ MANIPULATION / CROWD ALERTS DETECTED:
+                    </p>
+                    {result.alerts.map((al: any, ali: number) => (
+                      <p key={ali} className="text-foreground">
+                        <b className="text-destructive">→ ${al.symbol} ({al.score}/100 · {al.level}):</b> {al.conclusion}
+                      </p>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-[11px] text-muted-foreground">
+                  💡 {isRu ? "Нажмите на любую строку или кнопку «📊 Досье», чтобы раскрыть полное досье деривативов прямо под выбранной монетой:" : "Click any row or the Dossier button to expand the full derivatives dossier right below that coin:"}
+                </p>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-border text-[10px] uppercase text-muted-foreground">
+                        <th className="py-2.5 px-3">#</th>
+                        <th className="py-2.5 px-3">Symbol</th>
+                        <th className="py-2.5 px-3">Risk Score</th>
+                        <th className="py-2.5 px-3">Price / 24h Δ</th>
+                        <th className="py-2.5 px-3">MCap / Vol 24h</th>
+                        <th className="py-2.5 px-3">OI Total / Funding</th>
+                        <th className="py-2.5 px-3">Manip / Crowd / Org</th>
+                        <th className="py-2.5 px-3">Top Signals</th>
+                        <th className="py-2.5 px-3 text-right">Dossier</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {(result.results || []).map((row: any, rIdx: number) => {
+                        const isSelected = selectedTrendingDossier?.symbol === row.symbol;
+                        const lvlTone =
+                          row.level === "CRITICAL" || row.level === "HIGH"
+                            ? "border-destructive/40 bg-destructive/15 text-destructive"
+                            : row.level === "MEDIUM"
+                            ? "border-amber-500/40 bg-amber-500/15 text-amber-400"
+                            : "border-emerald-500/40 bg-emerald-500/15 text-emerald-400";
+                        return (
+                          <tbody key={row.symbol} className="contents">
+                            <tr
+                              onClick={() => setSelectedTrendingDossier(isSelected ? null : row.dossier)}
+                              className={`cursor-pointer transition-colors hover:bg-background/80 ${
+                                isSelected ? "bg-primary/15 border-l-2 border-l-primary" : ""
+                              }`}
+                            >
+                              <td className="py-2.5 px-3 text-muted-foreground">{rIdx + 1}</td>
+                              <td className="py-2.5 px-3 font-bold text-foreground">${row.symbol}</td>
+                              <td className="py-2.5 px-3">
+                                <span className={`rounded border px-2 py-0.5 text-[10px] font-bold ${lvlTone}`}>
+                                  {row.score}/100 · {row.level}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3">
+                                <div className="font-bold text-foreground">
+                                  {row.price_usd !== null && row.price_usd !== undefined
+                                    ? `$${Number(row.price_usd) < 1 ? Number(row.price_usd).toFixed(5) : fmt(row.price_usd)}`
+                                    : "—"}
+                                </div>
+                                {row.price_change_24h !== null && row.price_change_24h !== undefined && (
+                                  <div className={`text-[10px] ${Number(row.price_change_24h) >= 0 ? "text-emerald-400" : "text-destructive"}`}>
+                                    {Number(row.price_change_24h) >= 0 ? "+" : ""}
+                                    {Number(row.price_change_24h).toFixed(1)}%
+                                  </div>
+                                )}
+                              </td>
+                              <td className="py-2.5 px-3 text-[11px]">
+                                <div>MCap: {row.market_cap ? `$${fmt(row.market_cap)}` : "—"}</div>
+                                <div className="text-muted-foreground">Vol: {row.volume_24h ? `$${fmt(row.volume_24h)}` : "—"}</div>
+                              </td>
+                              <td className="py-2.5 px-3 text-[11px]">
+                                <div>OI: {row.oi_total ? `$${fmt(row.oi_total)}` : "—"}</div>
+                                <div className="text-muted-foreground">
+                                  Fund: {row.funding_rate !== null && row.funding_rate !== undefined ? Number(row.funding_rate).toFixed(6) : "—"}
+                                </div>
+                              </td>
+                              <td className="py-2.5 px-3 text-[11px]">
+                                <span className="text-destructive">M:{row.manipulation_risk}</span> ·{" "}
+                                <span className="text-amber-400">C:{row.crowd_overcrowding}</span> ·{" "}
+                                <span className="text-emerald-400">O:{row.organic_probability}%</span>
+                              </td>
+                              <td className="py-2.5 px-3">
+                                <div className="flex flex-wrap gap-1 max-w-[220px]">
+                                  {(row.top_signals || []).length === 0 ? (
+                                    <span className="text-muted-foreground">CLEAN</span>
+                                  ) : (
+                                    (row.top_signals || []).map((sg: string, sgi: number) => (
+                                      <span key={sgi} className="rounded border border-border bg-background px-1.5 py-0.5 text-[9px] text-primary">
+                                        {sg}
+                                      </span>
+                                    ))
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-2.5 px-3 text-right">
+                                <button
+                                  type="button"
+                                  onClick={(ev) => {
+                                    ev.stopPropagation();
+                                    setSelectedTrendingDossier(isSelected ? null : row.dossier);
+                                  }}
+                                  className={`rounded-lg border px-2.5 py-1 text-[10px] font-bold transition-all ${
+                                    isSelected
+                                      ? "border-primary bg-primary text-primary-foreground shadow"
+                                      : "border-primary/40 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground"
+                                  }`}
+                                >
+                                  {isSelected ? (isRu ? "▲ Свернуть" : "▲ Hide") : isRu ? "▼ 📊 Досье" : "▼ 📊 Dossier"}
+                                </button>
+                              </td>
+                            </tr>
+                            {isSelected && row.dossier && (
+                              <tr className="bg-background/90">
+                                <td colSpan={9} className="p-3 sm:p-4 border-l-2 border-l-primary">
+                                  {renderMarketDossier(row.dossier, () => setSelectedTrendingDossier(null))}
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        return renderMarketDossier(result);
+      })()}
 
       {result && tool === "holders" && (
         <div className="space-y-4 font-mono">
