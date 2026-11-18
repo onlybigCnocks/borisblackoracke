@@ -1179,27 +1179,29 @@ const ToolsPanel = () => {
             </div>
           )}
 
-          {/* Quick-Launch Mathematical Showcase for ZK Math Monster v5.0 (All 7 Proving Systems & Vuln Classes) */}
+          {/* Quick-Launch Mathematical Showcase for ZK Math Monster v5.5 (Canonical Exploited vs Sound Benchmarks across 7 Proving Systems) */}
           {tool === "zk" && (
             <div className="space-y-2 rounded-xl border border-primary/30 bg-background/60 p-3 font-mono text-[11px]">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-bold text-primary">
-                  📐 {isRu ? "BORIS ZK MATH MONSTER v5.0 · Живые эталоны по 7 системам доказательств (1-клик тест):" : "BORIS ZK MATH MONSTER v5.0 · Live Multi-System Verifier Showcase (1-click):"}
+                  📐 {isRu ? "BORIS ZK MATH MONSTER v5.5 · Калибровочная матрица (Канонические взломы vs Эталонные контракты):" : "BORIS ZK MATH MONSTER v5.5 · Calibrated Canonical Exploited vs Sound Verifiers:"}
                 </span>
                 <span className="text-[10px] text-muted-foreground">
-                  {isRu ? "База: 48,643 верификатора из 1,626,315 контрактов · 28 мат. детекторов" : "DB: 48,643 verifiers from 1.62M contracts · 28 math detectors"}
+                  {isRu ? "База: 48,649 верификаторов из 1.62M контрактов · 65 детекторов (Fp / Fp² Twist)" : "DB: 48,649 verifiers from 1.62M contracts · 65 detectors (Fp / Fp² Twist)"}
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-1.5">
                 {[
-                  { label: "🔴 Groth16 γ == δ Forgery (ETH)", addr: "0xca78718307d24d0c731fbc78019ca92c7a251378", ch: "ethereum" },
-                  { label: "🔴 Groth16 γ == δ Forgery (Polygon)", addr: "0xa6e4e74dbd04cc08bf054dd1aa5b9f83b5e66e2d", ch: "polygon" },
-                  { label: "🟠 PLONK KZG G₂-Collision (24KB)", addr: "0x1c397f0c436cff6159f10fbccd38374ec79e6902", ch: "ethereum" },
-                  { label: "🟣 FFLONK Fast-Fourier (23KB)", addr: "0xf2f73b87e97730dca6558dd71c0b1c945ca38096", ch: "ethereum" },
-                  { label: "🔵 Halo2 SHPLONK/GWC Accumulator", addr: "0x5284de439d386f54b769cbbe45ef51488db5aaff", ch: "bsc" },
-                  { label: "🔮 UltraPlonk / Honk (Noir/Aztec)", addr: "0x6e9bf73099cdc6d91d81d246238c5be5893cd6ff", ch: "ethereum" },
-                  { label: "🟡 STARK / FRI Algebraic Verifier", addr: "0xfebf5c0b9bd162735eec985df48eb8163f730776", ch: "optimism" },
-                  { label: "⚡ zkVM Receipt Verifier (SP1/RISC0)", addr: "0x2b2ab5ac76b399bb35e8cba96e4af300d4c9c437", ch: "bsc" },
+                  { label: "🔴 FoomCash Groth16 (EXPLOITED γ==δ==G₂)", addr: "0xc043865fb4D542E2bc5ed5Ed9A2F0939965671A6", ch: "ethereum" },
+                  { label: "🔴 Polygon Groth16 γ == δ Forgery", addr: "0xa6e4e74dbd04cc08bf054dd1aa5b9f83b5e66e2d", ch: "polygon" },
+                  { label: "🟢 Tornado Core Verifier (SOUND MPC)", addr: "0xce172ce1f20ec0b3728c9965470eaf994a03557a", ch: "ethereum" },
+                  { label: "🟢 Tornado 100 ETH Pool (Auto-Follows Verifier)", addr: "0xA160cdAB225685dA1d56aa342Ad8841c3b53f291", ch: "ethereum" },
+                  { label: "🟣 Polygon zkEVM FFLONK (SOUND 23KB)", addr: "0xf2f73b87e97730dca6558dd71c0b1c945ca38096", ch: "ethereum" },
+                  { label: "🧬 Canonical PLONK KZG (SOUND 24KB)", addr: "0x1c397f0c436cff6159f10fbccd38374ec79e6902", ch: "ethereum" },
+                  { label: "🔮 Aztec / Noir Honk (SOUND 24.5KB)", addr: "0x6e9bf73099cdc6d91d81d246238c5be5893cd6ff", ch: "ethereum" },
+                  { label: "🔵 Halo2 SHPLONK/GWC (14KB)", addr: "0x9b4f52e82f744f371f59f8904aee5d83bdcf81a5", ch: "ethereum" },
+                  { label: "🟡 STARK / FRI Transparent (19KB)", addr: "0xd4d6d145d26e948e7f7b98b06a742d1aed34e1cf", ch: "ethereum" },
+                  { label: "⚡ zkVM Receipt (SP1 / RISC Zero)", addr: "0x16613999219f9b56bededbf3722e44c4c2045300", ch: "ethereum" },
                 ].map((zp) => (
                   <button
                     key={`${zp.ch}:${zp.addr}`}
@@ -2944,6 +2946,17 @@ const ToolsPanel = () => {
           {/* 2. Disassembled EVM Bytecode & Elliptic Curve Algebra Telemetry */}
           {result.math_bytecode_profile && (
             <div className="space-y-3">
+              {result.math_bytecode_profile.linked_verifier && (
+                <div className="rounded-lg border border-cyan-500/50 bg-cyan-500/15 px-3.5 py-2.5 text-[11px] text-cyan-300 flex flex-wrap items-center justify-between gap-2">
+                  <span>
+                    🔗 <b>{isRu ? "Авто-резолв внешнего верификатора:" : "Auto-Followed External Verifier:"}</b>{" "}
+                    {isRu ? "Контракт пула/моста делегирует проверку доказательств через" : "Pool/Bridge delegates verification via"}{" "}
+                    <code className="text-white font-bold">{result.math_bytecode_profile.linked_verifier.pointer_getter}</code>{" "}
+                    → <code className="text-green-300 font-bold">{result.math_bytecode_profile.linked_verifier.verifier_address}</code>
+                  </span>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-8">
                 <div className="rounded-lg border border-border bg-background p-2.5">
                   <p className="text-[9px] uppercase text-muted-foreground">ecPairing (0x08)</p>
@@ -2952,15 +2965,9 @@ const ToolsPanel = () => {
                   </p>
                 </div>
                 <div className="rounded-lg border border-border bg-background p-2.5">
-                  <p className="text-[9px] uppercase text-muted-foreground">ecMul (0x07)</p>
+                  <p className="text-[9px] uppercase text-muted-foreground">ecMul / ecAdd</p>
                   <p className="mt-1 text-sm font-bold text-foreground">
-                    {result.math_bytecode_profile.precompiles?.ecmul_0x07 ?? 0} calls
-                  </p>
-                </div>
-                <div className="rounded-lg border border-border bg-background p-2.5">
-                  <p className="text-[9px] uppercase text-muted-foreground">ecAdd (0x06)</p>
-                  <p className="mt-1 text-sm font-bold text-foreground">
-                    {result.math_bytecode_profile.precompiles?.ecadd_0x06 ?? 0} calls
+                    {result.math_bytecode_profile.precompiles?.ecmul_0x07 ?? 0} / {result.math_bytecode_profile.precompiles?.ecadd_0x06 ?? 0}
                   </p>
                 </div>
                 <div className="rounded-lg border border-border bg-background p-2.5">
@@ -2976,9 +2983,15 @@ const ToolsPanel = () => {
                   </p>
                 </div>
                 <div className="rounded-lg border border-border bg-background p-2.5">
-                  <p className="text-[9px] uppercase text-muted-foreground">PUSH32 / G₁ Points</p>
+                  <p className="text-[9px] uppercase text-muted-foreground">G₁ Points (𝔽_p)</p>
                   <p className="mt-1 text-sm font-bold text-cyan-300">
-                    {result.math_bytecode_profile.push32_count ?? 0} / {result.math_bytecode_profile.valid_g1_points_count ?? 0} G₁
+                    {result.math_bytecode_profile.valid_g1_points_count ?? 0} on curve
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-2.5">
+                  <p className="text-[9px] uppercase text-muted-foreground">G₂ Twist (𝔽_p²)</p>
+                  <p className={`mt-1 text-sm font-bold ${(result.math_bytecode_profile.duplicate_g2_twist_points ?? 0) > 0 ? "text-red-400" : "text-green-400"}`}>
+                    {result.math_bytecode_profile.valid_g2_points_count ?? 0} pts ({result.math_bytecode_profile.duplicate_g2_twist_points ?? 0} dup)
                   </p>
                 </div>
                 <div className="rounded-lg border border-border bg-background p-2.5">
@@ -2994,6 +3007,36 @@ const ToolsPanel = () => {
                   </p>
                 </div>
               </div>
+
+              {/* Extracted Valid BN254 G2 Sextic Twist Points Sample */}
+              {Array.isArray(result.math_bytecode_profile.valid_g2_points_sample) &&
+                result.math_bytecode_profile.valid_g2_points_sample.length > 0 && (
+                  <details className="rounded-lg border border-purple-500/40 bg-background p-3">
+                    <summary className="cursor-pointer font-bold text-[11px] text-purple-300">
+                      🔮 {isRu
+                        ? `Показать реконструированные точки секстического твиста G₂ ∈ E'(𝔽_p²): Y² ≡ X³ + 3/(9+i) (${result.math_bytecode_profile.valid_g2_points_count} точек, дубликатов γ==δ: ${result.math_bytecode_profile.duplicate_g2_twist_points || 0})`
+                        : `Show reconstructed sextic twist G₂ ∈ E'(𝔽_p²) points (${result.math_bytecode_profile.valid_g2_points_count} points, γ==δ duplicates: ${result.math_bytecode_profile.duplicate_g2_twist_points || 0})`}
+                    </summary>
+                    <div className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-2 text-[10px]">
+                      {result.math_bytecode_profile.valid_g2_points_sample.map((pt: any, idx: number) => (
+                        <div key={idx} className={`rounded border p-2.5 ${pt.is_duplicate ? "border-red-500/60 bg-red-500/10" : "border-border/70 bg-card"}`}>
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-purple-300">
+                              G₂ Twist Point #{pt.index} {pt.is_generator_g2 ? "([1]₂ Canonical Generator)" : "([β]₂ / [γ]₂ / [δ]₂ / [τ]₂)"}
+                            </span>
+                            <span className={pt.is_duplicate ? "text-red-400 font-bold" : "text-green-400"}>
+                              {pt.is_duplicate ? "🔴 DUPLICATE [γ]₂ == [δ]₂" : "✓ Y² = X³ + 3/(9+i) in 𝔽_p²"}
+                            </span>
+                          </div>
+                          <p className="truncate text-muted-foreground mt-1">X₀: {pt.x0}</p>
+                          <p className="truncate text-muted-foreground">X₁: {pt.x1}</p>
+                          <p className="truncate text-muted-foreground">Y₀: {pt.y0}</p>
+                          <p className="truncate text-muted-foreground">Y₁: {pt.y1}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
 
               {/* Extracted Valid BN254 G1 Curve Points Sample */}
               {Array.isArray(result.math_bytecode_profile.valid_g1_points_sample) &&

@@ -842,22 +842,39 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
           )}
 
           {(tab === "contracts" || tab === "zk") && (
-            <select
-              value={chain}
-              onChange={(e) => {
-                setChain(e.target.value);
-                setPage(1);
-              }}
-              className="rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-primary"
-            >
-              <option value="all">{isRu ? "Все сети" : "All Chains"}</option>
-              <option value="ethereum">ETHEREUM</option>
-              <option value="bsc">BSC</option>
-              <option value="base">BASE</option>
-              <option value="optimism">OPTIMISM</option>
-              <option value="polygon">POLYGON</option>
-              <option value="arbitrum">ARBITRUM</option>
-            </select>
+            <>
+              <select
+                value={chain}
+                onChange={(e) => {
+                  setChain(e.target.value);
+                  setPage(1);
+                }}
+                className="rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-primary"
+              >
+                <option value="all">{isRu ? "Все сети" : "All Chains"}</option>
+                <option value="ethereum">ETHEREUM</option>
+                <option value="bsc">BSC</option>
+                <option value="base">BASE</option>
+                <option value="optimism">OPTIMISM</option>
+                <option value="polygon">POLYGON</option>
+                <option value="arbitrum">ARBITRUM</option>
+              </select>
+              {tab === "zk" && (
+                <select
+                  value={ghSort}
+                  onChange={(e) => {
+                    setGhSort(e.target.value);
+                    setPage(1);
+                  }}
+                  className="rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-primary"
+                >
+                  <option value="risk">{isRu ? "🔥 Сортировка: Эталоны и CRITICAL (γ==δ) сверху" : "🔥 Sort: Canonical & CRITICAL (γ==δ) First"}</option>
+                  <option value="size">{isRu ? "📐 По размеру схемы и байткода (24KB → 1KB)" : "📐 By Circuit / Bytecode Size ↓"}</option>
+                  <option value="score">{isRu ? "⚡ По ZK Risk Score ↓" : "⚡ By ZK Risk Score ↓"}</option>
+                  <option value="newest">{isRu ? "🕒 По блоку деплоя (Новые)" : "🕒 By Deploy Block (Newest)"}</option>
+                </select>
+              )}
+            </>
           )}
 
           <button
