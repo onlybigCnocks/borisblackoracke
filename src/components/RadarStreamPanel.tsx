@@ -272,8 +272,8 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
     },
     {
       id: "zk",
-      labelRu: "🔐 ZK Groth16",
-      labelEn: "🔐 ZK Groth16",
+      labelRu: "🔐 ZK Math Radar (48.6K)",
+      labelEn: "🔐 ZK Math Radar (48.6K)",
       tierBadge: "RAW+",
       lockedForUser: !isDeep,
     },
@@ -404,7 +404,7 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
           { k: "DeFiLlama [RADAR+]", v: fmt(stats.defillama_protocols || 9396), tabId: "defillama" as RadarTab },
           { k: "Contracts [RADAR+]", v: fmt(stats.verified_contracts || 245189), tabId: "contracts" as RadarTab },
           { k: "Soroban [RADAR+]", v: fmt(stats.soroban_targets || 641), tabId: "soroban" as RadarTab },
-          { k: "ZK Verifiers [RAW+]", v: fmt(stats.zk_verifiers || 4982), tabId: "zk" as RadarTab },
+          { k: "ZK Verifiers [RAW+]", v: fmt(stats.zk_verifiers || 48643), tabId: "zk" as RadarTab },
           { k: isRu ? "Архив [RADAR+]" : "Archive [RADAR+]", v: fmt(Math.max(Number(stats.audits_archive || 0), 20826)), tabId: "audits_base" as RadarTab },
         ].map((c, i) => (
           <button
@@ -659,15 +659,103 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
                   setOspecFilter(st.id);
                   setPage(1);
                 }}
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[10px] font-semibold transition-all ${
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] transition-all ${
                   ospecFilter === st.id
-                    ? "border-primary bg-primary/20 text-primary"
-                    : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    ? "border-primary bg-primary/15 text-primary font-bold"
+                    : "border-border bg-background text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <span>{isRu ? st.labelRu : st.labelEn}</span>
-                {st.cnt !== undefined && (
+                {st.cnt !== undefined && st.cnt > 0 && (
                   <span className="opacity-80">({fmt(st.cnt)})</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ZK MATH MONSTER v5.0 RADAR CONTROL DECK */}
+      {tab === "zk" && !feed?.locked && (
+        <div className="rounded-xl border border-primary/35 bg-card p-4 space-y-3 font-mono">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/15 px-2.5 py-1 text-xs font-bold text-primary">
+                📐 BORIS ZK MATH MONSTER v5.0 · MULTI-SYSTEM VERIFIER RADAR
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                {isRu
+                  ? `Просканировано: ${fmt(feed?.stats?.zk_breakdown?.candidates_scanned || 1626315)} контрактов (2.37B блоков) · Найдено ZK-верификаторов: ${fmt(feed?.stats?.zk_verifiers || 48643)} · γ==δ CRITICAL: ${fmt(feed?.stats?.zk_breakdown?.gamma_eq_delta_count || 276)} · G₂ Collision: ${fmt(feed?.stats?.zk_breakdown?.g2_reuse_count || 1776)}`
+                  : `Scanned: ${fmt(feed?.stats?.zk_breakdown?.candidates_scanned || 1626315)} contracts (2.37B blocks) · Indexed ZK Verifiers: ${fmt(feed?.stats?.zk_verifiers || 48643)} · γ==δ CRITICAL: ${fmt(feed?.stats?.zk_breakdown?.gamma_eq_delta_count || 276)}`}
+              </span>
+            </div>
+          </div>
+
+          {/* 7 Proving System Filter Pills */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="mr-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+              {isRu ? "Система доказательств:" : "Proving System:"}
+            </span>
+            {[
+              { id: "ALL", label: isRu ? "🌐 Все системы" : "🌐 All Systems", cnt: feed?.stats?.zk_verifiers || 48643 },
+              { id: "GROTH16", label: "📐 Groth16 (BN254)", cnt: feed?.stats?.zk_breakdown?.by_system?.GROTH16 || 31258 },
+              { id: "PLONK", label: "🧬 PLONK (KZG)", cnt: feed?.stats?.zk_breakdown?.by_system?.PLONK || 8627 },
+              { id: "FFLONK", label: "⚡ FFLONK (Fast-Fourier)", cnt: feed?.stats?.zk_breakdown?.by_system?.FFLONK || 3759 },
+              { id: "HALO2", label: "🌀 Halo2 (SHPLONK/GWC)", cnt: feed?.stats?.zk_breakdown?.by_system?.HALO2 || 2689 },
+              { id: "HONK", label: "🔮 Honk / UltraPlonk (Noir)", cnt: feed?.stats?.zk_breakdown?.by_system?.HONK || 1221 },
+              { id: "ZKVM", label: "🖥️ zkVM (SP1 / RISC0)", cnt: feed?.stats?.zk_breakdown?.by_system?.ZKVM || 1065 },
+              { id: "STARK", label: "🛡️ STARK / FRI", cnt: feed?.stats?.zk_breakdown?.by_system?.STARK || 24 },
+            ].map((ps) => (
+              <button
+                key={ps.id}
+                type="button"
+                onClick={() => {
+                  setGhVertical(ps.id);
+                  setPage(1);
+                }}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition-all ${
+                  ghVertical === ps.id
+                    ? "border-primary bg-primary text-primary-foreground font-bold shadow-sm"
+                    : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                }`}
+              >
+                <span>{ps.label}</span>
+                <span className="rounded bg-black/25 px-1.5 py-0.5 text-[10px]">
+                  {fmt(ps.cnt)}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Mathematical Vulnerability / Soundness Filter Row */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <span className="mr-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+              {isRu ? "Математический риск:" : "Math Risk Filter:"}
+            </span>
+            {[
+              { id: "ALL", label: isRu ? "Все верификаторы" : "All Verifiers", cnt: null },
+              { id: "GAMMA_EQ_DELTA", label: isRu ? "🔴 CRITICAL: γ == δ Forgery (Groth16)" : "🔴 CRITICAL: γ == δ Forgery", cnt: feed?.stats?.zk_breakdown?.gamma_eq_delta_count || 276 },
+              { id: "G2_REUSE", label: isRu ? "🟠 G₂ SRS / Generator Collision (KZG)" : "🟠 G₂ SRS / Generator Collision", cnt: feed?.stats?.zk_breakdown?.g2_reuse_count || 1776 },
+              { id: "HIGH", label: isRu ? "🔥 HIGH Risk Surface" : "🔥 HIGH Risk", cnt: feed?.stats?.zk_breakdown?.by_risk?.HIGH || 4251 },
+              { id: "MEDIUM", label: isRu ? "🟡 MEDIUM (KZG / Multi-Open)" : "🟡 MEDIUM", cnt: feed?.stats?.zk_breakdown?.by_risk?.MEDIUM || 15751 },
+              { id: "LOW", label: isRu ? "🟢 LOW (Standard BN254)" : "🟢 LOW", cnt: feed?.stats?.zk_breakdown?.by_risk?.LOW || 28365 },
+            ].map((rf) => (
+              <button
+                key={rf.id}
+                type="button"
+                onClick={() => {
+                  setOspecFilter(rf.id);
+                  setPage(1);
+                }}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] transition-all ${
+                  ospecFilter === rf.id
+                    ? "border-primary bg-primary/15 text-primary font-bold"
+                    : "border-border bg-background text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span>{rf.label}</span>
+                {rf.cnt !== null && rf.cnt > 0 && (
+                  <span className="opacity-80">({fmt(rf.cnt)})</span>
                 )}
               </button>
             ))}
@@ -764,9 +852,10 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
             >
               <option value="all">{isRu ? "Все сети" : "All Chains"}</option>
               <option value="ethereum">ETHEREUM</option>
-              <option value="base">BASE</option>
-              <option value="polygon">POLYGON</option>
               <option value="bsc">BSC</option>
+              <option value="base">BASE</option>
+              <option value="optimism">OPTIMISM</option>
+              <option value="polygon">POLYGON</option>
               <option value="arbitrum">ARBITRUM</option>
             </select>
           )}
@@ -990,6 +1079,22 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
                     className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/50 bg-red-500/15 px-3 py-2 font-semibold text-red-400 hover:bg-red-500 hover:text-white transition-colors"
                   >
                     <span>🔑 {isRu ? "В OSPEC" : "Open in OSPEC"}</span>
+                  </button>
+                )}
+
+                {item.source === "zk_radar" && item.identifier && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.dispatchEvent(
+                        new CustomEvent("boris-open-zk-audit", {
+                          detail: { address: item.identifier, chain: (item.chain || "ethereum").toLowerCase() },
+                        })
+                      );
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-purple-500/60 bg-purple-500/15 px-3 py-2 font-semibold text-purple-300 hover:bg-purple-500 hover:text-white transition-colors"
+                  >
+                    <span>🔬 {isRu ? "В ZK-Аудитор (Мат. Разбор)" : "Open in ZK Math Auditor"}</span>
                   </button>
                 )}
 

@@ -314,7 +314,56 @@ const ToolsPanel = () => {
       }
     };
     window.addEventListener("boris-open-ospec-repo", onOpenOspecEvent);
-    return () => window.removeEventListener("boris-open-ospec-repo", onOpenOspecEvent);
+
+    const runZkDirect = async (addr: string, ch: string) => {
+      setTool("zk");
+      setInput1(addr);
+      setChain(ch);
+      setError(null);
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/tools/zk-audit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders() },
+          body: JSON.stringify({ address: addr, chain: ch }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+        setResult(data);
+        loadHistory("zk");
+      } catch (e: any) {
+        setError(e.message || "ZK Audit error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const pendingZkRaw = sessionStorage.getItem("boris_pending_zk_target");
+    if (pendingZkRaw && rank >= 2) {
+      sessionStorage.removeItem("boris_pending_zk_target");
+      try {
+        const parsed = JSON.parse(pendingZkRaw);
+        if (parsed?.address) {
+          runZkDirect(parsed.address, parsed.chain || "ethereum");
+        }
+      } catch {}
+    }
+
+    const onOpenZkEvent = (ev: Event) => {
+      const ce = ev as CustomEvent<{ address?: string; chain?: string }>;
+      const addr = ce?.detail?.address || "";
+      const ch = ce?.detail?.chain || "ethereum";
+      if (addr && rank >= 2) {
+        sessionStorage.removeItem("boris_pending_zk_target");
+        runZkDirect(addr, ch);
+      }
+    };
+    window.addEventListener("boris-open-zk-audit", onOpenZkEvent);
+
+    return () => {
+      window.removeEventListener("boris-open-ospec-repo", onOpenOspecEvent);
+      window.removeEventListener("boris-open-zk-audit", onOpenZkEvent);
+    };
   }, [rank]);
 
   useEffect(() => {
@@ -347,7 +396,7 @@ const ToolsPanel = () => {
     { id: "flash", labelRu: "Flash-Loan & Spot-Оракул", labelEn: "Flash-Loan & Spot Oracle", icon: Zap, minRank: 1, placeholder: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2" },
     { id: "surface", labelRu: "Web3 Surface Mapper (Домен)", labelEn: "Web3 Surface Mapper (Domain)", icon: Radar, minRank: 1, placeholder: "across.to / rhino.fi / app.aave.com" },
     { id: "drift", labelRu: "Audit Drift (Репозиторий)", labelEn: "Audit Drift (Repo Audits)", icon: GitCompare, minRank: 1, placeholder: "https://github.com/aave/aave-v3-core или org/repo" },
-    { id: "zk", labelRu: "ZK / Groth16 аудит", labelEn: "ZK Groth16 Audit", icon: ShieldCheck, minRank: 2, placeholder: "0x... verifier" },
+    { id: "zk", labelRu: "ZK Math Monster v5.0 (7 Систем)", labelEn: "ZK Math Monster v5.0 (7 Systems)", icon: ShieldCheck, minRank: 2, placeholder: "0x... адрес ZK-верификатора (Groth16 / PLONK / FFLONK / Halo2 / Honk / STARK / zkVM)" },
     { id: "sandbox", labelRu: "Matrix Sandbox v16.2", labelEn: "Matrix Sandbox v16.2", icon: Terminal, minRank: 2, placeholder: "import requests, subprocess..." },
   ];
 
@@ -1127,6 +1176,65 @@ const ToolsPanel = () => {
                   {preset.replace("https://github.com/", "")}
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* Quick-Launch Mathematical Showcase for ZK Math Monster v5.0 (All 7 Proving Systems & Vuln Classes) */}
+          {tool === "zk" && (
+            <div className="space-y-2 rounded-xl border border-primary/30 bg-background/60 p-3 font-mono text-[11px]">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-bold text-primary">
+                  📐 {isRu ? "BORIS ZK MATH MONSTER v5.0 · Живые эталоны по 7 системам доказательств (1-клик тест):" : "BORIS ZK MATH MONSTER v5.0 · Live Multi-System Verifier Showcase (1-click):"}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  {isRu ? "База: 48,643 верификатора из 1,626,315 контрактов · 28 мат. детекторов" : "DB: 48,643 verifiers from 1.62M contracts · 28 math detectors"}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[
+                  { label: "🔴 Groth16 γ == δ Forgery (ETH)", addr: "0xca78718307d24d0c731fbc78019ca92c7a251378", ch: "ethereum" },
+                  { label: "🔴 Groth16 γ == δ Forgery (Polygon)", addr: "0xa6e4e74dbd04cc08bf054dd1aa5b9f83b5e66e2d", ch: "polygon" },
+                  { label: "🟠 PLONK KZG G₂-Collision (24KB)", addr: "0x1c397f0c436cff6159f10fbccd38374ec79e6902", ch: "ethereum" },
+                  { label: "🟣 FFLONK Fast-Fourier (23KB)", addr: "0xf2f73b87e97730dca6558dd71c0b1c945ca38096", ch: "ethereum" },
+                  { label: "🔵 Halo2 SHPLONK/GWC Accumulator", addr: "0x5284de439d386f54b769cbbe45ef51488db5aaff", ch: "bsc" },
+                  { label: "🔮 UltraPlonk / Honk (Noir/Aztec)", addr: "0x6e9bf73099cdc6d91d81d246238c5be5893cd6ff", ch: "ethereum" },
+                  { label: "🟡 STARK / FRI Algebraic Verifier", addr: "0xfebf5c0b9bd162735eec985df48eb8163f730776", ch: "optimism" },
+                  { label: "⚡ zkVM Receipt Verifier (SP1/RISC0)", addr: "0x2b2ab5ac76b399bb35e8cba96e4af300d4c9c437", ch: "bsc" },
+                ].map((zp) => (
+                  <button
+                    key={`${zp.ch}:${zp.addr}`}
+                    type="button"
+                    onClick={async () => {
+                      setInput1(zp.addr);
+                      setChain(zp.ch);
+                      setError(null);
+                      setLoading(true);
+                      try {
+                        const res = await fetch(`${API_BASE}/api/tools/zk-audit`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", ...authHeaders() },
+                          body: JSON.stringify({ address: zp.addr, chain: zp.ch }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+                        setResult(data);
+                        loadHistory("zk");
+                      } catch (e: any) {
+                        setError(e.message || "ZK Audit error");
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
+                      input1.toLowerCase() === zp.addr.toLowerCase()
+                        ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                        : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                    }`}
+                  >
+                    {zp.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -2756,45 +2864,209 @@ const ToolsPanel = () => {
       )}
 
       {result && tool === "zk" && (
-        <div className="rounded-xl border border-border bg-card p-5 space-y-4 font-mono text-xs">
+        <div className="rounded-xl border border-border bg-card p-5 space-y-5 font-mono text-xs">
+          {/* Header: Target Address, Proving System Badge & Soundness Verdict */}
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
-            <div>
-              <span className="text-primary font-bold">{result.address}</span>
-              <span className="ml-2 text-muted-foreground">({result.chain})</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-md border border-primary/50 bg-primary/15 px-2.5 py-1 text-xs font-bold uppercase text-primary">
+                📐 {result.proving_system || result.radar_metadata?.proving_system || "GROTH16"}
+              </span>
+              <span className="text-primary font-bold text-sm">{result.address}</span>
+              <span className="rounded bg-background border border-border px-2 py-0.5 text-[10px] uppercase text-muted-foreground">
+                {result.chain}
+              </span>
+              {result.radar_metadata?.archetype && (
+                <span className="rounded border border-purple-500/40 bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-300">
+                  {result.radar_metadata.archetype}
+                </span>
+              )}
             </div>
             <span
-              className={`rounded border px-2.5 py-0.5 text-[11px] font-bold ${
-                (result.critical_count || 0) > 0 || (result.high_count || 0) > 0
-                  ? "border-red-500/50 bg-red-500/15 text-red-400"
+              className={`rounded-lg border px-3 py-1 text-[11px] font-bold ${
+                (result.critical_count || 0) > 0
+                  ? "border-red-500/60 bg-red-500/20 text-red-300"
+                  : (result.high_count || 0) > 0
+                  ? "border-amber-500/60 bg-amber-500/20 text-amber-300"
                   : "border-green-500/50 bg-green-500/15 text-green-400"
               }`}
             >
-              {result.verdict || "ZK AUDIT COMPLETE"} · Findings: {result.verifiers_found}
+              {result.verdict || "ZK AUDIT COMPLETE"} · {isRu ? "Находок" : "Findings"}: {result.verifiers_found ?? (result.results?.length || 0)}
             </span>
           </div>
 
+          {/* 1. Mathematical Verification Equation & Proving System Profile */}
+          {result.proving_system_profile && (
+            <div className="rounded-xl border border-primary/30 bg-background/80 p-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-bold text-primary text-xs">
+                  🧮 {result.proving_system_profile.full_name}
+                </span>
+                <span className="rounded border border-cyan-500/40 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold text-cyan-300">
+                  {result.proving_system_profile.curve}
+                </span>
+              </div>
+
+              <div className="rounded-lg border border-border bg-card p-3 space-y-1.5">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {isRu ? "Алгебраическое уравнение верификации (Pairing / Polynomial Identity):" : "Algebraic Verification Equation:"}
+                </p>
+                <p className="text-xs font-bold text-green-400 break-all">
+                  {result.proving_system_profile.equation}
+                </p>
+                {result.proving_system_profile.alt_equation && (
+                  <p className="text-[11px] text-muted-foreground break-all">
+                    ⇔ {result.proving_system_profile.alt_equation}
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 text-[11px]">
+                <div className="rounded-lg border border-border bg-card p-2.5">
+                  <p className="text-[9px] uppercase text-muted-foreground">{isRu ? "Схема коммитментов" : "Commitment Scheme"}</p>
+                  <p className="mt-1 font-semibold text-foreground">{result.proving_system_profile.commitment_scheme}</p>
+                </div>
+                <div className="rounded-lg border border-border bg-card p-2.5">
+                  <p className="text-[9px] uppercase text-muted-foreground">{isRu ? "Церемония / Setup" : "Trusted Setup"}</p>
+                  <p className="mt-1 font-semibold text-foreground">{result.proving_system_profile.trusted_setup}</p>
+                </div>
+                <div className="rounded-lg border border-border bg-card p-2.5">
+                  <p className="text-[9px] uppercase text-muted-foreground">{isRu ? "Размер доказательства" : "Proof Size"}</p>
+                  <p className="mt-1 font-semibold text-foreground">{result.proving_system_profile.proof_size}</p>
+                </div>
+                <div className="rounded-lg border border-border bg-card p-2.5">
+                  <p className="text-[9px] uppercase text-muted-foreground">{isRu ? "Вычислительная сложность" : "Verification Complexity"}</p>
+                  <p className="mt-1 font-semibold text-foreground">{result.proving_system_profile.verification_complexity}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 2. Disassembled EVM Bytecode & Elliptic Curve Algebra Telemetry */}
+          {result.math_bytecode_profile && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-8">
+                <div className="rounded-lg border border-border bg-background p-2.5">
+                  <p className="text-[9px] uppercase text-muted-foreground">ecPairing (0x08)</p>
+                  <p className="mt-1 text-sm font-bold text-primary">
+                    {result.math_bytecode_profile.precompiles?.ecpairing_0x08 ?? 0} calls
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-2.5">
+                  <p className="text-[9px] uppercase text-muted-foreground">ecMul (0x07)</p>
+                  <p className="mt-1 text-sm font-bold text-foreground">
+                    {result.math_bytecode_profile.precompiles?.ecmul_0x07 ?? 0} calls
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-2.5">
+                  <p className="text-[9px] uppercase text-muted-foreground">ecAdd (0x06)</p>
+                  <p className="mt-1 text-sm font-bold text-foreground">
+                    {result.math_bytecode_profile.precompiles?.ecadd_0x06 ?? 0} calls
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-2.5">
+                  <p className="text-[9px] uppercase text-muted-foreground">ADDMOD / MULMOD</p>
+                  <p className="mt-1 text-sm font-bold text-amber-300">
+                    {result.math_bytecode_profile.opcodes?.addmod ?? 0} / {result.math_bytecode_profile.opcodes?.mulmod ?? 0}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-2.5">
+                  <p className="text-[9px] uppercase text-muted-foreground">KECCAK256 (Transcript)</p>
+                  <p className="mt-1 text-sm font-bold text-purple-300">
+                    {result.math_bytecode_profile.opcodes?.keccak256 ?? 0}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-2.5">
+                  <p className="text-[9px] uppercase text-muted-foreground">PUSH32 / G₁ Points</p>
+                  <p className="mt-1 text-sm font-bold text-cyan-300">
+                    {result.math_bytecode_profile.push32_count ?? 0} / {result.math_bytecode_profile.valid_g1_points_count ?? 0} G₁
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-2.5">
+                  <p className="text-[9px] uppercase text-muted-foreground">Base Field p (Fq)</p>
+                  <p className={`mt-1 text-xs font-bold ${result.math_bytecode_profile.has_base_prime_p ? "text-green-400" : "text-amber-400"}`}>
+                    {result.math_bytecode_profile.has_base_prime_p ? "✅ Embedded" : "⚠️ Implicit"}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-background p-2.5">
+                  <p className="text-[9px] uppercase text-muted-foreground">Scalar Field r (Fr)</p>
+                  <p className={`mt-1 text-xs font-bold ${result.math_bytecode_profile.has_scalar_prime_r ? "text-green-400" : "text-red-400"}`}>
+                    {result.math_bytecode_profile.has_scalar_prime_r ? "✅ Checked (< r)" : "🔴 No < r Check"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Extracted Valid BN254 G1 Curve Points Sample */}
+              {Array.isArray(result.math_bytecode_profile.valid_g1_points_sample) &&
+                result.math_bytecode_profile.valid_g1_points_sample.length > 0 && (
+                  <details className="rounded-lg border border-border bg-background p-3">
+                    <summary className="cursor-pointer font-bold text-[11px] text-cyan-300">
+                      🧬 {isRu
+                        ? `Показать извлечённые из байткода точки кривой G₁ (y² ≡ x³ + 3 mod p): подтверждено ${result.math_bytecode_profile.valid_g1_points_count} точек на BN254`
+                        : `Show extracted on-curve G₁ points (y² ≡ x³ + 3 mod p): ${result.math_bytecode_profile.valid_g1_points_count} valid BN254 points`}
+                    </summary>
+                    <div className="mt-2.5 grid grid-cols-1 gap-1.5 sm:grid-cols-2 text-[10px]">
+                      {result.math_bytecode_profile.valid_g1_points_sample.map((pt: any, idx: number) => (
+                        <div key={idx} className="rounded border border-border/70 bg-card p-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-primary">G₁ Point #{pt.index} (IC / VK)</span>
+                            <span className={pt.is_duplicate ? "text-red-400 font-bold" : "text-green-400"}>
+                              {pt.is_duplicate ? "⚠️ DUPLICATE IC_i" : "✓ y² = x³ + 3 (mod p)"}
+                            </span>
+                          </div>
+                          <p className="truncate text-muted-foreground mt-0.5">x: {pt.x}</p>
+                          <p className="truncate text-muted-foreground">y: {pt.y}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
+            </div>
+          )}
+
+          {/* 3. ZK Radar v5 Metadata & VK Fingerprint Cluster */}
           {result.radar_metadata && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <div className="rounded-lg border border-border bg-background p-3">
-                <p className="text-[10px] uppercase text-muted-foreground">ZK Radar v4 Match</p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              <div className="rounded-lg border border-border bg-background p-2.5">
+                <p className="text-[9px] uppercase text-muted-foreground">ZK Radar v5 Status</p>
                 <p className="mt-1 font-bold text-green-400">
-                  ✅ {result.radar_metadata.discovery_method || "Indexed"}
+                  ✅ {result.radar_metadata.setup_status || result.radar_metadata.discovery_method || "Indexed"}
                 </p>
               </div>
-              <div className="rounded-lg border border-border bg-background p-3">
-                <p className="text-[10px] uppercase text-muted-foreground">Deploy Block</p>
+              <div className="rounded-lg border border-border bg-background p-2.5">
+                <p className="text-[9px] uppercase text-muted-foreground">VK Fingerprint</p>
+                <p className="mt-1 font-bold text-cyan-300">
+                  {result.radar_metadata.vk_fingerprint_short || "—"}
+                  {result.vk_siblings_count > 0 && (
+                    <span className="ml-1.5 rounded bg-amber-500/20 px-1.5 py-0.5 text-[9px] text-amber-300">
+                      +{result.vk_siblings_count} clones
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-background p-2.5">
+                <p className="text-[9px] uppercase text-muted-foreground">γ == δ / G₂ Collision</p>
+                <p className={`mt-1 font-bold ${result.radar_metadata.gamma_eq_delta ? "text-red-400" : result.radar_metadata.g2_generator_reuse ? "text-amber-300" : "text-green-400"}`}>
+                  {result.radar_metadata.gamma_eq_delta
+                    ? "🔴 γ == δ (CRITICAL)"
+                    : result.radar_metadata.g2_generator_reuse
+                    ? "🟠 G₂ SRS Reuse"
+                    : "🟢 Distinct G₂"}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-background p-2.5">
+                <p className="text-[9px] uppercase text-muted-foreground">Public Inputs / IC</p>
                 <p className="mt-1 font-bold text-foreground">
-                  {result.radar_metadata.deploy_block || "—"}
+                  {result.radar_metadata.public_inputs ?? "—"} inputs (IC={result.radar_metadata.ic_length ?? "—"})
                 </p>
               </div>
-              <div className="rounded-lg border border-border bg-background p-3">
-                <p className="text-[10px] uppercase text-muted-foreground">Bytecode Size</p>
+              <div className="rounded-lg border border-border bg-background p-2.5">
+                <p className="text-[9px] uppercase text-muted-foreground">Bytecode / Block</p>
                 <p className="mt-1 font-bold text-foreground">
-                  {result.radar_metadata.bytecode_size || 0} bytes
+                  {(result.radar_metadata.bytecode_size || 0).toLocaleString()}B · #{result.radar_metadata.deploy_block || "—"}
                 </p>
               </div>
-              <div className="rounded-lg border border-border bg-background p-3">
-                <p className="text-[10px] uppercase text-muted-foreground">Deployer EOA</p>
+              <div className="rounded-lg border border-border bg-background p-2.5">
+                <p className="text-[9px] uppercase text-muted-foreground">Deployer EOA</p>
                 <p className="mt-1 truncate font-bold text-primary">
                   {result.radar_metadata.deployer || "—"}
                 </p>
@@ -2802,25 +3074,77 @@ const ToolsPanel = () => {
             </div>
           )}
 
+          {/* 4. Mathematical & Cryptographic Vulnerability Findings */}
           {Array.isArray(result.results) && result.results.length > 0 ? (
-            <div className="space-y-2">
-              {result.results.map((f: any, idx: number) => (
-                <div key={idx} className="rounded-lg border border-border bg-background p-3 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-foreground">{f.title || f.vuln_type || "ZK Finding"}</span>
-                    <span className="rounded border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                      {f.severity || "INFO"}
-                    </span>
+            <div className="space-y-2.5">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                🔬 {isRu ? `Математические и криптографические находки (${result.results.length}):` : `Mathematical & Cryptographic Findings (${result.results.length}):`}
+              </p>
+              {result.results.map((f: any, idx: number) => {
+                const sev = String(f.severity || "INFO").toUpperCase();
+                return (
+                  <div
+                    key={idx}
+                    className={`rounded-xl border p-3.5 space-y-2 ${
+                      sev === "CRITICAL"
+                        ? "border-red-500/50 bg-red-500/10"
+                        : sev === "HIGH"
+                        ? "border-amber-500/50 bg-amber-500/10"
+                        : "border-border bg-background"
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {f.detector_id && (
+                          <span className="rounded bg-card border border-border px-2 py-0.5 text-[10px] font-bold text-primary">
+                            {f.detector_id}
+                          </span>
+                        )}
+                        <span className="font-bold text-foreground text-xs">
+                          {f.title || f.type || f.vuln_type || "ZK Cryptographic Finding"}
+                        </span>
+                      </div>
+                      <span
+                        className={`rounded border px-2 py-0.5 text-[10px] font-bold ${
+                          sev === "CRITICAL"
+                            ? "border-red-500/60 bg-red-500/20 text-red-300"
+                            : sev === "HIGH"
+                            ? "border-amber-500/60 bg-amber-500/20 text-amber-300"
+                            : "border-primary/40 bg-primary/10 text-primary"
+                        }`}
+                      >
+                        {sev}
+                      </span>
+                    </div>
+                    {f.description && (
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">{f.description}</p>
+                    )}
+                    {f.math_proof && (
+                      <div className="rounded-lg border border-primary/30 bg-card/90 px-3 py-2 text-[11px] text-green-300">
+                        <span className="font-bold text-primary">📐 {isRu ? "Математика вектора: " : "Math Proof: "}</span>
+                        {f.math_proof}
+                      </div>
+                    )}
+                    {f.code_snippet && (
+                      <pre className="overflow-x-auto rounded-lg border border-border bg-card p-2 text-[10px] text-muted-foreground">
+                        {f.code_snippet}
+                      </pre>
+                    )}
+                    {f.recommendation && (
+                      <p className="text-[11px] text-cyan-300">
+                        <span className="font-bold">🛡️ {isRu ? "Рекомендация: " : "Remediation: "}</span>
+                        {f.recommendation}
+                      </p>
+                    )}
                   </div>
-                  {f.description && <p className="text-[11px] text-muted-foreground">{f.description}</p>}
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p className="text-[11px] text-muted-foreground">
               {isRu
-                ? "Уязвимостей кривой BN254, gamma==delta, подгрупповых атак G1/G2 или переполнения публичных входов не обнаружено."
-                : "No BN254 curve membership, gamma==delta, G1/G2 subgroup, or public input overflow flaws detected."}
+                ? "Уязвимостей кривой BN254, gamma==delta, подгрупповых атак G1/G2, Frozen Heart или переполнения публичных входов не обнаружено."
+                : "No BN254 curve membership, gamma==delta, G1/G2 subgroup, Frozen Heart, or public input overflow flaws detected."}
             </p>
           )}
         </div>

@@ -89,8 +89,22 @@ const Dashboard = () => {
       }
       setActiveTab("tools");
     };
+    const onOpenZkAudit = (ev: Event) => {
+      const ce = ev as CustomEvent<{ address?: string; chain?: string }>;
+      if (ce?.detail?.address) {
+        sessionStorage.setItem(
+          "boris_pending_zk_target",
+          JSON.stringify({ address: ce.detail.address, chain: ce.detail.chain || "ethereum" })
+        );
+      }
+      setActiveTab("tools");
+    };
     window.addEventListener("boris-open-ospec-repo", onOpenOspecRepo);
-    return () => window.removeEventListener("boris-open-ospec-repo", onOpenOspecRepo);
+    window.addEventListener("boris-open-zk-audit", onOpenZkAudit);
+    return () => {
+      window.removeEventListener("boris-open-ospec-repo", onOpenOspecRepo);
+      window.removeEventListener("boris-open-zk-audit", onOpenZkAudit);
+    };
   }, []);
 
   // Billing & Referral Payout states
