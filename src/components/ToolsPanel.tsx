@@ -1402,6 +1402,46 @@ const ToolsPanel = () => {
                     ⚡ {isRu ? "Турбо-Скан (50 репо)" : "Turbo Scan (50)"}
                     {rank < 3 && <span className="ml-1 rounded bg-black/40 px-1 py-0.5 text-[9px]">🔒 BB</span>}
                   </button>
+                  <button
+                    type="button"
+                    disabled={ospecDaemonBusy}
+                    onClick={async () => {
+                      if (rank < 2) {
+                        setError(
+                          isRu
+                            ? "🔒 Запуск Мультичейн Дериватора и Live-Чекера (BTC xprv, NEAR, Keystore v3, PEM, EVM, API) доступен на тарифах RAW и BLACKBOX."
+                            : "🔒 Multichain Live Verifier requires RAW or BLACKBOX tier."
+                        );
+                        return;
+                      }
+                      setOspecDaemonBusy(true);
+                      setOspecDaemonMsg(null);
+                      try {
+                        const res = await fetch(`${API_BASE}/api/tools/ospec-daemon-control`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", ...authHeaders() },
+                          body: JSON.stringify({ action: "run_checkers", batch_size: 80 }),
+                        });
+                        const d = await res.json().catch(() => ({}));
+                        if (!res.ok) throw new Error(d.detail || `HTTP ${res.status}`);
+                        setOspecDaemonMsg(
+                          d.message ||
+                            (isRu
+                              ? "🧬 Мультичейн Live-Чек завершён!"
+                              : "🧬 Multichain Live Verification completed!")
+                        );
+                        runOspecWithFilters({ offset: ospecOffset });
+                      } catch (e: any) {
+                        setError(e.message);
+                      } finally {
+                        setOspecDaemonBusy(false);
+                      }
+                    }}
+                    className="rounded-lg border border-cyan-500/60 bg-cyan-500/15 px-2.5 py-1 font-semibold text-cyan-300 transition-all hover:bg-cyan-500 hover:text-black disabled:opacity-50"
+                  >
+                    🧬 {isRu ? "Мультичейн Live-Чек" : "Multichain Live Check"}
+                    {rank < 2 && <span className="ml-1 rounded bg-black/40 px-1 py-0.5 text-[9px]">🔒 RAW+</span>}
+                  </button>
                 </div>
               </div>
 
@@ -2367,6 +2407,31 @@ const ToolsPanel = () => {
           </div>
 
           {/* Visual Top Holders Table */}
+          {result.db_stats?.by_chain && Object.keys(result.db_stats.by_chain).length > 0 && (
+            <div className="rounded-xl border border-cyan-500/30 bg-card px-4 py-3 font-mono text-xs flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 mr-1">
+                  🧬 {isRu ? "Мультичейн Дериватор & Чекеры:" : "Multichain Derivator & Live Checkers:"}
+                </span>
+                {Object.entries(result.db_stats.by_chain)
+                  .filter(([ch]) => ch !== "undetermined" && ch !== "other")
+                  .map(([ch, cnt]: [string, any]) => (
+                    <span
+                      key={ch}
+                      className="rounded border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-300"
+                    >
+                      ⛓ {ch.toUpperCase()}: <b>{fmt(Number(cnt || 0), 0)}</b>
+                    </span>
+                  ))}
+              </div>
+              <span className="text-[10px] text-muted-foreground">
+                {isRu
+                  ? "EVM (6 сетей) · BTC xprv (BIP44/49/84) · NEAR ed25519 · Solana · Keystore v3 · PEM (secp256k1) · 45+ API"
+                  : "EVM (6 chains) · BTC xprv (BIP44/49/84) · NEAR ed25519 · Solana · Keystore v3 · PEM (secp256k1) · 45+ API"}
+              </span>
+            </div>
+          )}
+
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <p className="text-[10px] uppercase tracking-wider text-primary font-bold">
@@ -3299,6 +3364,34 @@ const ToolsPanel = () => {
                         <div className="flex items-center gap-2">
                           {f.found_at && (
                             <span className="text-[10px] text-muted-foreground">{f.found_at}</span>
+                          )}
+                          {rank >= 2 && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  setOspecDaemonMsg(isRu ? `🧬 Проверка живости #${f.id} (${f.kind})...` : `🧬 Probing #${f.id} (${f.kind})...`);
+                                  const res = await fetch(`${API_BASE}/api/tools/ospec/verify/${f.id}`, {
+                                    method: "POST",
+                                    headers: { ...authHeaders() },
+                                  });
+                                  const d = await res.json().catch(() => ({}));
+                                  if (!res.ok) throw new Error(d.detail || `HTTP ${res.status}`);
+                                  setOspecDaemonMsg(
+                                    `🧬 #${f.id} [${d.kind}]: ${d.is_live ? "🔥 LIVE" : "⚪ 0 bal / DEAD"} · ${
+                                      d.derived_addr ? `${d.derived_chain?.toUpperCase() || ""} ${d.derived_addr} · ` : ""
+                                    }${d.detail || ""}`
+                                  );
+                                  runOspecWithFilters({ offset: ospecOffset });
+                                } catch (e: any) {
+                                  setError(e.message);
+                                }
+                              }}
+                              className="inline-flex items-center gap-1 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-2 py-1 font-mono text-[10px] font-semibold text-cyan-300 transition-colors hover:bg-cyan-500 hover:text-black"
+                              title={isRu ? "Проверить баланс / живость ключа" : "Run live balance / API check"}
+                            >
+                              ⚡ {isRu ? "Live-Чек" : "Verify"}
+                            </button>
                           )}
                           <button
                             type="button"
