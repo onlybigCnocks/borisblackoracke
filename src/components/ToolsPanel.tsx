@@ -122,6 +122,7 @@ const ToolsPanel = () => {
 
   const skipAutoOspecRef = useRef<boolean>(false);
   const resultsTopRef = useRef<HTMLDivElement | null>(null);
+  const activeToolResultRef = useRef<HTMLDivElement | null>(null);
 
   const handleToggleOspecFinding = async (fid: number) => {
     if (expandedFindingId === fid) {
@@ -624,24 +625,78 @@ const ToolsPanel = () => {
       if (data && data.result) {
         skipAutoOspecRef.current = true;
         const r = data.result;
+        const rawTarget = String(item.target || "").trim();
+        const isFilterTarget = rawTarget.toLowerCase().startsWith("filter:");
+        const filterSuffix = isFilterTarget ? rawTarget.slice(7).trim().toUpperCase() : "";
+
         // Normalize legacy OSPEC history records if needed
-        if (item.tool === "ospec" && Array.isArray(r.findings)) {
-          r.findings = r.findings.map((f: any) => ({
-            ...f,
-            hits: f.hits || 1,
-            kind: String(f.kind || "SECRET").replace("secret:", ""),
-            gh_url: f.gh_url || f.repo_url || "",
-          }));
-          if (!r.filter_mode) r.filter_mode = `history:${item.target}`;
+        if (item.tool === "ospec") {
+          if (Array.isArray(r.findings)) {
+            r.findings = r.findings.map((f: any) => ({
+              ...f,
+              hits: f.hits || 1,
+              kind: String(f.kind || "SECRET").replace("secret:", ""),
+              gh_url: f.gh_url || f.repo_url || "",
+            }));
+          }
+          if (!r.filter_mode) r.filter_mode = `history:${rawTarget}`;
+
+          const savedCat =
+            r.category_filter ||
+            (["WHITEHAT_POS_BIZ", "FINTECH_ECOMM", "AI_VOICE_LLM", "CLOUD_DB_BAAS", "COMMS_MOBILE_OTA", "WEB3_WALLETS_RPC"].includes(filterSuffix)
+              ? filterSuffix
+              : "ALL");
+          const savedSev =
+            r.severity_filter && r.severity_filter !== "ALL"
+              ? r.severity_filter
+              : ["CRITICAL", "HIGH", "MEDIUM"].includes(filterSuffix)
+              ? filterSuffix
+              : "";
+          const savedVert = r.vertical_filter || "ALL";
+          const savedCls = r.cls_filter || "REAL";
+          const cleanQuery = isFilterTarget ? "" : rawTarget;
+
+          setTool("ospec");
+          setInput1(cleanQuery);
+          setOspecCategory(savedCat);
+          setOspecSeverity(savedSev);
+          setOspecVertical(savedVert);
+          setOspecClsFilter(savedCls);
+          setOspecOnlyReal(savedCls === "REAL");
+          setOspecOnlyLive(false);
+
+          // If the historical snapshot had 0 findings (e.g. recorded while LIVE filter was stuck on),
+          // re-fetch live OSPEC findings immediately so clicking "Открыть" always shows real data!
+          if (!Array.isArray(r.findings) || r.findings.length === 0) {
+            setOpenedHistoryBanner(
+              `${item.tool.toUpperCase()} · ${rawTarget} (${new Date(item.created_at * 1000).toLocaleString()})`
+            );
+            await runOspecWithFilters({
+              q: cleanQuery,
+              cat: savedCat,
+              sev: savedSev,
+              vert: savedVert,
+              cls: savedCls,
+              real: savedCls === "REAL",
+              live: false,
+              offset: 0,
+            });
+            setTimeout(() => {
+              (activeToolResultRef.current || resultsTopRef.current)?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 80);
+            return;
+          }
+        } else {
+          setTool(item.tool as ToolId);
+          setInput1(rawTarget);
         }
-        setTool(item.tool as ToolId);
-        setInput1(item.target || "");
+
         setResult(r);
         setOpenedHistoryBanner(
-          `${item.tool.toUpperCase()} · ${item.target} (${new Date(item.created_at * 1000).toLocaleString()})`
+          `${item.tool.toUpperCase()} · ${rawTarget} (${new Date(item.created_at * 1000).toLocaleString()})`
         );
         setTimeout(() => {
-          resultsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+          (activeToolResultRef.current || resultsTopRef.current)?.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 80);
       }
     } catch (e: any) {
@@ -1326,7 +1381,9 @@ const ToolsPanel = () => {
                           }
                           setOspecCategory(cat.id);
                           setInput1("");
-                          runOspecWithFilters({ cat: cat.id, q: "", offset: 0 });
+                          const keepLive = cat.id === "WEB3_WALLETS_RPC" ? ospecOnlyLive : false;
+                          if (!keepLive) setOspecOnlyLive(false);
+                          runOspecWithFilters({ cat: cat.id, q: "", live: keepLive, offset: 0 });
                         }}
                         className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
                           activeCat
@@ -1356,7 +1413,9 @@ const ToolsPanel = () => {
                       onChange={(e) => {
                         const val = e.target.value;
                         setInput1(val);
-                        runOspecWithFilters({ q: val, offset: 0 });
+                        setOspecCategory("ALL");
+                        setOspecOnlyLive(false);
+                        runOspecWithFilters({ q: val, cat: "ALL", live: false, offset: 0 });
                       }}
                       className="w-full rounded-lg border border-border bg-card px-2.5 py-1.5 font-mono text-[11px] text-foreground outline-none focus:border-primary"
                     >
@@ -1500,6 +1559,8 @@ const ToolsPanel = () => {
           <span>{error}</span>
         </div>
       )}
+
+      <div ref={activeToolResultRef} />
 
       {/* RESULTS */}
       {(() => {

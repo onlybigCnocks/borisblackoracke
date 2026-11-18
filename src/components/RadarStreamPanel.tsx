@@ -27,7 +27,7 @@ import {
 
 interface Props {
   user: BorisUser | null;
-  onOpenDossier: (taskId: string) => void;
+  onOpenDossier: (taskId: string, fallbackTarget?: string) => void;
   onPrefillScan: (target: string) => void;
 }
 
@@ -164,8 +164,8 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
   };
 
   const handleControlDaemon = async (action: "toggle_watcher" | "toggle_backfill" | "run_batch") => {
-    if (!isPaid) {
-      window.dispatchEvent(new CustomEvent("boris-open-checkout", { detail: { tier: "radar" } }));
+    if (user?.tier?.toUpperCase() !== "BLACKBOX") {
+      window.dispatchEvent(new CustomEvent("boris-open-checkout", { detail: { tier: "blackbox" } }));
       return;
     }
     setOmniRunning(true);
@@ -956,7 +956,7 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
                 {item.task_id ? (
                   <button
                     type="button"
-                    onClick={() => onOpenDossier(item.task_id)}
+                    onClick={() => onOpenDossier(item.task_id, item.url || item.identifier || item.name)}
                     className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 font-semibold text-primary-foreground hover:bg-primary-dim"
                   >
                     <Eye size={13} />

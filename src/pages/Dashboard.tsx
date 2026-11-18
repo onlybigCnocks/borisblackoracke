@@ -1374,7 +1374,7 @@ const Dashboard = () => {
         {activeTab === "radar" && (
           <RadarStreamPanel
             user={user}
-            onOpenDossier={(taskId) => handleOpenSavedScan(taskId)}
+            onOpenDossier={(taskId, fallbackTarget) => handleOpenSavedScan(taskId, fallbackTarget)}
             onPrefillScan={(target) => {
               localStorage.setItem("boris_prefill_target", target);
               window.dispatchEvent(new CustomEvent("boris-prefill-target", { detail: { target } }));
