@@ -83,6 +83,8 @@ const ToolsPanel = () => {
   // OSPEC Telegram-style filter states
   const [ospecSeverity, setOspecSeverity] = useState<string>("");
   const [ospecVertical, setOspecVertical] = useState<string>("ALL");
+  const [ospecCategory, setOspecCategory] = useState<string>("ALL");
+  const [ospecClsFilter, setOspecClsFilter] = useState<string>("REAL");
   const [ospecOnlyReal, setOspecOnlyReal] = useState<boolean>(true);
   const [ospecOnlyLive, setOspecOnlyLive] = useState<boolean>(false);
   const [ospecOffset, setOspecOffset] = useState<number>(0);
@@ -91,6 +93,7 @@ const ToolsPanel = () => {
   const [loadingFindingId, setLoadingFindingId] = useState<number | null>(null);
   const [copiedSecretId, setCopiedSecretId] = useState<string | null>(null);
   const [openedHistoryBanner, setOpenedHistoryBanner] = useState<string | null>(null);
+  const ospecSearchInputRef = useRef<HTMLInputElement | null>(null);
 
   // Full Markdown Writeup viewer for the 1,678 Deep Exploits DB
   const [expandedWriteupSlug, setExpandedWriteupSlug] = useState<string | null>(null);
@@ -151,6 +154,8 @@ const ToolsPanel = () => {
     q?: string;
     sev?: string;
     vert?: string;
+    cat?: string;
+    cls?: string;
     real?: boolean;
     live?: boolean;
     offset?: number;
@@ -159,6 +164,8 @@ const ToolsPanel = () => {
     const qVal = opts?.q !== undefined ? opts.q : input1.trim();
     const sevVal = opts?.sev !== undefined ? opts.sev : ospecSeverity;
     const vertVal = opts?.vert !== undefined ? opts.vert : ospecVertical;
+    const catVal = opts?.cat !== undefined ? opts.cat : ospecCategory;
+    const clsVal = opts?.cls !== undefined ? opts.cls : ospecClsFilter;
     const realVal = opts?.real !== undefined ? opts.real : ospecOnlyReal;
     const liveVal = opts?.live !== undefined ? opts.live : ospecOnlyLive;
     const offsetVal = opts?.offset !== undefined ? opts.offset : 0;
@@ -175,6 +182,8 @@ const ToolsPanel = () => {
           query: qVal,
           severity: sevVal,
           vertical: vertVal,
+          category: catVal,
+          cls_filter: clsVal,
           only_real: realVal,
           only_live: liveVal,
           offset: offsetVal,
@@ -190,6 +199,86 @@ const ToolsPanel = () => {
       setLoading(false);
     }
   };
+
+  // Keyboard hotkeys for OSPEC when active and not typing in an input/select
+  useEffect(() => {
+    if (tool !== "ospec" || rank < 1) return;
+    const onKeyDown = (ev: KeyboardEvent) => {
+      const tag = (ev.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === "input" || tag === "textarea" || tag === "select") {
+        if (ev.key === "Escape") (ev.target as HTMLElement).blur();
+        return;
+      }
+      if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+      if (ev.key === "/") {
+        ev.preventDefault();
+        ospecSearchInputRef.current?.focus();
+      } else if (ev.key === "1") {
+        ev.preventDefault();
+        setInput1("");
+        setOspecSeverity("");
+        setOspecCategory("ALL");
+        setOspecClsFilter("REAL");
+        setOspecOnlyReal(true);
+        setOspecOnlyLive(false);
+        runOspecWithFilters({ q: "", sev: "", cat: "ALL", cls: "REAL", real: true, live: false, offset: 0 });
+      } else if (ev.key === "2") {
+        ev.preventDefault();
+        if (rank < 2) {
+          setError(isRu ? "🔥 Фильтр LIVE / С балансом доступен на тарифах RAW и BLACKBOX." : "🔥 LIVE / Funded filter requires RAW or BLACKBOX tier.");
+          return;
+        }
+        const next = !ospecOnlyLive;
+        setOspecOnlyLive(next);
+        runOspecWithFilters({ live: next, offset: 0 });
+      } else if (ev.key === "3") {
+        ev.preventDefault();
+        const next = ospecSeverity === "CRITICAL" ? "" : "CRITICAL";
+        setOspecSeverity(next);
+        runOspecWithFilters({ sev: next, offset: 0 });
+      } else if (ev.key === "4") {
+        ev.preventDefault();
+        const next = ospecSeverity === "HIGH" ? "" : "HIGH";
+        setOspecSeverity(next);
+        runOspecWithFilters({ sev: next, offset: 0 });
+      } else if (ev.key === "5") {
+        ev.preventDefault();
+        if (rank < 2) {
+          setError(isRu ? "🍔 Категория Whitehat (Рестораны / POS / SaaS) доступна на тарифах RAW и BLACKBOX." : "🍔 Whitehat category requires RAW or BLACKBOX tier.");
+          return;
+        }
+        const next = ospecCategory === "WHITEHAT_POS_BIZ" ? "ALL" : "WHITEHAT_POS_BIZ";
+        setOspecCategory(next);
+        runOspecWithFilters({ cat: next, offset: 0 });
+      } else if (ev.key === "6") {
+        ev.preventDefault();
+        if (rank < 3) {
+          setError(isRu ? "🧪 Обратный отсев (пулы SUSPECT / TEST) доступен эксклюзивно на тарифе BLACKBOX." : "🧪 Reverse-Sieve (SUSPECT / TEST pools) requires BLACKBOX tier.");
+          return;
+        }
+        const nextCls = ospecClsFilter === "REAL" ? "SUSPECT" : "REAL";
+        const nextReal = nextCls === "REAL";
+        setOspecClsFilter(nextCls);
+        setOspecOnlyReal(nextReal);
+        runOspecWithFilters({ cls: nextCls, real: nextReal, offset: 0 });
+      } else if (ev.key === "[" || ev.key === "ArrowLeft") {
+        const step = Number(result?.limit || 15);
+        if (ospecOffset > 0 && !loading) {
+          ev.preventDefault();
+          runOspecWithFilters({ offset: Math.max(0, ospecOffset - step) });
+        }
+      } else if (ev.key === "]" || ev.key === "ArrowRight") {
+        const step = Number(result?.limit || 15);
+        const tot = Number(result?.total_groups || 0);
+        if (ospecOffset + step < tot && !loading) {
+          ev.preventDefault();
+          runOspecWithFilters({ offset: ospecOffset + step });
+        }
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [tool, rank, ospecOnlyLive, ospecSeverity, ospecCategory, ospecClsFilter, ospecOffset, result, loading]);
 
   useEffect(() => {
     const pendingRepo = sessionStorage.getItem("boris_pending_ospec_repo");
@@ -678,6 +767,7 @@ const ToolsPanel = () => {
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
               <input
+                ref={tool === "ospec" ? ospecSearchInputRef : undefined}
                 value={input1}
                 onChange={(e) => setInput1(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && (tool === "ospec" || tool === "hacks" || input1) && run()}
@@ -979,182 +1069,426 @@ const ToolsPanel = () => {
             </div>
           )}
 
-          {/* Telegram-style quick filters for OSPEC */}
+          {/* Structured OSPEC Intelligence Deck: 3-Tier Gating + 7 Secret Families + Dropdowns + Hotkeys */}
           {tool === "ospec" && (
-            <div className="space-y-2 pt-1">
-              <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setInput1("");
-                    setOspecSeverity("");
-                    setOspecOnlyReal(true);
-                    setOspecOnlyLive(false);
-                    runOspecWithFilters({ q: "", sev: "", real: true, live: false, offset: 0 });
-                  }}
-                  className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
-                    !ospecSeverity && ospecOnlyReal && !ospecOnlyLive && !input1
-                      ? "border-primary bg-primary/15 text-primary"
-                      : "border-border bg-background text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  🔍 {isRu ? "Последние REAL" : "Recent REAL"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = ospecSeverity === "CRITICAL" ? "" : "CRITICAL";
-                    setOspecSeverity(next);
-                    runOspecWithFilters({ sev: next });
-                  }}
-                  className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
-                    ospecSeverity === "CRITICAL"
-                      ? "border-destructive bg-destructive/20 text-destructive"
-                      : "border-border bg-background text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  🔴 Critical
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = ospecSeverity === "HIGH" ? "" : "HIGH";
-                    setOspecSeverity(next);
-                    runOspecWithFilters({ sev: next });
-                  }}
-                  className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
-                    ospecSeverity === "HIGH"
-                      ? "border-primary bg-primary/20 text-primary"
-                      : "border-border bg-background text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  🟠 High
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = !ospecOnlyReal;
-                    setOspecOnlyReal(next);
-                    runOspecWithFilters({ real: next });
-                  }}
-                  className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
-                    ospecOnlyReal
-                      ? "border-green-500/60 bg-green-500/15 text-green-400"
-                      : "border-border bg-background text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  🟢 {isRu ? "Только REAL" : "Only REAL"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = !ospecOnlyLive;
-                    setOspecOnlyLive(next);
-                    runOspecWithFilters({ live: next });
-                  }}
-                  className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
-                    ospecOnlyLive
-                      ? "border-amber-500/60 bg-amber-500/15 text-amber-400"
-                      : "border-border bg-background text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  🔥 {isRu ? "LIVE / С балансом" : "LIVE / Funded"}
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      const res = await fetch(`${API_BASE}/api/tools/ospec-daemon-control`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", ...authHeaders() },
-                        body: JSON.stringify({ action: "toggle_watcher" }),
-                      });
-                      const d = await res.json().catch(() => ({}));
-                      setOpenedHistoryBanner(d.message || (isRu ? "Статус Авто-Скана OSPEC переключён" : "OSPEC Auto-Scan toggled"));
-                      runOspecWithFilters();
-                    } catch (e: any) {
-                      setError(e.message);
-                    }
-                  }}
-                  className="rounded-lg border border-green-500/60 bg-green-500/15 px-2.5 py-1 font-semibold text-green-400 transition-all hover:bg-green-500 hover:text-black"
-                >
-                  ▶️ {isRu ? "Вкл / ⏸ Пауза Авто-Скан OSPEC" : "Toggle OSPEC Auto-Scan"}
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      const res = await fetch(`${API_BASE}/api/tools/ospec-daemon-control`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", ...authHeaders() },
-                        body: JSON.stringify({ action: "run_batch" }),
-                      });
-                      const d = await res.json().catch(() => ({}));
-                      setOpenedHistoryBanner(d.message || (isRu ? "Запущен ручной Турбо-скан (50 репо в /dev/shm)" : "Manual 50-repo Turbo scan started"));
-                    } catch (e: any) {
-                      setError(e.message);
-                    }
-                  }}
-                  className="rounded-lg border border-amber-500/60 bg-amber-500/15 px-2.5 py-1 font-semibold text-amber-300 transition-all hover:bg-amber-500 hover:text-black"
-                >
-                  ⚡ {isRu ? "Ручной Турбо-Скан (50 репо)" : "Manual Scan (50 repos)"}
-                </button>
+            <div className="space-y-3 pt-1.5">
+              {/* Top Tier Access & Keyboard Hotkeys Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/80 bg-background/70 px-3 py-2 font-mono text-[10px]">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`rounded-md border px-2 py-0.5 font-bold uppercase ${
+                      rank >= 3
+                        ? "border-amber-500/60 bg-amber-500/15 text-amber-300"
+                        : rank === 2
+                        ? "border-cyan-500/60 bg-cyan-500/15 text-cyan-300"
+                        : "border-primary/50 bg-primary/15 text-primary"
+                    }`}
+                  >
+                    {rank >= 3
+                      ? "🥇 BLACKBOX: FULL ACCESS (246 СИГНАТУР)"
+                      : rank === 2
+                      ? "🥈 RAW: СЕРЕДИНКА (ПУТИ + МАСКА + LIVE)"
+                      : "🥉 RADAR: БАЗОВЫЙ ОБЗОР (ОГРАНИЧЕННО)"}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {rank >= 3
+                      ? isRu
+                        ? "Открыты полные нецензурированные секреты, Whitehat-пулы (POS/Рестораны/SaaS), обратный отсев TEST/SUSPECT и управление демонами"
+                        : "Full unmasked secrets, Whitehat POS/SaaS pools, TEST/SUSPECT reverse-sieve, and daemon controls unlocked"
+                      : rank === 2
+                      ? isRu
+                        ? "Открыты файл:строка, маска секрета и LIVE-фильтр. Полные нецензурированные ключи и обратный отсев — на BLACKBOX."
+                        : "File:line, masked preview & LIVE filter unlocked. Unmasked secrets & reverse-sieve require BLACKBOX."
+                      : isRu
+                      ? "Лимит 10 групп, пути и секреты скрыты. На RAW — пути + маска + LIVE, на BLACKBOX — полные нецензурированные ключи."
+                      : "Limited to 10 groups, paths & secrets hidden. Upgrade to RAW for paths/LIVE or BLACKBOX for full unmasked keys."}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1 text-[9px] text-muted-foreground">
+                  <span className="font-semibold text-foreground">{isRu ? "⌨️ Хоткеи:" : "⌨️ Hotkeys:"}</span>
+                  <kbd className="rounded border border-border bg-card px-1 py-0.5 text-foreground">/</kbd>
+                  <span>{isRu ? "поиск" : "search"}</span>
+                  <kbd className="rounded border border-border bg-card px-1 py-0.5 text-foreground">1</kbd>
+                  <span>REAL</span>
+                  <kbd className="rounded border border-border bg-card px-1 py-0.5 text-foreground">2</kbd>
+                  <span>LIVE</span>
+                  <kbd className="rounded border border-border bg-card px-1 py-0.5 text-foreground">3</kbd>
+                  <span>Crit</span>
+                  <kbd className="rounded border border-border bg-card px-1 py-0.5 text-foreground">4</kbd>
+                  <span>High</span>
+                  <kbd className="rounded border border-border bg-card px-1 py-0.5 text-foreground">5</kbd>
+                  <span>Whitehat</span>
+                  <kbd className="rounded border border-border bg-card px-1 py-0.5 text-foreground">6</kbd>
+                  <span>{isRu ? "Отсев" : "Sieve"}</span>
+                  <kbd className="rounded border border-border bg-card px-1 py-0.5 text-foreground">←/→</kbd>
+                  <span>{isRu ? "стр." : "page"}</span>
+                </div>
               </div>
 
-              {/* 6 Vertical Filters for OSPEC Leaked Secrets */}
-              <div className="flex flex-wrap items-center gap-1.5 font-mono text-[10px] pt-0.5">
-                <span className="text-muted-foreground">{isRu ? "Вертикаль репо:" : "Repo vertical:"}</span>
-                {[
-                  { id: "ALL", labelRu: "🌐 Все", labelEn: "🌐 All" },
-                  { id: "WEB3_DEFI", labelRu: "⛓️ Web3 & DeFi", labelEn: "⛓️ Web3 & DeFi" },
-                  { id: "AI_AGENTS", labelRu: "🤖 AI & MCP", labelEn: "🤖 AI & MCP" },
-                  { id: "STARTUP_SAAS", labelRu: "🚀 Startups & SaaS", labelEn: "🚀 Startups & SaaS" },
-                  { id: "INFRA_CLOUD", labelRu: "☁️ Infra & Cloud", labelEn: "☁️ Infra & Cloud" },
-                  { id: "QUANT_HFT", labelRu: "📈 Quant & HFT", labelEn: "📈 Quant & HFT" },
-                ].map((vf) => {
-                  const cnt = vf.id === "ALL" ? undefined : result?.db_stats?.by_vertical?.[vf.id];
-                  return (
-                    <button
-                      key={vf.id}
-                      type="button"
-                      onClick={() => {
-                        setOspecVertical(vf.id);
-                        runOspecWithFilters({ vert: vf.id, offset: 0 });
-                      }}
-                      className={`rounded-lg border px-2 py-0.5 font-semibold transition-all ${
-                        ospecVertical === vf.id
-                          ? "border-primary bg-primary text-primary-foreground shadow"
-                          : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                      }`}
-                    >
-                      {isRu ? vf.labelRu : vf.labelEn}
-                      {cnt !== undefined ? ` (${fmt(cnt, 0)})` : ""}
-                    </button>
-                  );
-                })}
+              {/* Row 1: Primary Mode Pills + Severity + Daemon Controls */}
+              <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px]">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInput1("");
+                      setOspecSeverity("");
+                      setOspecCategory("ALL");
+                      setOspecClsFilter("REAL");
+                      setOspecOnlyReal(true);
+                      setOspecOnlyLive(false);
+                      runOspecWithFilters({ q: "", sev: "", cat: "ALL", cls: "REAL", real: true, live: false, offset: 0 });
+                    }}
+                    className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
+                      !ospecSeverity && ospecClsFilter === "REAL" && !ospecOnlyLive && !input1 && ospecCategory === "ALL"
+                        ? "border-primary bg-primary/15 text-primary shadow-sm"
+                        : "border-border bg-background text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    🔍 {isRu ? "Последние REAL" : "Recent REAL"} <span className="opacity-60 text-[9px]">[1]</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = ospecSeverity === "CRITICAL" ? "" : "CRITICAL";
+                      setOspecSeverity(next);
+                      runOspecWithFilters({ sev: next, offset: 0 });
+                    }}
+                    className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
+                      ospecSeverity === "CRITICAL"
+                        ? "border-destructive bg-destructive/20 text-destructive"
+                        : "border-border bg-background text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    🔴 Critical <span className="opacity-60 text-[9px]">[3]</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = ospecSeverity === "HIGH" ? "" : "HIGH";
+                      setOspecSeverity(next);
+                      runOspecWithFilters({ sev: next, offset: 0 });
+                    }}
+                    className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
+                      ospecSeverity === "HIGH"
+                        ? "border-primary bg-primary/20 text-primary"
+                        : "border-border bg-background text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    🟠 High <span className="opacity-60 text-[9px]">[4]</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (rank < 2) {
+                        setError(
+                          isRu
+                            ? "🔥 Фильтр живых ключей с балансом (LIVE / Funded) доступен начиная с тарифа RAW."
+                            : "🔥 LIVE / Funded filter requires RAW or BLACKBOX tier."
+                        );
+                        return;
+                      }
+                      const next = !ospecOnlyLive;
+                      setOspecOnlyLive(next);
+                      runOspecWithFilters({ live: next, offset: 0 });
+                    }}
+                    className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
+                      ospecOnlyLive
+                        ? "border-amber-500/60 bg-amber-500/20 text-amber-300"
+                        : "border-border bg-background text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    🔥 {isRu ? "LIVE / С балансом" : "LIVE / Funded"} <span className="opacity-60 text-[9px]">[2]</span>
+                    {rank < 2 && <span className="ml-1 rounded bg-black/40 px-1 py-0.5 text-[9px] text-amber-300">🔒 RAW+</span>}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (rank < 3) {
+                        setError(
+                          isRu
+                            ? "🧪 Обратный отсев (проверка пулов SUSPECT и TEST на скрытые боевые ключи) доступен эксклюзивно на тарифе BLACKBOX."
+                            : "🧪 Reverse-Sieve (SUSPECT / TEST pools) requires BLACKBOX tier."
+                        );
+                        return;
+                      }
+                      const nextCls = ospecClsFilter === "REAL" ? "SUSPECT" : "REAL";
+                      const nextReal = nextCls === "REAL";
+                      setOspecClsFilter(nextCls);
+                      setOspecOnlyReal(nextReal);
+                      runOspecWithFilters({ cls: nextCls, real: nextReal, offset: 0 });
+                    }}
+                    className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
+                      ospecClsFilter !== "REAL"
+                        ? "border-purple-500/60 bg-purple-500/20 text-purple-300"
+                        : "border-border bg-background text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    🧪 {isRu ? "Обратный отсев (TEST / SUSPECT)" : "Reverse-Sieve (TEST / SUSPECT)"}{" "}
+                    <span className="opacity-60 text-[9px]">[6]</span>
+                    {rank < 3 && <span className="ml-1 rounded bg-black/40 px-1 py-0.5 text-[9px] text-purple-300">🔒 BLACKBOX</span>}
+                  </button>
+                </div>
+
+                {/* Daemon Controls (BLACKBOX exclusive) */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (rank < 3) {
+                        setError(
+                          isRu
+                            ? "🔒 Управление боевыми демонами OSPEC (Авто-Скан в /dev/shm) доступно только на тарифе BLACKBOX."
+                            : "🔒 OSPEC Daemon Control requires BLACKBOX tier."
+                        );
+                        return;
+                      }
+                      try {
+                        const res = await fetch(`${API_BASE}/api/tools/ospec-daemon-control`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", ...authHeaders() },
+                          body: JSON.stringify({ action: "toggle_watcher" }),
+                        });
+                        const d = await res.json().catch(() => ({}));
+                        if (!res.ok) throw new Error(d.detail || `HTTP ${res.status}`);
+                        setOpenedHistoryBanner(d.message || (isRu ? "Статус Авто-Скана OSPEC переключён" : "OSPEC Auto-Scan toggled"));
+                        runOspecWithFilters();
+                      } catch (e: any) {
+                        setError(e.message);
+                      }
+                    }}
+                    className="rounded-lg border border-green-500/60 bg-green-500/15 px-2.5 py-1 font-semibold text-green-400 transition-all hover:bg-green-500 hover:text-black"
+                  >
+                    ▶️ {isRu ? "Вкл / ⏸ Пауза Авто-Скан" : "Toggle Auto-Scan"}
+                    {rank < 3 && <span className="ml-1 rounded bg-black/40 px-1 py-0.5 text-[9px]">🔒 BB</span>}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (rank < 3) {
+                        setError(
+                          isRu
+                            ? "🔒 Запуск ручного Турбо-Скана (50 репо в /dev/shm) доступен только на тарифе BLACKBOX."
+                            : "🔒 Manual Turbo-Scan requires BLACKBOX tier."
+                        );
+                        return;
+                      }
+                      try {
+                        const res = await fetch(`${API_BASE}/api/tools/ospec-daemon-control`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", ...authHeaders() },
+                          body: JSON.stringify({ action: "run_batch" }),
+                        });
+                        const d = await res.json().catch(() => ({}));
+                        if (!res.ok) throw new Error(d.detail || `HTTP ${res.status}`);
+                        setOpenedHistoryBanner(d.message || (isRu ? "Запущен ручной Турбо-скан (50 репо в /dev/shm)" : "Manual 50-repo Turbo scan started"));
+                      } catch (e: any) {
+                        setError(e.message);
+                      }
+                    }}
+                    className="rounded-lg border border-amber-500/60 bg-amber-500/15 px-2.5 py-1 font-semibold text-amber-300 transition-all hover:bg-amber-500 hover:text-black"
+                  >
+                    ⚡ {isRu ? "Турбо-Скан (50 репо)" : "Turbo Scan (50)"}
+                    {rank < 3 && <span className="ml-1 rounded bg-black/40 px-1 py-0.5 text-[9px]">🔒 BB</span>}
+                  </button>
+                </div>
               </div>
 
-              {result?.kind_stats?.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 font-mono text-[10px]">
-                  <span className="text-muted-foreground">{isRu ? "Типы секретов:" : "Secret kinds:"}</span>
-                  {result.kind_stats.slice(0, 8).map((ks: any) => {
-                    const shortKind = String(ks.kind || "").replace("secret:", "");
+              {/* Row 2: 7 Structured Secret Category Families (Whitehat POS/Restaurants, FinTech, AI/Voice, Cloud/DB, Comms/OTA, Wallets/RPC) */}
+              <div className="space-y-1.5 rounded-xl border border-border/70 bg-background/40 p-2.5 font-mono text-[10px]">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-muted-foreground font-semibold mr-1">
+                    {isRu ? "📂 Семейство ключей:" : "📂 Secret Family:"}
+                  </span>
+                  {[
+                    { id: "ALL", labelRu: "🌐 Все (246 сигн.)", labelEn: "🌐 All (246 sigs)", minR: 1 },
+                    { id: "WHITEHAT_POS_BIZ", labelRu: "🍔 Whitehat: Рестораны / POS / SaaS [5]", labelEn: "🍔 Whitehat: POS / Restaurants / SaaS [5]", minR: 2 },
+                    { id: "FINTECH_ECOMM", labelRu: "💳 Платежи / Банки / Магазины", labelEn: "💳 FinTech / E-Commerce / Banks", minR: 1 },
+                    { id: "AI_VOICE_LLM", labelRu: "🤖 AI, LLM & Голосовые боты", labelEn: "🤖 AI, LLM & Voice Bots", minR: 1 },
+                    { id: "CLOUD_DB_BAAS", labelRu: "☁️ Базы данных & Облака", labelEn: "☁️ Databases & Cloud BaaS", minR: 1 },
+                    { id: "COMMS_MOBILE_OTA", labelRu: "📱 WhatsApp / Почта / Mobile OTA", labelEn: "📱 WhatsApp / Email / Mobile OTA", minR: 1 },
+                    { id: "WEB3_WALLETS_RPC", labelRu: "🔑 Кошельки, Сиды & Web3 RPC", labelEn: "🔑 Wallets, Seeds & Web3 RPC", minR: 1 },
+                  ].map((cat) => {
+                    const cnt = cat.id === "ALL" ? undefined : result?.category_counts?.[cat.id];
+                    const activeCat = ospecCategory === cat.id;
                     return (
                       <button
-                        key={ks.kind}
+                        key={cat.id}
                         type="button"
                         onClick={() => {
-                          setInput1(shortKind);
-                          runOspecWithFilters({ q: shortKind });
+                          if (rank < cat.minR) {
+                            setError(
+                              isRu
+                                ? "🍔 Категория Whitehat Bounty (Рестораны, POS-терминалы, Доставка, B2B SaaS) доступна на тарифах RAW и BLACKBOX."
+                                : "🍔 Whitehat Bounty category requires RAW or BLACKBOX tier."
+                            );
+                            return;
+                          }
+                          setOspecCategory(cat.id);
+                          setInput1("");
+                          runOspecWithFilters({ cat: cat.id, q: "", offset: 0 });
                         }}
-                        className="rounded border border-border bg-background px-2 py-0.5 text-muted-foreground hover:border-primary hover:text-primary"
+                        className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
+                          activeCat
+                            ? "border-primary bg-primary text-primary-foreground shadow"
+                            : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                        }`}
                       >
-                        {shortKind} <span className="text-primary">({ks.real})</span>
+                        <span>{isRu ? cat.labelRu : cat.labelEn}</span>
+                        {cnt !== undefined && (
+                          <span className={`ml-1 font-bold ${activeCat ? "text-primary-foreground" : "text-primary"}`}>
+                            ({fmt(cnt, 0)})
+                          </span>
+                        )}
+                        {rank < cat.minR && <span className="ml-1 rounded bg-black/40 px-1 py-0.5 text-[8px] text-amber-300">🔒 RAW+</span>}
                       </button>
                     );
                   })}
                 </div>
-              )}
+
+                {/* Row 3: Dropdown Lists (Exact Signature Picker + Pool Selector + Repo Verticals) */}
+                <div className="grid grid-cols-1 gap-2 pt-1.5 sm:grid-cols-3 border-t border-border/50">
+                  {/* Dropdown 1: Pick any of the 246 secret signatures grouped by family */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-muted-foreground shrink-0">{isRu ? "🔑 Сигнатура:" : "🔑 Signature:"}</span>
+                    <select
+                      value={input1}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setInput1(val);
+                        runOspecWithFilters({ q: val, offset: 0 });
+                      }}
+                      className="w-full rounded-lg border border-border bg-card px-2.5 py-1.5 font-mono text-[11px] text-foreground outline-none focus:border-primary"
+                    >
+                      <option value="">{isRu ? "— Все 246 сигнатур (выберите из списка) —" : "— All 246 signatures (select from list) —"}</option>
+                      {result?.kind_stats?.length > 0 && (
+                        <optgroup label={isRu ? "🔥 Активные в базе (с числом находок REAL)" : "🔥 Active in DB (with REAL counts)"}>
+                          {result.kind_stats.map((ks: any) => {
+                            const sk = ks.short_kind || String(ks.kind || "").replace("secret:", "");
+                            return (
+                              <option key={sk} value={sk}>
+                                {sk} ({ks.real} REAL{ks.suspect ? ` · ${ks.suspect} SUSP` : ""})
+                              </option>
+                            );
+                          })}
+                        </optgroup>
+                      )}
+                      <optgroup label={isRu ? "🍔 Рестораны, POS-кассы и Доставка (Whitehat)" : "🍔 Restaurants, POS & Food Delivery (Whitehat)"}>
+                        <option value="toast_pos_key">toast_pos_key — Toast POS Restaurant API</option>
+                        <option value="iiko_poster_rkeeper_key">iiko_poster_rkeeper_key — iiko / Syrve / Poster POS / R-Keeper</option>
+                        <option value="clover_pos_token">clover_pos_token — Clover POS Terminal</option>
+                        <option value="lightspeed_pos_key">lightspeed_pos_key — Lightspeed Restaurant/Retail POS</option>
+                        <option value="doordash_drive_key">doordash_drive_key — DoorDash Drive API</option>
+                        <option value="ubereats_api_secret">ubereats_api_secret — UberEats / Uber Direct POS</option>
+                        <option value="delivery_platform_key">delivery_platform_key — Deliveroo / Wolt / Glovo / Stuart</option>
+                        <option value="restaurant_booking_key">restaurant_booking_key — SevenRooms / OpenTable / Resy</option>
+                      </optgroup>
+                      <optgroup label={isRu ? "💳 Платежи, Банки и E-Commerce" : "💳 FinTech, Banking & E-Commerce"}>
+                        <option value="stripe_live">stripe_live — Stripe Live Secret Key (sk_live_...)</option>
+                        <option value="stripe_whsec">stripe_whsec — Stripe Webhook Secret (whsec_...)</option>
+                        <option value="woocommerce_consumer_secret">woocommerce_consumer_secret — WooCommerce Store (cs_...)</option>
+                        <option value="shopify_token">shopify_token — Shopify Admin/Custom App (shpat_...)</option>
+                        <option value="square_access">square_access — Square POS & Payments (sq0atp...)</option>
+                        <option value="plaid_secret_key">plaid_secret_key — Plaid Banking API</option>
+                        <option value="mollie_live_key">mollie_live_key — Mollie Live Acquiring (live_...)</option>
+                        <option value="paddle_live_apikey">paddle_live_apikey — Paddle Billing (pdl_live_...)</option>
+                        <option value="lemonsqueezy_api_key">lemonsqueezy_api_key — LemonSqueezy API</option>
+                        <option value="mercury_bank_token">mercury_bank_token — Mercury Bank Production Token</option>
+                        <option value="revolut_business_key">revolut_business_key — Revolut Business (oa_prod_...)</option>
+                        <option value="wise_api_token">wise_api_token — Wise Business API</option>
+                        <option value="cis_acquiring_secret">cis_acquiring_secret — ЮKassa / CloudPayments / Tinkoff</option>
+                      </optgroup>
+                      <optgroup label={isRu ? "🤖 AI, LLM и Голосовые боты (Колл-центры)" : "🤖 AI, LLMs & Voice Agents"}>
+                        <option value="openai_key">openai_key — OpenAI API Key (sk-proj-...)</option>
+                        <option value="anthropic_key">anthropic_key — Anthropic Claude (sk-ant-...)</option>
+                        <option value="gemini_key">gemini_key — Google Gemini / Firebase (AIzaSy...)</option>
+                        <option value="voice_ai_agent_key">voice_ai_agent_key — Vapi / Retell AI / Bland AI / Cartesia</option>
+                        <option value="elevenlabs_api_key">elevenlabs_api_key — ElevenLabs Voice AI</option>
+                        <option value="deepgram_api_key">deepgram_api_key — Deepgram STT/Voice</option>
+                        <option value="livekit_api_secret">livekit_api_secret — LiveKit WebRTC / Voice</option>
+                        <option value="groq_api_key">groq_api_key — Groq Cloud (gsk_...)</option>
+                        <option value="perplexity_api_key">perplexity_api_key — Perplexity AI (pplx-...)</option>
+                        <option value="replicate_api_token">replicate_api_token — Replicate (r8_...)</option>
+                        <option value="pinecone_api_key">pinecone_api_key — Pinecone Vector DB (pcsk_...)</option>
+                        <option value="ai_search_tool_key">ai_search_tool_key — Tavily Search (tvly-...)</option>
+                      </optgroup>
+                      <optgroup label={isRu ? "☁️ Базы данных, Облака и BaaS" : "☁️ Databases, Cloud & BaaS"}>
+                        <option value="postgres_uri">postgres_uri — PostgreSQL Production URI</option>
+                        <option value="mongodb_uri">mongodb_uri — MongoDB Atlas URI (mongodb+srv://)</option>
+                        <option value="redis_uri">redis_uri — Redis URI</option>
+                        <option value="supabase_service_key">supabase_service_key — Supabase service_role Key</option>
+                        <option value="neon_api_key">neon_api_key — Neon Serverless Postgres (napi_...)</option>
+                        <option value="upstash_qstash_token">upstash_qstash_token — Upstash Redis / QStash</option>
+                        <option value="convex_deploy_key">convex_deploy_key — Convex BaaS Deploy Key</option>
+                        <option value="appwrite_api_key">appwrite_api_key — Appwrite Secret Key</option>
+                        <option value="aws_secret_access_key">aws_secret_access_key — AWS Secret Access Key</option>
+                        <option value="gcp_sa_json">gcp_sa_json — Google Cloud Service Account JSON</option>
+                      </optgroup>
+                      <optgroup label={isRu ? "📱 Почта, WhatsApp, СМС, Мобилки и Медиа" : "📱 WhatsApp, Email, SMS, Mobile OTA & Media"}>
+                        <option value="whatsapp_cloud_token">whatsapp_cloud_token — WhatsApp Business Cloud (EAA...)</option>
+                        <option value="expo_access_token">expo_access_token — Expo React Native OTA Token</option>
+                        <option value="resend_api_key">resend_api_key — Resend Email API (re_...)</option>
+                        <option value="brevo_sendinblue_key">brevo_sendinblue_key — Brevo / Sendinblue (xkeysib-...)</option>
+                        <option value="cloudinary_url">cloudinary_url — Cloudinary Media Storage (cloudinary://)</option>
+                        <option value="mapbox_secret_token">mapbox_secret_token — Mapbox Secret Token (sk.eyJ1...)</option>
+                        <option value="telegram_bot">telegram_bot — Telegram Bot Token</option>
+                        <option value="slack_token">slack_token — Slack Bot/User Token (xoxb-...)</option>
+                      </optgroup>
+                    </select>
+                  </div>
+
+                  {/* Dropdown 2: Classification Pool Selector (REAL vs SUSPECT vs TEST reverse-sieve) */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-muted-foreground shrink-0">{isRu ? "🧪 Пул БД:" : "🧪 DB Pool:"}</span>
+                    <select
+                      value={ospecClsFilter}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v !== "REAL" && rank < 3) {
+                          setError(
+                            isRu
+                              ? "🧪 Доступ к пулам SUSPECT и TEST (обратный отсев) открыт эксклюзивно на тарифе BLACKBOX."
+                              : "🧪 SUSPECT & TEST reverse-sieve pools require BLACKBOX tier."
+                          );
+                          return;
+                        }
+                        const isR = v === "REAL";
+                        setOspecClsFilter(v);
+                        setOspecOnlyReal(isR);
+                        runOspecWithFilters({ cls: v, real: isR, offset: 0 });
+                      }}
+                      className="w-full rounded-lg border border-border bg-card px-2.5 py-1.5 font-mono text-[11px] text-foreground outline-none focus:border-primary"
+                    >
+                      <option value="REAL">{isRu ? "🟢 Пул REAL — Подтверждённые боевые (L2.5)" : "🟢 REAL Pool — Verified Live/Prod"}</option>
+                      <option value="SUSPECT">{isRu ? "🟡 Пул SUSPECT — Подозрительные (Отсев) [BLACKBOX]" : "🟡 SUSPECT Pool — Reverse-Sieve [BLACKBOX]"}</option>
+                      <option value="TEST">{isRu ? "🔬 Пул TEST — Тестовый отсев (1.1M) [BLACKBOX]" : "🔬 TEST Pool — Raw Test Sieve [BLACKBOX]"}</option>
+                      <option value="ALL">{isRu ? "🌐 Все пулы вместе (REAL + SUSPECT + TEST) [BLACKBOX]" : "🌐 All Pools Combined [BLACKBOX]"}</option>
+                    </select>
+                  </div>
+
+                  {/* Dropdown 3: Repo Vertical Selector */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-muted-foreground shrink-0">{isRu ? "🌐 Вертикаль:" : "🌐 Vertical:"}</span>
+                    <select
+                      value={ospecVertical}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setOspecVertical(v);
+                        runOspecWithFilters({ vert: v, offset: 0 });
+                      }}
+                      className="w-full rounded-lg border border-border bg-card px-2.5 py-1.5 font-mono text-[11px] text-foreground outline-none focus:border-primary"
+                    >
+                      <option value="ALL">{isRu ? "🌐 Все 6 вертикалей репозиториев" : "🌐 All 6 Repository Verticals"}</option>
+                      <option value="WEB3_DEFI">⛓️ Web3 & DeFi ({fmt(result?.db_stats?.by_vertical?.WEB3_DEFI ?? 0, 0)})</option>
+                      <option value="AI_AGENTS">🤖 AI, LLM & MCP ({fmt(result?.db_stats?.by_vertical?.AI_AGENTS ?? 0, 0)})</option>
+                      <option value="STARTUP_SAAS">🚀 Startups, POS & SaaS ({fmt(result?.db_stats?.by_vertical?.STARTUP_SAAS ?? 0, 0)})</option>
+                      <option value="INFRA_CLOUD">☁️ Infra, DevOps & Cloud ({fmt(result?.db_stats?.by_vertical?.INFRA_CLOUD ?? 0, 0)})</option>
+                      <option value="QUANT_HFT">📈 Quant, Algo & HFT ({fmt(result?.db_stats?.by_vertical?.QUANT_HFT ?? 0, 0)})</option>
+                      <option value="DORK_LEAKS">🔑 Secret Dorks ({fmt(result?.db_stats?.by_vertical?.DORK_LEAKS ?? 0, 0)})</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -2881,17 +3215,69 @@ const ToolsPanel = () => {
                       {(f.derived_addr || f.secret_masked) && (
                         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2 text-[11px] text-muted-foreground">
                           {f.derived_addr ? (
-                            <span>
-                              🔑 <code className="text-foreground">{f.derived_addr}</code>{" "}
-                              {f.derived_chain ? `(${f.derived_chain})` : ""}
+                            <span className="flex items-center gap-1.5">
+                              <span>
+                                🔑 <code className="text-foreground">{f.derived_addr}</code>{" "}
+                                {f.derived_chain ? `(${f.derived_chain})` : ""}
+                              </span>
+                              {rank >= 2 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(f.derived_addr || "");
+                                    setCopiedSecretId(`addr_${f.id}`);
+                                    setTimeout(() => setCopiedSecretId(null), 1500);
+                                  }}
+                                  className="rounded border border-border px-1.5 py-0.5 text-[10px] hover:border-primary hover:text-primary"
+                                >
+                                  {copiedSecretId === `addr_${f.id}` ? "✓" : "📋"}
+                                </button>
+                              )}
                             </span>
                           ) : (
                             <span />
                           )}
                           {f.secret_masked && (
-                            <span>
-                              Preview: <code className="text-primary">{f.secret_masked}</code>
-                            </span>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span>
+                                {rank >= 3 ? (isRu ? "Полный ключ:" : "Full Secret:") : "Preview:"}{" "}
+                                <code className="rounded bg-card px-2 py-0.5 text-primary select-all">{f.secret_masked}</code>
+                              </span>
+                              {rank >= 3 && f.secret_full ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(f.secret_full || f.secret_masked || "");
+                                    setCopiedSecretId(`sec_${f.id}`);
+                                    setTimeout(() => setCopiedSecretId(null), 1500);
+                                  }}
+                                  className="inline-flex items-center gap-1 rounded border border-primary/50 bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary hover:bg-primary hover:text-primary-foreground"
+                                >
+                                  {copiedSecretId === `sec_${f.id}` ? <Check size={10} /> : <Copy size={10} />}
+                                  <span>{copiedSecretId === `sec_${f.id}` ? (isRu ? "Скопировано" : "Copied") : (isRu ? "Копировать ключ" : "Copy Key")}</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    window.dispatchEvent(
+                                      new CustomEvent("boris-open-checkout", {
+                                        detail: { tier: rank === 1 ? "raw" : "blackbox" },
+                                      })
+                                    )
+                                  }
+                                  className="rounded border border-amber-500/50 bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-300 hover:bg-amber-500 hover:text-black"
+                                >
+                                  {rank === 1
+                                    ? isRu
+                                      ? "⬆️ RAW (маска+путь) / BLACKBOX (полный)"
+                                      : "⬆️ Upgrade RAW / BLACKBOX"
+                                    : isRu
+                                    ? "⬆️ Открыть полный ключ [BLACKBOX]"
+                                    : "⬆️ Unlock Full Key [BLACKBOX]"}
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
                       )}
