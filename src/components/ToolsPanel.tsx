@@ -93,6 +93,9 @@ const ToolsPanel = () => {
   const [loadingFindingId, setLoadingFindingId] = useState<number | null>(null);
   const [copiedSecretId, setCopiedSecretId] = useState<string | null>(null);
   const [openedHistoryBanner, setOpenedHistoryBanner] = useState<string | null>(null);
+  const [ospecDaemonRunning, setOspecDaemonRunning] = useState<boolean>(true);
+  const [ospecDaemonBusy, setOspecDaemonBusy] = useState<boolean>(false);
+  const [ospecDaemonMsg, setOspecDaemonMsg] = useState<string | null>(null);
   const ospecSearchInputRef = useRef<HTMLInputElement | null>(null);
 
   // Full Markdown Writeup viewer for the 1,678 Deep Exploits DB
@@ -192,6 +195,9 @@ const ToolsPanel = () => {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+      if (typeof data?.db_stats?.ospec_watcher_running === "boolean") {
+        setOspecDaemonRunning(data.db_stats.ospec_watcher_running);
+      }
       setResult(data);
       loadHistory(historyFilter);
     } catch (e: any) {
@@ -1289,6 +1295,7 @@ const ToolsPanel = () => {
                 <div className="flex flex-wrap items-center gap-1.5">
                   <button
                     type="button"
+                    disabled={ospecDaemonBusy}
                     onClick={async () => {
                       if (rank < 3) {
                         setError(
@@ -1298,6 +1305,8 @@ const ToolsPanel = () => {
                         );
                         return;
                       }
+                      setOspecDaemonBusy(true);
+                      setOspecDaemonMsg(null);
                       try {
                         const res = await fetch(`${API_BASE}/api/tools/ospec-daemon-control`, {
                           method: "POST",
@@ -1306,19 +1315,57 @@ const ToolsPanel = () => {
                         });
                         const d = await res.json().catch(() => ({}));
                         if (!res.ok) throw new Error(d.detail || `HTTP ${res.status}`);
-                        setOpenedHistoryBanner(d.message || (isRu ? "Статус Авто-Скана OSPEC переключён" : "OSPEC Auto-Scan toggled"));
-                        runOspecWithFilters();
+                        const isNowRunning = Boolean(d?.status?.ospec_watcher_running);
+                        setOspecDaemonRunning(isNowRunning);
+                        setOspecDaemonMsg(
+                          d.message ||
+                            (isNowRunning
+                              ? isRu
+                                ? "🟢 Турбо Авто-Скан OSPEC ЗАПУЩЕН (10 потоков /dev/shm + 8 ядер CPU)!"
+                                : "🟢 OSPEC Turbo Auto-Scan RUNNING!"
+                              : isRu
+                              ? "⏸ Авто-Скан OSPEC поставлен НА ПАУЗУ."
+                              : "⏸ OSPEC Auto-Scan PAUSED.")
+                        );
                       } catch (e: any) {
                         setError(e.message);
+                      } finally {
+                        setOspecDaemonBusy(false);
                       }
                     }}
-                    className="rounded-lg border border-green-500/60 bg-green-500/15 px-2.5 py-1 font-semibold text-green-400 transition-all hover:bg-green-500 hover:text-black"
+                    className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1 font-bold transition-all disabled:opacity-50 ${
+                      ospecDaemonRunning
+                        ? "border-green-500/70 bg-green-500/20 text-green-300 hover:bg-amber-500 hover:border-amber-500 hover:text-black"
+                        : "border-amber-500/70 bg-amber-500/20 text-amber-300 hover:bg-green-500 hover:border-green-500 hover:text-black"
+                    }`}
                   >
-                    ▶️ {isRu ? "Вкл / ⏸ Пауза Авто-Скан" : "Toggle Auto-Scan"}
+                    {ospecDaemonBusy ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <span
+                        className={`h-2 w-2 rounded-full ${
+                          ospecDaemonRunning ? "bg-green-400 animate-pulse" : "bg-amber-400"
+                        }`}
+                      />
+                    )}
+                    <span>
+                      {ospecDaemonBusy
+                        ? isRu
+                          ? "Переключение…"
+                          : "Switching…"
+                        : ospecDaemonRunning
+                        ? isRu
+                          ? "🟢 Авто-Скан: РАБОТАЕТ (⏸ Стоп)"
+                          : "🟢 Auto-Scan: ON (⏸ Pause)"
+                        : isRu
+                        ? "⏸ Авто-Скан: ПАУЗА (▶️ Старт)"
+                        : "⏸ Auto-Scan: PAUSED (▶️ Start)"}
+                    </span>
                     {rank < 3 && <span className="ml-1 rounded bg-black/40 px-1 py-0.5 text-[9px]">🔒 BB</span>}
                   </button>
                   <button
                     type="button"
+                    disabled={ospecDaemonBusy}
                     onClick={async () => {
                       if (rank < 3) {
                         setError(
@@ -1328,6 +1375,8 @@ const ToolsPanel = () => {
                         );
                         return;
                       }
+                      setOspecDaemonBusy(true);
+                      setOspecDaemonMsg(null);
                       try {
                         const res = await fetch(`${API_BASE}/api/tools/ospec-daemon-control`, {
                           method: "POST",
@@ -1336,18 +1385,38 @@ const ToolsPanel = () => {
                         });
                         const d = await res.json().catch(() => ({}));
                         if (!res.ok) throw new Error(d.detail || `HTTP ${res.status}`);
-                        setOpenedHistoryBanner(d.message || (isRu ? "Запущен ручной Турбо-скан (50 репо в /dev/shm)" : "Manual 50-repo Turbo scan started"));
+                        setOspecDaemonMsg(
+                          d.message ||
+                            (isRu
+                              ? "⚡ Запущен ручной Турбо-скан 50 репозиториев в /dev/shm!"
+                              : "⚡ Manual 50-repo Turbo scan started in /dev/shm!")
+                        );
                       } catch (e: any) {
                         setError(e.message);
+                      } finally {
+                        setOspecDaemonBusy(false);
                       }
                     }}
-                    className="rounded-lg border border-amber-500/60 bg-amber-500/15 px-2.5 py-1 font-semibold text-amber-300 transition-all hover:bg-amber-500 hover:text-black"
+                    className="rounded-lg border border-amber-500/60 bg-amber-500/15 px-2.5 py-1 font-semibold text-amber-300 transition-all hover:bg-amber-500 hover:text-black disabled:opacity-50"
                   >
                     ⚡ {isRu ? "Турбо-Скан (50 репо)" : "Turbo Scan (50)"}
                     {rank < 3 && <span className="ml-1 rounded bg-black/40 px-1 py-0.5 text-[9px]">🔒 BB</span>}
                   </button>
                 </div>
               </div>
+
+              {ospecDaemonMsg && (
+                <div className="flex items-center justify-between gap-2 rounded-lg border border-green-500/50 bg-green-500/15 px-3 py-2 font-mono text-[11px] font-semibold text-green-300">
+                  <span>{ospecDaemonMsg}</span>
+                  <button
+                    type="button"
+                    onClick={() => setOspecDaemonMsg(null)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
 
               {/* Row 2: 7 Structured Secret Category Families (Whitehat POS/Restaurants, FinTech, AI/Voice, Cloud/DB, Comms/OTA, Wallets/RPC) */}
               <div className="space-y-1.5 rounded-xl border border-border/70 bg-background/40 p-2.5 font-mono text-[10px]">
