@@ -9,7 +9,7 @@ const ru = {
     login: "Войти",
   },
   hero: {
-    badge: "BORIS Beta v1.42 · Платформа разведки безопасности",
+    badge: "BORIS Beta v1.43 · Платформа разведки безопасности",
     title1: "Black Oracle",
     title2: "Risk Inspection System",
     subtitle: "// Не взлом. Предупреждение.",

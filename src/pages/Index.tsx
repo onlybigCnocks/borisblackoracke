@@ -156,7 +156,7 @@ const Index = () => {
               <div className="rounded-xl border border-border bg-background/80 p-5">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-mono text-xs font-bold uppercase text-primary">[01] DETERMINISTIC CORE</span>
-                  <span className="rounded bg-green-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-green-400">LIVE · v1.42</span>
+                  <span className="rounded bg-green-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-green-400">LIVE · v1.43</span>
                 </div>
                 <h3 className="font-mono text-sm font-bold text-foreground mb-1.5">
                   {isRu ? "🦾 20 слоёв механического анализа" : "🦾 20-Layer Mechanical Execution"}
@@ -171,7 +171,7 @@ const Index = () => {
               <div className="rounded-xl border border-border bg-background/80 p-5">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-mono text-xs font-bold uppercase text-primary">[02] KNOWLEDGE CORPUS</span>
-                  <span className="rounded bg-green-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-green-400">LIVE · v1.42</span>
+                  <span className="rounded bg-green-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-green-400">LIVE · v1.43</span>
                 </div>
                 <h3 className="font-mono text-sm font-bold text-foreground mb-1.5">
                   {isRu ? "📚 20,826 аудитов & 2,539 взломов" : "📚 20,826 Audits & 2,539 Exploits"}

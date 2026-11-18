@@ -433,7 +433,7 @@ const Dashboard = () => {
                     {user?.tier || "GUEST"}
                   </span>
                   <span className="rounded border border-green-500/40 bg-green-500/10 px-2.5 py-0.5 font-mono text-[10px] font-bold text-green-400">
-                    BORIS Beta v1.42
+                    BORIS Beta v1.43
                   </span>
                   <span className="rounded border border-amber-500/40 bg-amber-500/10 px-2.5 py-0.5 font-mono text-[10px] font-bold text-amber-400">
                     ⚡ AI CORTEX & SWARM · SOON v1.5 (RAW+)
