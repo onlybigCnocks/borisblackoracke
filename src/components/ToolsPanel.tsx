@@ -96,6 +96,9 @@ const ToolsPanel = () => {
   const [ospecDaemonRunning, setOspecDaemonRunning] = useState<boolean>(true);
   const [ospecDaemonBusy, setOspecDaemonBusy] = useState<boolean>(false);
   const [ospecDaemonMsg, setOspecDaemonMsg] = useState<string | null>(null);
+  const [zkShowcaseTab, setZkShowcaseTab] = useState<"active_tvl" | "benchmarks">("active_tvl");
+  const [zkActiveContracts, setZkActiveContracts] = useState<any[]>([]);
+  const [zkActiveLoading, setZkActiveLoading] = useState<boolean>(false);
   const ospecSearchInputRef = useRef<HTMLInputElement | null>(null);
 
   // Full Markdown Writeup viewer for the 1,678 Deep Exploits DB
@@ -373,6 +376,16 @@ const ToolsPanel = () => {
     }
     if (tool === "ospec" && rank >= 1 && !result) {
       runOspecWithFilters({ q: "", sev: "", real: true, live: false, offset: 0 });
+    }
+    if (tool === "zk" && rank >= 2 && zkActiveContracts.length === 0) {
+      setZkActiveLoading(true);
+      fetch(`${API_BASE}/api/tools/zk-active-valuable`, { headers: { ...authHeaders() } })
+        .then((r) => r.json())
+        .then((d) => {
+          if (Array.isArray(d?.items)) setZkActiveContracts(d.items);
+        })
+        .catch(() => {})
+        .finally(() => setZkActiveLoading(false));
     }
   }, [tool]);
 
@@ -742,13 +755,34 @@ const ToolsPanel = () => {
             return;
           }
         } else {
+          const itemChain = String(item.chain || r.chain || "ethereum").toLowerCase();
           setTool(item.tool as ToolId);
           setInput1(rawTarget);
+          if (["ethereum", "bsc", "polygon", "arbitrum", "optimism", "base"].includes(itemChain)) {
+            setChain(itemChain);
+          }
+
+          if (item.tool === "zk" && (!r.onchain_liveness || !r.proving_system_profile || !r.math_bytecode_profile)) {
+            setOpenedHistoryBanner(
+              `📂 Открыт и обновлён до v5.5 отчёт из истории: ZK · ${rawTarget} [${itemChain.toUpperCase()}]`
+            );
+            const resZk = await fetch(`${API_BASE}/api/tools/zk-audit`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", ...authHeaders() },
+              body: JSON.stringify({ address: rawTarget, chain: itemChain }),
+            });
+            const freshZk = await resZk.json().catch(() => r);
+            setResult(resZk.ok ? freshZk : r);
+            setTimeout(() => {
+              (activeToolResultRef.current || resultsTopRef.current)?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 80);
+            return;
+          }
         }
 
         setResult(r);
         setOpenedHistoryBanner(
-          `${item.tool.toUpperCase()} · ${rawTarget} (${new Date(item.created_at * 1000).toLocaleString()})`
+          `📂 Открыт отчёт из истории: ${item.tool.toUpperCase()} · ${rawTarget} [${(item.chain || "").toUpperCase()}] (${new Date(item.created_at * 1000).toLocaleString()})`
         );
         setTimeout(() => {
           (activeToolResultRef.current || resultsTopRef.current)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1179,64 +1213,174 @@ const ToolsPanel = () => {
             </div>
           )}
 
-          {/* Quick-Launch Mathematical Showcase for ZK Math Monster v5.5 (Canonical Exploited vs Sound Benchmarks across 7 Proving Systems) */}
+          {/* Quick-Launch Mathematical Showcase & Active Funded/Controlling Filter for ZK Math Monster v5.5 */}
           {tool === "zk" && (
-            <div className="space-y-2 rounded-xl border border-primary/30 bg-background/60 p-3 font-mono text-[11px]">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-bold text-primary">
-                  📐 {isRu ? "BORIS ZK MATH MONSTER v5.5 · Калибровочная матрица (Канонические взломы vs Эталонные контракты):" : "BORIS ZK MATH MONSTER v5.5 · Calibrated Canonical Exploited vs Sound Verifiers:"}
-                </span>
-                <span className="text-[10px] text-muted-foreground">
-                  {isRu ? "База: 48,649 верификаторов из 1.62M контрактов · 65 детекторов (Fp / Fp² Twist)" : "DB: 48,649 verifiers from 1.62M contracts · 65 detectors (Fp / Fp² Twist)"}
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5">
-                {[
-                  { label: "🔴 FoomCash Groth16 (EXPLOITED γ==δ==G₂)", addr: "0xc043865fb4D542E2bc5ed5Ed9A2F0939965671A6", ch: "ethereum" },
-                  { label: "🔴 Polygon Groth16 γ == δ Forgery", addr: "0xa6e4e74dbd04cc08bf054dd1aa5b9f83b5e66e2d", ch: "polygon" },
-                  { label: "🟢 Tornado Core Verifier (SOUND MPC)", addr: "0xce172ce1f20ec0b3728c9965470eaf994a03557a", ch: "ethereum" },
-                  { label: "🟢 Tornado 100 ETH Pool (Auto-Follows Verifier)", addr: "0xA160cdAB225685dA1d56aa342Ad8841c3b53f291", ch: "ethereum" },
-                  { label: "🟣 Polygon zkEVM FFLONK (SOUND 23KB)", addr: "0xf2f73b87e97730dca6558dd71c0b1c945ca38096", ch: "ethereum" },
-                  { label: "🧬 Canonical PLONK KZG (SOUND 24KB)", addr: "0x1c397f0c436cff6159f10fbccd38374ec79e6902", ch: "ethereum" },
-                  { label: "🔮 Aztec / Noir Honk (SOUND 24.5KB)", addr: "0x6e9bf73099cdc6d91d81d246238c5be5893cd6ff", ch: "ethereum" },
-                  { label: "🔵 Halo2 SHPLONK/GWC (14KB)", addr: "0x9b4f52e82f744f371f59f8904aee5d83bdcf81a5", ch: "ethereum" },
-                  { label: "🟡 STARK / FRI Transparent (19KB)", addr: "0xd4d6d145d26e948e7f7b98b06a742d1aed34e1cf", ch: "ethereum" },
-                  { label: "⚡ zkVM Receipt (SP1 / RISC Zero)", addr: "0x16613999219f9b56bededbf3722e44c4c2045300", ch: "ethereum" },
-                ].map((zp) => (
+            <div className="space-y-3 rounded-xl border border-primary/35 bg-background/70 p-3.5 font-mono text-[11px]">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <button
-                    key={`${zp.ch}:${zp.addr}`}
                     type="button"
-                    onClick={async () => {
-                      setInput1(zp.addr);
-                      setChain(zp.ch);
-                      setError(null);
-                      setLoading(true);
-                      try {
-                        const res = await fetch(`${API_BASE}/api/tools/zk-audit`, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json", ...authHeaders() },
-                          body: JSON.stringify({ address: zp.addr, chain: zp.ch }),
-                        });
-                        const data = await res.json().catch(() => ({}));
-                        if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
-                        setResult(data);
-                        loadHistory("zk");
-                      } catch (e: any) {
-                        setError(e.message || "ZK Audit error");
-                      } finally {
-                        setLoading(false);
-                      }
-                    }}
-                    className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
-                      input1.toLowerCase() === zp.addr.toLowerCase()
-                        ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                        : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                    onClick={() => setZkShowcaseTab("active_tvl")}
+                    className={`rounded-lg border px-3 py-1.5 font-bold transition-all ${
+                      zkShowcaseTab === "active_tvl"
+                        ? "border-green-500 bg-green-500/20 text-green-300 shadow-sm"
+                        : "border-border bg-card text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    {zp.label}
+                    💰 {isRu ? "Живые с балансом (TVL $), Nonce > 0 и Управляющие/Делегации (Без пустышек!)" : "Active Funded (TVL $), Nonce > 0 & Controlling/Delegated (No Empty Shells!)"}
                   </button>
-                ))}
+                  <button
+                    type="button"
+                    onClick={() => setZkShowcaseTab("benchmarks")}
+                    className={`rounded-lg border px-3 py-1.5 font-bold transition-all ${
+                      zkShowcaseTab === "benchmarks"
+                        ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                        : "border-border bg-card text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    📐 {isRu ? "Канонические эталоны по 7 системам (Взломы vs Sound)" : "Canonical Benchmarks (7 Proving Systems)"}
+                  </button>
+                </div>
+                <span className="text-[10px] text-muted-foreground">
+                  {isRu ? "88+ пулов с балансом (~$969.5M TVL) · 738 активных с Nonce > 0 · 65 детекторов" : "88+ funded pools (~$969.5M TVL) · 738 active with Nonce > 0 · 65 detectors"}
+                </span>
               </div>
+
+              {zkShowcaseTab === "active_tvl" ? (
+                <div className="space-y-2">
+                  <p className="text-[10px] text-muted-foreground">
+                    {isRu
+                      ? "⚡ В эту вкладку автоматически отфильтрованы только ЖИВЫЕ контракты (где есть реальные деньги TVL > $0 на контракте или управляющем пуле, активный Nonce/транзакции или делегирование verifyProof). Пустые изолированные верификаторы скрыты:"
+                      : "⚡ Filtered strictly to LIVE contracts with real TVL ($ > 0), active Nonce/Txs, or controlling pool delegation (stateless empty shells excluded):"}
+                  </p>
+                  {zkActiveLoading ? (
+                    <div className="flex items-center gap-2 py-2 text-muted-foreground">
+                      <Loader2 size={13} className="animate-spin text-primary" />
+                      <span>{isRu ? "Загрузка живых контрактов с балансом и Nonce…" : "Loading active funded & controlling ZK contracts…"}</span>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 max-h-64 overflow-y-auto pr-1">
+                      {zkActiveContracts.map((ac: any) => {
+                        const tvl = Number(ac.effective_tvl_usd || ac.tvl_usd || 0);
+                        const txs = Number(ac.effective_tx_count || ac.normal_tx_count || 0);
+                        const isCrit = String(ac.risk_level || "").toUpperCase() === "CRITICAL";
+                        return (
+                          <button
+                            key={`${ac.chain}:${ac.address}`}
+                            type="button"
+                            onClick={async () => {
+                              setInput1(ac.address);
+                              setChain(ac.chain);
+                              setError(null);
+                              setLoading(true);
+                              try {
+                                const res = await fetch(`${API_BASE}/api/tools/zk-audit`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json", ...authHeaders() },
+                                  body: JSON.stringify({ address: ac.address, chain: ac.chain }),
+                                });
+                                const data = await res.json().catch(() => ({}));
+                                if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+                                setResult(data);
+                                loadHistory("zk");
+                              } catch (e: any) {
+                                setError(e.message || "ZK Audit error");
+                              } finally {
+                                setLoading(false);
+                              }
+                            }}
+                            className={`flex flex-col justify-between rounded-lg border p-2.5 text-left transition-all ${
+                              input1.toLowerCase() === String(ac.address).toLowerCase()
+                                ? "border-primary bg-primary/15"
+                                : isCrit
+                                ? "border-red-500/40 bg-red-500/5 hover:border-red-500"
+                                : "border-border bg-card hover:border-primary/50"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-1.5">
+                              <span className="truncate font-bold text-foreground text-[11px]">
+                                {ac.protocol_name || ac.mc_name || ac.contract_name || `${ac.proving_system} Verifier`}
+                              </span>
+                              <span className="rounded bg-background border border-border px-1.5 py-0.5 text-[9px] uppercase text-primary shrink-0">
+                                {ac.chain} · {ac.proving_system}
+                              </span>
+                            </div>
+                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px]">
+                              {tvl > 0 && (
+                                <span className="rounded border border-green-500/50 bg-green-500/15 px-1.5 py-0.5 font-bold text-green-300">
+                                  💰 TVL: ${tvl >= 1e6 ? (tvl / 1e6).toFixed(2) + "M" : tvl.toLocaleString()}
+                                </span>
+                              )}
+                              {txs > 0 && (
+                                <span className="rounded border border-cyan-500/40 bg-cyan-500/10 px-1.5 py-0.5 text-cyan-300">
+                                  ⚡ Nonce/Tx: {txs}
+                                </span>
+                              )}
+                              {ac.last_caller && (
+                                <span className="rounded border border-purple-500/40 bg-purple-500/10 px-1.5 py-0.5 text-purple-300">
+                                  🏛️ Pool: {String(ac.last_caller).slice(0, 8)}…
+                                </span>
+                              )}
+                              <span className={`rounded px-1.5 py-0.5 font-bold ${isCrit ? "bg-red-500/20 text-red-300" : "bg-amber-500/15 text-amber-300"}`}>
+                                {ac.risk_level}
+                              </span>
+                            </div>
+                            <p className="mt-1 truncate text-[10px] text-muted-foreground">{ac.address}</p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {[
+                    { label: "🔴 FoomCash Groth16 (EXPLOITED γ==δ==G₂)", addr: "0xc043865fb4D542E2bc5ed5Ed9A2F0939965671A6", ch: "ethereum" },
+                    { label: "🔴 Polygon Groth16 γ == δ Forgery", addr: "0xa6e4e74dbd04cc08bf054dd1aa5b9f83b5e66e2d", ch: "polygon" },
+                    { label: "🟢 Tornado Core Verifier (SOUND MPC)", addr: "0xce172ce1f20ec0b3728c9965470eaf994a03557a", ch: "ethereum" },
+                    { label: "🟢 Tornado 100 ETH Pool ($969M TVL → Auto-Follows Verifier)", addr: "0xA160cdAB225685dA1d56aa342Ad8841c3b53f291", ch: "ethereum" },
+                    { label: "🟣 Polygon zkEVM FFLONK (SOUND 23KB)", addr: "0xf2f73b87e97730dca6558dd71c0b1c945ca38096", ch: "ethereum" },
+                    { label: "🧬 Canonical PLONK KZG (SOUND 24KB)", addr: "0x1c397f0c436cff6159f10fbccd38374ec79e6902", ch: "ethereum" },
+                    { label: "🔮 Aztec / Noir Honk (SOUND 24.5KB)", addr: "0x6e9bf73099cdc6d91d81d246238c5be5893cd6ff", ch: "ethereum" },
+                    { label: "🔵 Halo2 SHPLONK/GWC (14KB)", addr: "0x9b4f52e82f744f371f59f8904aee5d83bdcf81a5", ch: "ethereum" },
+                    { label: "🟡 STARK / FRI Transparent (19KB)", addr: "0xd4d6d145d26e948e7f7b98b06a742d1aed34e1cf", ch: "ethereum" },
+                    { label: "⚡ zkVM Receipt (SP1 / RISC Zero)", addr: "0x16613999219f9b56bededbf3722e44c4c2045300", ch: "ethereum" },
+                  ].map((zp) => (
+                    <button
+                      key={`${zp.ch}:${zp.addr}`}
+                      type="button"
+                      onClick={async () => {
+                        setInput1(zp.addr);
+                        setChain(zp.ch);
+                        setError(null);
+                        setLoading(true);
+                        try {
+                          const res = await fetch(`${API_BASE}/api/tools/zk-audit`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json", ...authHeaders() },
+                            body: JSON.stringify({ address: zp.addr, chain: zp.ch }),
+                          });
+                          const data = await res.json().catch(() => ({}));
+                          if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+                          setResult(data);
+                          loadHistory("zk");
+                        } catch (e: any) {
+                          setError(e.message || "ZK Audit error");
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      className={`rounded-lg border px-2.5 py-1 font-semibold transition-all ${
+                        input1.toLowerCase() === zp.addr.toLowerCase()
+                          ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                          : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                      }`}
+                    >
+                      {zp.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -1779,7 +1923,20 @@ const ToolsPanel = () => {
         </div>
       )}
 
-      <div ref={activeToolResultRef} />
+      <div ref={activeToolResultRef} className="scroll-mt-20">
+        {openedHistoryBanner && result && (
+          <div className="mb-3 flex items-center justify-between gap-2 rounded-xl border border-green-500/60 bg-green-500/15 px-4 py-2.5 font-mono text-xs font-semibold text-green-300 shadow-sm">
+            <span>✅ {openedHistoryBanner}</span>
+            <button
+              type="button"
+              onClick={() => setOpenedHistoryBanner(null)}
+              className="rounded px-2 py-0.5 text-muted-foreground hover:bg-black/20 hover:text-foreground"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* RESULTS */}
       {(() => {
@@ -2895,6 +3052,104 @@ const ToolsPanel = () => {
               {result.verdict || "ZK AUDIT COMPLETE"} · {isRu ? "Находок" : "Findings"}: {result.verifiers_found ?? (result.results?.length || 0)}
             </span>
           </div>
+
+          {/* 0. LIVE ON-CHAIN BALANCE, TVL AT RISK, NONCE & CONTROLLING/DELEGATION CHECKER */}
+          {result.onchain_liveness && (
+            <div
+              className={`rounded-xl border p-4 space-y-3 ${
+                result.onchain_liveness.effective_tvl_usd > 0
+                  ? "border-green-500/60 bg-green-500/10"
+                  : result.onchain_liveness.is_controlling_or_delegated
+                  ? "border-purple-500/50 bg-purple-500/10"
+                  : result.onchain_liveness.effective_tx_count > 1
+                  ? "border-cyan-500/50 bg-cyan-500/10"
+                  : "border-border bg-background/70"
+              }`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-bold text-xs text-foreground">
+                    💰 {isRu ? "ОНЧЕЙН-ЧЕКЕР БАЛАНСОВ, NONCE И УПРАВЛЯЮЩИХ КОНТРАКТОВ (LIVE RPC):" : "LIVE ON-CHAIN BALANCE, NONCE & CONTROLLING CONTRACT CHECKER:"}
+                  </span>
+                  <span
+                    className={`rounded-md border px-2.5 py-0.5 text-[11px] font-bold ${
+                      result.onchain_liveness.effective_tvl_usd > 0
+                        ? "border-green-500 bg-green-500/20 text-green-300"
+                        : result.onchain_liveness.is_controlling_or_delegated
+                        ? "border-purple-500 bg-purple-500/20 text-purple-300"
+                        : result.onchain_liveness.effective_tx_count > 1
+                        ? "border-cyan-500 bg-cyan-500/20 text-cyan-300"
+                        : "border-border bg-card text-muted-foreground"
+                    }`}
+                  >
+                    {result.onchain_liveness.liveness_badge}
+                  </span>
+                </div>
+                <span className="text-xs font-bold text-green-400">
+                  TVL / Balance: ${(result.onchain_liveness.effective_tvl_usd || 0).toLocaleString()} · Nonce/Tx: {result.onchain_liveness.effective_tx_count || 0}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 text-[11px]">
+                <div className="rounded-lg border border-border bg-card p-3">
+                  <p className="text-[9px] uppercase text-muted-foreground">{isRu ? "Прямой баланс контракта" : "Direct Contract Balance"}</p>
+                  <p className="mt-1 text-sm font-bold text-foreground">
+                    {result.onchain_liveness.direct_contract?.native_balance ?? 0} {result.onchain_liveness.direct_contract?.native_symbol || "ETH"}{" "}
+                    <span className="text-green-400">(${(result.onchain_liveness.direct_contract?.total_usd || 0).toLocaleString()})</span>
+                  </p>
+                  {result.onchain_liveness.direct_contract?.tokens &&
+                    Object.keys(result.onchain_liveness.direct_contract.tokens).length > 0 && (
+                      <p className="mt-0.5 text-[10px] text-cyan-300">
+                        Tokens: {JSON.stringify(result.onchain_liveness.direct_contract.tokens)}
+                      </p>
+                    )}
+                </div>
+
+                <div className="rounded-lg border border-border bg-card p-3">
+                  <p className="text-[9px] uppercase text-muted-foreground">{isRu ? "Ончейн Nonce / Вызовы" : "On-Chain Nonce / Txs"}</p>
+                  <p className="mt-1 text-sm font-bold text-cyan-300">
+                    Nonce: {result.onchain_liveness.direct_contract?.nonce ?? 0} · Txs: {result.onchain_liveness.effective_tx_count ?? 0}
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">
+                    {result.onchain_liveness.is_empty_shell
+                      ? isRu ? "Статус: Изолированный без транзакций" : "Stateless shell"
+                      : isRu ? "Статус: Живой активный контракт" : "Active contract"}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-border bg-card p-3">
+                  <p className="text-[9px] uppercase text-muted-foreground">{isRu ? "Роль / Делегация / Прокси" : "Role / Delegation / Proxy"}</p>
+                  <p className="mt-1 text-xs font-bold text-purple-300">
+                    {result.onchain_liveness.eip1967_implementation
+                      ? `🔀 EIP-1967 Proxy → ${result.onchain_liveness.eip1967_implementation.slice(0, 10)}…`
+                      : result.onchain_liveness.has_delegatecall
+                      ? "🔀 Uses DELEGATECALL (Library/Proxy)"
+                      : result.onchain_liveness.is_controlling_or_delegated
+                      ? "🏛️ Linked to Controlling Pool/Bridge"
+                      : "📐 Standalone Math Verifier"}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-border bg-card p-3">
+                  <p className="text-[9px] uppercase text-muted-foreground">{isRu ? "Связанный Пул / Вызыватель (TVL)" : "Linked Pool / Caller (TVL)"}</p>
+                  {result.onchain_liveness.linked_partner ? (
+                    <div className="mt-1 space-y-1">
+                      <p className="truncate font-bold text-primary" title={result.onchain_liveness.linked_partner.address}>
+                        {result.onchain_liveness.linked_partner.address}
+                      </p>
+                      <p className="text-[10px] text-green-400 font-bold">
+                        💰 ${Number(result.onchain_liveness.linked_partner.total_usd || 0).toLocaleString()} ({result.onchain_liveness.linked_partner.native_balance} {result.onchain_liveness.linked_partner.native_symbol}) · Nonce: {result.onchain_liveness.linked_partner.nonce}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {isRu ? "Прямой внешний пул не обнаружен" : "No external caller pool linked"}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* 1. Mathematical Verification Equation & Proving System Profile */}
           {result.proving_system_profile && (
@@ -4689,6 +4944,8 @@ const ToolsPanel = () => {
               { id: "social", label: "Social" },
               { id: "soroban", label: "Soroban" },
               { id: "ospec", label: "OSPEC" },
+              { id: "zk", label: "ZK Math v5.5" },
+              { id: "drift", label: "Audit Drift" },
               { id: "hacks", label: "2,539 Exploits DB" },
               { id: "deployer", label: "Deployer" },
               { id: "proxy", label: "Proxy" },

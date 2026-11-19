@@ -843,12 +843,13 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
               {isRu ? "Математический риск:" : "Math Risk Filter:"}
             </span>
             {[
-              { id: "ALL", label: isRu ? "Все верификаторы" : "All Verifiers", cnt: null },
+              { id: "ACTIVE_VALUABLE", label: isRu ? "🔥 ЖИВЫЕ (TVL > $0 · Nonce > 0 · Управляющие/Делегации — Без пустышек!)" : "🔥 LIVE (TVL > $0 · Nonce > 0 · Controlling — No Empty Shells!)", cnt: feed?.stats?.zk_breakdown?.active_valuable_count || 5012 },
+              { id: "HAS_TVL", label: isRu ? "💰 С балансом / TVL под угрозой ($ > 0)" : "💰 Funded / TVL at Risk ($ > 0)", cnt: feed?.stats?.zk_breakdown?.tvl_contracts_count || 88 },
+              { id: "CONTROLLING", label: isRu ? "🏛️ Управляющие / Пулы / Делегации (Caller / Proxy)" : "🏛️ Controlling Pools / Proxy / Delegated", cnt: feed?.stats?.zk_breakdown?.controlling_contracts_count || 4985 },
+              { id: "HAS_TX", label: isRu ? "⚡ Активные по транзакциям (Nonce / Tx > 0)" : "⚡ Active by Txs (Nonce > 0)", cnt: feed?.stats?.zk_breakdown?.tx_active_count || 745 },
               { id: "GAMMA_EQ_DELTA", label: isRu ? "🔴 CRITICAL: γ == δ Forgery (Groth16)" : "🔴 CRITICAL: γ == δ Forgery", cnt: feed?.stats?.zk_breakdown?.gamma_eq_delta_count || 276 },
-              { id: "G2_REUSE", label: isRu ? "🟠 G₂ SRS / Generator Collision (KZG)" : "🟠 G₂ SRS / Generator Collision", cnt: feed?.stats?.zk_breakdown?.g2_reuse_count || 1776 },
-              { id: "HIGH", label: isRu ? "🔥 HIGH Risk Surface" : "🔥 HIGH Risk", cnt: feed?.stats?.zk_breakdown?.by_risk?.HIGH || 4251 },
-              { id: "MEDIUM", label: isRu ? "🟡 MEDIUM (KZG / Multi-Open)" : "🟡 MEDIUM", cnt: feed?.stats?.zk_breakdown?.by_risk?.MEDIUM || 15751 },
-              { id: "LOW", label: isRu ? "🟢 LOW (Standard BN254)" : "🟢 LOW", cnt: feed?.stats?.zk_breakdown?.by_risk?.LOW || 28365 },
+              { id: "G2_REUSE", label: isRu ? "🟠 G₂ SRS / Generator Collision (KZG)" : "🟠 G₂ SRS / Generator Collision", cnt: feed?.stats?.zk_breakdown?.g2_reuse_count || 1773 },
+              { id: "ALL", label: isRu ? "🌐 Все контракты (вкл. пустышки)" : "🌐 All Contracts (incl. shells)", cnt: feed?.stats?.zk_verifiers || 52347 },
             ].map((rf) => (
               <button
                 key={rf.id}
@@ -978,7 +979,8 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
                   }}
                   className="rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground outline-none focus:border-primary"
                 >
-                  <option value="risk">{isRu ? "🔥 Сортировка: Эталоны и CRITICAL (γ==δ) сверху" : "🔥 Sort: Canonical & CRITICAL (γ==δ) First"}</option>
+                  <option value="tvl">{isRu ? "💰 По балансу / TVL под угрозой ($ ↓) и Nonce ↓" : "💰 By TVL at Risk ($ ↓) & Nonce ↓"}</option>
+                  <option value="risk">{isRu ? "🔥 Эталоны и CRITICAL (γ==δ) сверху" : "🔥 Canonical & CRITICAL (γ==δ) First"}</option>
                   <option value="size">{isRu ? "📐 По размеру схемы и байткода (24KB → 1KB)" : "📐 By Circuit / Bytecode Size ↓"}</option>
                   <option value="score">{isRu ? "⚡ По ZK Risk Score ↓" : "⚡ By ZK Risk Score ↓"}</option>
                   <option value="newest">{isRu ? "🕒 По блоку деплоя (Новые)" : "🕒 By Deploy Block (Newest)"}</option>
