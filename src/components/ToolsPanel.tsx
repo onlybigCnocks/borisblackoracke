@@ -1303,7 +1303,7 @@ const ToolsPanel = () => {
                           >
                             <div className="flex items-center justify-between gap-1.5">
                               <span className="truncate font-bold text-foreground text-[11px]">
-                                {ac.protocol_name || ac.mc_name || ac.contract_name || `${ac.proving_system} Verifier`}
+                                {ac.display_name || ac.protocol_name || ac.mc_name || ac.contract_name || `${ac.proving_system} Verifier`}
                               </span>
                               <span className="rounded bg-background border border-border px-1.5 py-0.5 text-[9px] uppercase text-primary shrink-0">
                                 {ac.chain} · {ac.proving_system}
@@ -2553,8 +2553,12 @@ const ToolsPanel = () => {
                   <p className="text-[10px] uppercase tracking-wider text-primary font-bold">
                     {isRu ? "Инфографика распределения эмиссии" : "Token Supply Distribution"}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {result.token_symbol ? `$${result.token_symbol} · ` : ""}{String(result.chain || "").toUpperCase()}
+                  <p className="text-xs font-bold text-foreground mt-0.5">
+                    🏛️ {result.token_name || result.display_name || "On-Chain Token"}{" "}
+                    <span className="text-primary">
+                      {result.token_symbol ? `($${result.token_symbol})` : ""}
+                    </span>{" "}
+                    · <span className="text-muted-foreground">{String(result.chain || "").toUpperCase()}</span>
                   </p>
                 </div>
                 <span
@@ -2777,8 +2781,8 @@ const ToolsPanel = () => {
                 <span className="rounded-lg border border-primary/40 bg-primary/15 px-2.5 py-1 text-xs font-bold text-primary">
                   {result.detected_mode === "LP POOL" ? "💧 LP POOL FLOW" : "📜 CONTRACT / ADDRESS FLOW"}
                 </span>
-                <span className="text-sm font-bold text-foreground">
-                  {result.target_icon || "🎯"} {result.target_label || result.address}
+                <span className="text-sm font-bold text-emerald-300">
+                  {result.target_icon || "🏛️"} {result.target_name || result.target_label || result.contract_name || result.address}
                 </span>
                 <code className="text-xs text-muted-foreground">{result.address}</code>
               </div>
@@ -3034,7 +3038,12 @@ const ToolsPanel = () => {
               <span className="rounded-md border border-primary/50 bg-primary/15 px-2.5 py-1 text-xs font-bold uppercase text-primary">
                 📐 {result.proving_system || result.radar_metadata?.proving_system || "GROTH16"}
               </span>
-              <span className="text-primary font-bold text-sm">{result.address}</span>
+              {(result.display_name || result.protocol_name || result.contract_name || result.radar_metadata?.protocol_name || result.radar_metadata?.contract_name) && (
+                <span className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-xs font-bold text-emerald-300">
+                  🏛️ {result.display_name || result.protocol_name || result.contract_name || result.radar_metadata?.protocol_name || result.radar_metadata?.contract_name}
+                </span>
+              )}
+              <code className="text-primary font-bold text-xs">{result.address}</code>
               <span className="rounded bg-background border border-border px-2 py-0.5 text-[10px] uppercase text-muted-foreground">
                 {result.chain}
               </span>
@@ -4215,7 +4224,11 @@ const ToolsPanel = () => {
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
             <div>
               <span className="text-primary font-bold">
-                {result.mode === "kb_search" ? `KB Query: ${result.query}` : result.target}
+                {result.mode === "kb_search"
+                  ? `KB Query: ${result.query}`
+                  : result.target_name && result.target_name !== result.target
+                  ? `🏛️ ${result.target_name} (${result.target})`
+                  : result.target}
               </span>
               {result.chain && <span className="ml-2 text-muted-foreground">({result.chain})</span>}
             </div>
@@ -4415,9 +4428,14 @@ const ToolsPanel = () => {
       {result && tool === "proxy" && (
         <div className="rounded-xl border border-border bg-card p-5 space-y-4 font-mono text-xs">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
-            <div>
+            <div className="flex flex-wrap items-center gap-2">
+              {(result.proxy_name || result.impl_name) && (
+                <span className="rounded border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-0.5 text-xs font-bold text-emerald-300">
+                  🏛️ {result.proxy_name || result.impl_name}
+                </span>
+              )}
               <span className="text-primary font-bold">{result.address}</span>
-              <span className="ml-2 text-muted-foreground">({result.chain})</span>
+              <span className="text-muted-foreground">({result.chain})</span>
             </div>
             <span
               className={`rounded border px-2.5 py-0.5 text-[11px] font-bold ${
@@ -4647,9 +4665,14 @@ const ToolsPanel = () => {
       {result && tool === "flash" && (
         <div className="rounded-xl border border-border bg-card p-5 space-y-4 font-mono text-xs">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
-            <div>
+            <div className="flex flex-wrap items-center gap-2">
+              {(result.display_name || result.contract_name || result.implementation_name) && (
+                <span className="rounded border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-0.5 text-xs font-bold text-emerald-300">
+                  🏛️ {result.display_name || result.implementation_name || result.contract_name}
+                </span>
+              )}
               <span className="text-primary font-bold">{result.address}</span>
-              <span className="ml-2 text-muted-foreground">({result.chain})</span>
+              <span className="text-muted-foreground">({result.chain})</span>
             </div>
             <span className="rounded border border-primary/40 bg-primary/15 px-2.5 py-0.5 text-[11px] font-bold text-primary">
               {result.verdict} · Score: {result.composite_score}
@@ -4815,6 +4838,11 @@ const ToolsPanel = () => {
               <span className="rounded border border-primary/40 bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase text-primary">
                 {result.primary.type || "ADDRESS"}
               </span>
+              {(result.primary.display_name || result.primary.known_label || result.primary.contract_name) && (
+                <span className="rounded border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-0.5 text-xs font-bold text-emerald-300">
+                  🏛️ {result.primary.display_name || result.primary.known_label || result.primary.contract_name}
+                </span>
+              )}
               <span className="text-primary font-bold">{result.primary.address}</span>
               <span className="text-muted-foreground">({String(result.primary.chain || "").toUpperCase()})</span>
             </div>
