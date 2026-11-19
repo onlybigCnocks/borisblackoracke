@@ -1217,6 +1217,120 @@ const ToolsPanel = () => {
             </div>
           )}
 
+          {/* Quick presets for Social & OSINT */}
+          {tool === "social" && (
+            <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[11px]">
+              <span className="text-muted-foreground">{isRu ? "Быстрые цели OSINT:" : "Quick OSINT targets:"}</span>
+              {[
+                { label: "Aave (aave.com)", val: "aave.com" },
+                { label: "Uniswap (uniswap.org)", val: "uniswap.org" },
+                { label: "Lido (lido.fi)", val: "lido.fi" },
+                { label: "DeXe (dexe.network)", val: "dexe.network" },
+                { label: "Curve (curve.fi)", val: "curve.fi" },
+                { label: "Pendle (pendle.finance)", val: "pendle.finance" },
+              ].map((p) => (
+                <button
+                  key={p.val}
+                  type="button"
+                  onClick={() => setInput1(p.val)}
+                  className="rounded-lg border border-border bg-background px-2.5 py-1 text-muted-foreground hover:border-primary hover:text-primary"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Quick presets for Proxy & EIP-1967 */}
+          {tool === "proxy" && (
+            <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[11px]">
+              <span className="text-muted-foreground">{isRu ? "Быстрые прокси-контракты:" : "Quick proxy contracts:"}</span>
+              {[
+                { label: "USDC FiatTokenProxy", val: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", ch: "ethereum" },
+                { label: "Aave V3 Pool Proxy", val: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2", ch: "ethereum" },
+                { label: "Lido stETH Proxy", val: "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", ch: "ethereum" },
+                { label: "EigenLayer StrategyManager", val: "0x858646372CC42E1A627fcE94aa7A7033e7CF075A", ch: "ethereum" },
+              ].map((p) => (
+                <button
+                  key={p.val}
+                  type="button"
+                  onClick={() => {
+                    setInput1(p.val);
+                    setChain(p.ch);
+                  }}
+                  className="rounded-lg border border-border bg-background px-2.5 py-1 text-muted-foreground hover:border-primary hover:text-primary"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Quick presets for Flash-Loan & Spot-Oracle */}
+          {tool === "flash" && (
+            <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[11px]">
+              <span className="text-muted-foreground">{isRu ? "Быстрые контракты оракулов/пулов:" : "Quick oracle/pool targets:"}</span>
+              {[
+                { label: "Aave V3 Pool (FlashLoan)", val: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2", ch: "ethereum" },
+                { label: "Uniswap V3 USDC/WETH", val: "0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640", ch: "ethereum" },
+                { label: "Curve 3Pool", val: "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7", ch: "ethereum" },
+              ].map((p) => (
+                <button
+                  key={p.val}
+                  type="button"
+                  onClick={() => {
+                    setInput1(p.val);
+                    setChain(p.ch);
+                  }}
+                  className="rounded-lg border border-border bg-background px-2.5 py-1 text-muted-foreground hover:border-primary hover:text-primary"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Quick presets for Deployer & Address Profiler */}
+          {tool === "deployer" && (
+            <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[11px]">
+              <span className="text-muted-foreground">{isRu ? "Быстрые цели деплоера:" : "Quick deployer targets:"}</span>
+              {[
+                { label: "Tornado Cash 100 ETH Pool", val: "0xA160cdAB225685dA1d56aa342Ad8841c3b53f291", ch: "ethereum" },
+                { label: "Aave V3 Pool", val: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2", ch: "ethereum" },
+                { label: "USDT Tether Contract", val: "0xdAC17F958D2ee523a2206206994597C13D831ec7", ch: "ethereum" },
+              ].map((p) => (
+                <button
+                  key={p.val}
+                  type="button"
+                  onClick={() => {
+                    setInput1(p.val);
+                    setChain(p.ch);
+                  }}
+                  className="rounded-lg border border-border bg-background px-2.5 py-1 text-muted-foreground hover:border-primary hover:text-primary"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Quick presets for Stellar / Soroban */}
+          {tool === "soroban" && (
+            <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[11px]">
+              <span className="text-muted-foreground">{isRu ? "Быстрые активы Stellar / Soroban:" : "Quick Stellar / Soroban assets:"}</span>
+              {["USDC", "AQUA", "YXLM", "EURC", "XLM"].map((tk) => (
+                <button
+                  key={tk}
+                  type="button"
+                  onClick={() => setInput1(tk)}
+                  className="rounded-lg border border-border bg-background px-2.5 py-1 text-muted-foreground hover:border-primary hover:text-primary"
+                >
+                  {tk}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Quick-Launch Mathematical Showcase & Active Funded/Controlling Filter for ZK Math Monster v5.5 */}
           {tool === "zk" && (
             <div className="space-y-3 rounded-xl border border-primary/35 bg-background/70 p-3.5 font-mono text-[11px]">
@@ -4331,53 +4445,324 @@ const ToolsPanel = () => {
         </div>
       )}
 
-      {result && tool === "social" && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[
-              { k: isRu ? "Проект" : "Project", v: result.project_id },
-              { k: "Trust Score", v: `${result.trust_score}/100` },
-              { k: "Social Risk", v: `${result.social_score}/100` },
-              { k: isRu ? "Сигналы" : "Signals", v: result.signals_total },
-            ].map((c, i) => (
-              <div key={i} className="rounded-xl border border-border bg-card p-4">
-                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{c.k}</p>
-                <p className="mt-1 truncate font-mono text-lg font-bold text-foreground">{c.v}</p>
-              </div>
-            ))}
-          </div>
-          {result.platforms?.length > 0 && (
-            <div className="rounded-xl border border-border bg-card p-5">
-              <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-primary">
-                {isRu ? "Платформы" : "Platforms"}
-              </p>
-              <div className="space-y-1.5">
-                {result.platforms.map((p: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs">
-                    <span className="font-bold uppercase text-primary">{p.platform}</span>
-                    <span className="flex-1 truncate text-muted-foreground">{p.url}</span>
-                    <span className="text-foreground">{fmt(p.followers, 0)} followers</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {result.signals?.length > 0 && (
-            <div className="rounded-xl border border-border bg-card p-5 space-y-2">
-              <p className="font-mono text-[10px] uppercase tracking-wider text-primary">{isRu ? "OSINT Сигналы" : "OSINT Signals"}</p>
-              {result.signals.map((s: any, i: number) => (
-                <div key={i} className="rounded-lg border border-border bg-background p-3 font-mono text-xs">
-                  <div className="flex justify-between">
-                    <span className="font-bold text-foreground">{s.type}</span>
-                    <span className="text-muted-foreground">{s.platform} · {s.severity}</span>
-                  </div>
-                  <p className="mt-1 text-muted-foreground">{s.description}</p>
+      {result && tool === "social" && (() => {
+        const trust = Math.min(100, Math.max(0, Number(result.trust_score ?? 50)));
+        const sRisk = Math.min(100, Math.max(0, Number(result.social_score ?? 0)));
+        const rdap = result.domain_osint?.rdap || {};
+        const dns = result.domain_osint?.dns || {};
+        const wb = result.domain_osint?.wayback || {};
+        const gh = result.github_osint || {};
+        const regMeta = result.registry_meta || {};
+        const maxFollowers = Math.max(1, ...(result.platforms || []).map((p: any) => Number(p.followers || 0)));
+
+        const rGauge = 44;
+        const cGauge = 2 * Math.PI * rGauge;
+        const arcGauge = cGauge * 0.75;
+        const trustOffset = arcGauge - (trust / 100) * arcGauge;
+        const riskOffset = arcGauge - (sRisk / 100) * arcGauge;
+
+        return (
+          <div className="space-y-4 font-mono text-xs">
+            {/* HERO COMMAND BRIDGE: DUAL RADIAL GAUGES + RDAP/DNS DOMAIN INTEL + GITHUB ORG */}
+            <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <span className="rounded-lg border border-primary/40 bg-primary/15 px-3 py-1 text-xs font-bold text-primary">
+                    🕵️‍♂️ OSINT & DOMAIN INTELLIGENCE v2.0
+                  </span>
+                  <span className="text-base font-black text-foreground">
+                    {regMeta.name || result.project_id}
+                  </span>
+                  {regMeta.symbol && (
+                    <span className="rounded bg-emerald-500/15 border border-emerald-500/40 px-2 py-0.5 text-[11px] font-bold text-emerald-300">
+                      ${regMeta.symbol}
+                    </span>
+                  )}
+                  {regMeta.category && (
+                    <span className="rounded bg-background border border-border px-2 py-0.5 text-[10px] text-muted-foreground">
+                      {regMeta.category}
+                    </span>
+                  )}
                 </div>
-              ))}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`rounded-lg border px-3 py-1 text-[11px] font-bold ${
+                    trust >= 70
+                      ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-300"
+                      : trust >= 45
+                      ? "border-amber-500/50 bg-amber-500/15 text-amber-300"
+                      : "border-destructive/50 bg-destructive/15 text-destructive"
+                  }`}>
+                    Class: {result.project_class || "PROFILED"} · Trust {trust}/100
+                  </span>
+                  {result.domain_osint?.domain && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTool("surface");
+                        setInput1(result.domain_osint.domain);
+                      }}
+                      className="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-bold text-cyan-300 hover:bg-cyan-500 hover:text-black"
+                    >
+                      🌐 Скан поддоменов ({result.domain_osint.domain}) ↗
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+                {/* COL 1 (4 cols): Dual SVG Radial Gauges (Trust Score vs Social/Sybil Risk) */}
+                <div className="rounded-xl border border-border bg-background/70 p-4 lg:col-span-4 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                      🎯 {isRu ? "Индекс Доверия vs Соц. Риск" : "Trust Index vs Social Risk"}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">{result.signals_total || 0} signals</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 my-1">
+                    {/* Gauge 1: Trust Score */}
+                    <div className="flex flex-col items-center rounded-lg border border-border bg-card p-2.5">
+                      <div className="relative h-24 w-24">
+                        <svg viewBox="0 0 110 110" className="h-full w-full rotate-[135deg]">
+                          <circle cx="55" cy="55" r={rGauge} fill="transparent" stroke="hsl(var(--border))" strokeWidth="8" strokeDasharray={`${arcGauge} ${cGauge}`} strokeLinecap="round" />
+                          <circle cx="55" cy="55" r={rGauge} fill="transparent" stroke="#10b981" strokeWidth="8" strokeDasharray={`${arcGauge} ${cGauge}`} strokeDashoffset={trustOffset} strokeLinecap="round" />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-xl font-black text-emerald-400">{trust}</span>
+                          <span className="text-[8px] uppercase text-muted-foreground">TRUST</span>
+                        </div>
+                      </div>
+                      <span className="mt-1 text-[10px] font-bold text-foreground">
+                        {isRu ? "Репутация / Органика" : "Organic Trust"}
+                      </span>
+                    </div>
+
+                    {/* Gauge 2: Social / Sybil Risk */}
+                    <div className="flex flex-col items-center rounded-lg border border-border bg-card p-2.5">
+                      <div className="relative h-24 w-24">
+                        <svg viewBox="0 0 110 110" className="h-full w-full rotate-[135deg]">
+                          <circle cx="55" cy="55" r={rGauge} fill="transparent" stroke="hsl(var(--border))" strokeWidth="8" strokeDasharray={`${arcGauge} ${cGauge}`} strokeLinecap="round" />
+                          <circle cx="55" cy="55" r={rGauge} fill="transparent" stroke={sRisk >= 50 ? "#ef4444" : "#f59e0b"} strokeWidth="8" strokeDasharray={`${arcGauge} ${cGauge}`} strokeDashoffset={riskOffset} strokeLinecap="round" />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-xl font-black text-amber-400">{sRisk}</span>
+                          <span className="text-[8px] uppercase text-muted-foreground">RISK</span>
+                        </div>
+                      </div>
+                      <span className="mt-1 text-[10px] font-bold text-foreground">
+                        {isRu ? "Накрутка / Боты" : "Bot / Sybil Risk"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {regMeta.chains?.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1 pt-2 border-t border-border/60 text-[10px]">
+                      <span className="text-muted-foreground mr-1">⛓ Chains:</span>
+                      {regMeta.chains.map((ch: string, ci: number) => (
+                        <span key={ci} className="rounded border border-border bg-card px-1.5 py-0.5 text-foreground">
+                          {ch}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* COL 2 (4 cols): IANA RDAP / WHOIS Domain Age & DNS Security Posture */}
+                <div className="rounded-xl border border-border bg-background/70 p-4 lg:col-span-4 flex flex-col justify-between space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                      🌐 {isRu ? "RDAP / WHOIS Домен & DNS-Защита" : "RDAP / WHOIS Domain & DNS Posture"}
+                    </span>
+                    {result.domain_osint?.domain && (
+                      <span className="rounded border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                        {result.domain_osint.domain}
+                      </span>
+                    )}
+                  </div>
+
+                  {result.domain_osint?.domain ? (
+                    <div className="space-y-2 text-[11px]">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="rounded-lg border border-border bg-card p-2.5">
+                          <p className="text-[9px] uppercase text-muted-foreground">{isRu ? "Возраст домена (RDAP)" : "Domain Age (RDAP)"}</p>
+                          <p className="mt-0.5 text-sm font-bold text-emerald-400">
+                            {rdap.age_years !== undefined && rdap.age_years !== null
+                              ? `${rdap.age_years} ${isRu ? "лет" : "yrs"} (${rdap.age_days}d)`
+                              : wb.first_archived_at
+                              ? `Archive: ${wb.first_archived_at}`
+                              : "—"}
+                          </p>
+                          <p className="text-[9px] text-muted-foreground">
+                            Reg: {rdap.registered_at || wb.first_archived_at || "—"} · Exp: {rdap.expires_at || "—"}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-border bg-card p-2.5">
+                          <p className="text-[9px] uppercase text-muted-foreground">{isRu ? "Регистратор & DNSSEC" : "Registrar & DNSSEC"}</p>
+                          <p className="mt-0.5 truncate font-bold text-foreground" title={rdap.registrar}>
+                            {rdap.registrar || "IANA Verified"}
+                          </p>
+                          <p className="text-[9px] text-muted-foreground">
+                            DNSSEC: <b className={rdap.dnssec ? "text-emerald-400" : "text-amber-400"}>{rdap.dnssec ? "SIGNED" : "UNSIGNED"}</b>
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border border-border bg-card p-2.5 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground">📧 Mail / MX:</span>
+                          <b className="text-foreground">{dns.mail_provider || "None"}</b>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground">🛡️ DMARC / SPF:</span>
+                          <span className={dns.dmarc_enforced ? "text-emerald-400 font-bold" : "text-amber-400 font-bold"}>
+                            {dns.dmarc_enforced ? "✓ DMARC Enforced" : dns.spf ? "SPF Only (No strict DMARC)" : "No DMARC"}
+                          </span>
+                        </div>
+                        {dns.verified_services?.length > 0 && (
+                          <div className="flex flex-wrap gap-1 pt-1 border-t border-border/60">
+                            {dns.verified_services.map((vs: string, vi: number) => (
+                              <span key={vi} className="rounded bg-primary/15 px-1.5 py-0.5 text-[9px] font-semibold text-primary">
+                                ✓ {vs}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground py-6 text-center">
+                      {isRu ? "Введите домен проекта (например aave.com) для RDAP/WHOIS и DNS-разведки." : "Enter a project domain (e.g. aave.com) for RDAP & DNS OSINT."}
+                    </p>
+                  )}
+                </div>
+
+                {/* COL 3 (4 cols): GitHub Organization & Developer Velocity OSINT */}
+                <div className="rounded-xl border border-border bg-background/70 p-4 lg:col-span-4 flex flex-col justify-between space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                      📦 {isRu ? "GitHub Организация & Разработка" : "GitHub Organization & Dev OSINT"}
+                    </span>
+                    {gh.owner && (
+                      <a href={gh.url} target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold text-primary hover:underline">
+                        @{gh.owner} ↗
+                      </a>
+                    )}
+                  </div>
+
+                  {gh.owner ? (
+                    <div className="space-y-2 text-[11px]">
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="rounded-lg border border-border bg-card p-2 text-center">
+                          <p className="text-[9px] text-muted-foreground">Repos</p>
+                          <p className="font-bold text-foreground">{gh.public_repos ?? "—"}</p>
+                        </div>
+                        <div className="rounded-lg border border-border bg-card p-2 text-center">
+                          <p className="text-[9px] text-muted-foreground">★ Stars</p>
+                          <p className="font-bold text-amber-400">{fmt(gh.total_stars_sample ?? 0, 0)}</p>
+                        </div>
+                        <div className="rounded-lg border border-border bg-card p-2 text-center">
+                          <p className="text-[9px] text-muted-foreground">Created</p>
+                          <p className="font-bold text-foreground">{gh.created_at ? gh.created_at.slice(0, 4) : "—"}</p>
+                        </div>
+                      </div>
+
+                      {gh.top_repos?.length > 0 && (
+                        <div className="space-y-1 max-h-28 overflow-y-auto pr-1">
+                          {gh.top_repos.slice(0, 3).map((tr: any, ti: number) => (
+                            <div key={ti} className="flex items-center justify-between gap-2 rounded border border-border bg-card px-2.5 py-1 text-[10px]">
+                              <a href={tr.url} target="_blank" rel="noopener noreferrer" className="font-bold text-primary hover:underline truncate">
+                                {tr.name}
+                              </a>
+                              <span className="text-muted-foreground shrink-0">
+                                ★{tr.stars} · {tr.language} · {tr.pushed_at}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground py-6 text-center">
+                      {isRu ? "GitHub-организация не привязана или не указана" : "No linked GitHub organization"}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* SOCIAL PLATFORMS AUDIENCE & ENGAGEMENT BARS */}
+              {result.platforms?.length > 0 && (
+                <div className="rounded-xl border border-border bg-background/70 p-4 space-y-2.5">
+                  <p className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                    📡 {isRu ? `Карта соцсетей и вовлечённости аудитории (${result.platforms.length})` : `Social Platforms & Engagement Telemetry (${result.platforms.length})`}
+                  </p>
+                  <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                    {result.platforms.map((p: any, i: number) => {
+                      const fol = Number(p.followers || 0);
+                      const pctW = Math.min(100, Math.max(6, (fol / maxFollowers) * 100));
+                      return (
+                        <div key={i} className="rounded-lg border border-border bg-card p-3 space-y-1.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="rounded border border-primary/40 bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase text-primary">
+                                {p.platform}
+                              </span>
+                              <a href={p.url} target="_blank" rel="noopener noreferrer" className="truncate text-foreground font-semibold hover:text-primary hover:underline">
+                                {p.url} ↗
+                              </a>
+                            </div>
+                            <span className="font-bold text-emerald-400 shrink-0">
+                              {fmt(fol, 0)} followers
+                            </span>
+                          </div>
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-background border border-border/60">
+                            <div className="h-full bg-gradient-to-r from-primary to-emerald-400" style={{ width: `${pctW}%` }} />
+                          </div>
+                          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                            <span>Profile: <b className="text-foreground">{p.engagement_profile || p.verdict || "ACTIVE"}</b></span>
+                            {p.engagement_rate ? <span>ER: <b className="text-foreground">{p.engagement_rate}%</b></span> : null}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* OSINT SIGNALS */}
+              {result.signals?.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                    🚨 {isRu ? `Детерминированные OSINT и Доменные сигналы (${result.signals.length})` : `Detected OSINT & Domain Signals (${result.signals.length})`}
+                  </p>
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                    {result.signals.map((s: any, i: number) => {
+                      const sev = String(s.severity || "INFO").toUpperCase();
+                      return (
+                        <div
+                          key={i}
+                          className={`rounded-lg border p-3 ${
+                            sev === "CRITICAL" || sev === "HIGH" || sev === "NEGATIVE"
+                              ? "border-destructive/40 bg-destructive/10"
+                              : "border-border bg-background"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold text-foreground">{s.type}</span>
+                            <span className="rounded border border-border bg-card px-2 py-0.5 text-[10px] text-primary font-bold">
+                              {s.platform} · {sev}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">{s.description}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        );
+      })()}
 
       {result && tool === "soroban" && (
         <div className="space-y-4">
@@ -4419,6 +4804,174 @@ const ToolsPanel = () => {
 
       {result && tool === "ospec" && (
         <div className="space-y-4">
+          {/* OSPEC VISUAL TELEMETRY COMMAND DECK (SVG Donut + Interactive Category Bars + Top Active Signatures) */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 font-mono text-xs">
+            {/* COL 1 (4 cols): SVG Donut Chart of Verified REAL Secrets & Live On-Chain Keys */}
+            <div className="rounded-xl border border-border bg-card p-4 lg:col-span-4 flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                  🎯 {isRu ? "Структура боевого пула REAL (L2.5 + Context v6.2)" : "Verified REAL Secret Pool Topology"}
+                </span>
+                <span className="rounded border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+                  Zero-FP v6.2
+                </span>
+              </div>
+
+              {(() => {
+                const critCnt = Number(result.db_stats?.by_severity?.CRITICAL ?? 0);
+                const highCnt = Number(result.db_stats?.by_severity?.HIGH ?? 0);
+                const medCnt = Number(result.db_stats?.by_severity?.MEDIUM ?? 0);
+                const totReal = Math.max(1, critCnt + highCnt + medCnt);
+                const critPct = Math.round((critCnt / totReal) * 100);
+                const highPct = Math.round((highCnt / totReal) * 100);
+                const medPct = Math.max(0, 100 - critPct - highPct);
+                return (
+                  <div className="flex items-center gap-4 my-2">
+                    <div className="relative h-32 w-32 shrink-0">
+                      <svg viewBox="0 0 42 42" className="h-full w-full -rotate-90">
+                        <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="hsl(var(--border))" strokeWidth="4.5" />
+                        <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#ef4444" strokeWidth="4.5" strokeDasharray={`${critPct} ${100 - critPct}`} strokeDashoffset="100" />
+                        <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#f59e0b" strokeWidth="4.5" strokeDasharray={`${highPct} ${100 - highPct}`} strokeDashoffset={100 - critPct} />
+                        <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#10b981" strokeWidth="4.5" strokeDasharray={`${medPct} ${100 - medPct}`} strokeDashoffset={100 - critPct - highPct} />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                        <span className="text-sm font-black text-foreground">{fmt(result.db_stats?.real_findings ?? totReal, 0)}</span>
+                        <span className="text-[9px] text-emerald-400 font-bold">REAL</span>
+                        <span className="text-[9px] text-amber-400">🔥 {fmt(result.db_stats?.live_keys ?? 0, 0)} LIVE</span>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 space-y-1.5 text-[11px]">
+                      <div className="flex items-center justify-between rounded border border-border bg-background px-2.5 py-1.5">
+                        <span className="text-red-400 font-bold">🔴 CRITICAL</span>
+                        <b>{fmt(critCnt, 0)} ({critPct}%)</b>
+                      </div>
+                      <div className="flex items-center justify-between rounded border border-border bg-background px-2.5 py-1.5">
+                        <span className="text-amber-400 font-bold">🟠 HIGH</span>
+                        <b>{fmt(highCnt, 0)} ({highPct}%)</b>
+                      </div>
+                      <div className="flex items-center justify-between rounded border border-border bg-background px-2.5 py-1.5">
+                        <span className="text-emerald-400 font-bold">🔥 LIVE Funded</span>
+                        <b>{fmt(result.db_stats?.live_keys ?? 0, 0)} keys</b>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div className="flex items-center justify-between border-t border-border/60 pt-2 text-[10px] text-muted-foreground">
+                <span>📦 Scanned: <b className="text-foreground">{fmt(result.db_stats?.indexed_repos ?? 0, 0)} repos</b></span>
+                <span>🎯 With REAL: <b className="text-primary">{fmt(result.db_stats?.real_repos ?? 0, 0)} repos</b></span>
+              </div>
+            </div>
+
+            {/* COL 2 (4 cols): 6-Family Interactive Distribution Bars */}
+            <div className="rounded-xl border border-border bg-card p-4 lg:col-span-4 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                  📊 {isRu ? "Распределение по 6 семействам (Клик = Фильтр)" : "6-Family Secret Distribution (Click to Filter)"}
+                </span>
+                <span className="text-[10px] text-muted-foreground">Click bar</span>
+              </div>
+
+              <div className="space-y-2 my-1">
+                {[
+                  { id: "WEB3_WALLETS_RPC", label: isRu ? "🔑 Кошельки, Сиды & RPC" : "🔑 Wallets, Seeds & RPC", color: "bg-primary" },
+                  { id: "CLOUD_DB_BAAS", label: isRu ? "☁️ Базы данных & Облака" : "☁️ Databases & Cloud BaaS", color: "bg-cyan-500" },
+                  { id: "AI_VOICE_LLM", label: isRu ? "🤖 AI, LLM & Голосовые" : "🤖 AI, LLM & Voice Agents", color: "bg-purple-500" },
+                  { id: "COMMS_MOBILE_OTA", label: isRu ? "📱 TG / Slack / Почта / OTA" : "📱 Comms, Bots & OTA", color: "bg-emerald-500" },
+                  { id: "FINTECH_ECOMM", label: isRu ? "💳 Платежи & E-Commerce" : "💳 FinTech & Payments", color: "bg-amber-500" },
+                  { id: "WHITEHAT_POS_BIZ", label: isRu ? "🍔 Whitehat: POS & SaaS" : "🍔 Whitehat POS & SaaS", color: "bg-pink-500" },
+                ].map((fam) => {
+                  const fCnt = Number(result?.category_counts?.[fam.id] ?? 0);
+                  const maxFam = Math.max(1, ...Object.values(result?.category_counts || { a: 1 }).map((v: any) => Number(v || 0)));
+                  const barW = Math.min(100, Math.max(4, (fCnt / maxFam) * 100));
+                  return (
+                    <button
+                      key={fam.id}
+                      type="button"
+                      onClick={() => {
+                        setOspecCategory(fam.id);
+                        setInput1("");
+                        runOspecWithFilters({ cat: fam.id, q: "", offset: 0 });
+                      }}
+                      className="w-full text-left space-y-0.5 group"
+                    >
+                      <div className="flex justify-between text-[10px]">
+                        <span className="text-foreground group-hover:text-primary font-semibold">{fam.label}</span>
+                        <b className="text-foreground">{fmt(fCnt, 0)}</b>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-background border border-border/60">
+                        <div className={`h-full ${fam.color} transition-all duration-500`} style={{ width: `${barW}%` }} />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* COL 3 (4 cols): Top Active Verified Signatures (1-Click Quick Filter Pills) */}
+            <div className="rounded-xl border border-border bg-card p-4 lg:col-span-4 flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                  🔥 {isRu ? "Топ боевых сигнатур в БД (1-Клик Фильтр)" : "Top Verified Signatures (1-Click Filter)"}
+                </span>
+                {input1 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInput1("");
+                      runOspecWithFilters({ q: "", offset: 0 });
+                    }}
+                    className="text-[10px] text-primary hover:underline"
+                  >
+                    ✕ Сбросить ({input1})
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-1.5 my-1 max-h-40 overflow-y-auto pr-1">
+                {(result.kind_stats || []).slice(0, 18).map((ks: any) => {
+                  const sk = ks.short_kind || String(ks.kind || "").replace("secret:", "");
+                  const isSel = input1 === sk;
+                  return (
+                    <button
+                      key={sk}
+                      type="button"
+                      onClick={() => {
+                        const nextQ = isSel ? "" : sk;
+                        setInput1(nextQ);
+                        setOspecCategory("ALL");
+                        runOspecWithFilters({ q: nextQ, cat: "ALL", offset: 0 });
+                      }}
+                      className={`rounded-lg border px-2 py-1 text-[10px] font-semibold transition-all ${
+                        isSel
+                          ? "border-primary bg-primary text-primary-foreground shadow"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                      }`}
+                    >
+                      {sk} <b className={isSel ? "text-primary-foreground" : "text-primary"}>({ks.real})</b>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {result.db_stats?.by_chain && (
+                <div className="flex flex-wrap items-center gap-1 pt-2 border-t border-border/60 text-[9px] text-muted-foreground">
+                  <span className="text-cyan-400 font-bold">⛓ Chains:</span>
+                  {Object.entries(result.db_stats.by_chain)
+                    .filter(([ch]) => ch !== "other" && ch !== "undetermined")
+                    .slice(0, 6)
+                    .map(([ch, cnt]: [string, any]) => (
+                      <span key={ch} className="rounded border border-cyan-500/30 bg-cyan-500/10 px-1.5 py-0.5 text-cyan-300">
+                        {ch.toUpperCase()}: {cnt}
+                      </span>
+                    ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             {[
               {
@@ -5031,10 +5584,67 @@ const ToolsPanel = () => {
             </span>
           </div>
 
+          {/* SVG EIP-1967 DELEGATION FLOW DIAGRAM */}
+          <div className="rounded-xl border border-border bg-background/70 p-3.5 overflow-x-auto">
+            <svg viewBox="0 0 820 96" className="w-full min-w-[600px] h-auto">
+              <rect x="16" y="18" width="210" height="60" rx="10" fill="hsl(var(--card))" stroke="hsl(var(--primary))" strokeWidth="1.8" />
+              <text x="121" y="42" textAnchor="middle" fill="hsl(var(--primary))" fontSize="10" fontWeight="bold">
+                🛡️ PROXY ENTRYPOINT
+              </text>
+              <text x="121" y="60" textAnchor="middle" fill="hsl(var(--foreground))" fontSize="9.5">
+                {String(result.address || "").slice(0, 10)}…{String(result.address || "").slice(-6)}
+              </text>
+
+              <path d="M 226 48 L 304 48" stroke="#10b981" strokeWidth="2" strokeDasharray="4 3" />
+              <text x="265" y="40" textAnchor="middle" fill="#10b981" fontSize="8.5" fontWeight="bold">
+                DELEGATECALL
+              </text>
+
+              <rect x="304" y="18" width="230" height="60" rx="10" fill="hsl(var(--card))" stroke="#10b981" strokeWidth="1.8" />
+              <text x="419" y="42" textAnchor="middle" fill="#10b981" fontSize="10" fontWeight="bold">
+                ⚙️ IMPLEMENTATION LOGIC
+              </text>
+              <text x="419" y="60" textAnchor="middle" fill="hsl(var(--foreground))" fontSize="9.5">
+                {result.eip1967?.implementation
+                  ? `${result.eip1967.implementation.slice(0, 10)}…${result.eip1967.implementation.slice(-6)}`
+                  : "Standalone / Immutable"}
+              </text>
+
+              <path d="M 534 48 L 600 48" stroke="#f59e0b" strokeWidth="1.8" />
+              <text x="567" y="40" textAnchor="middle" fill="#f59e0b" fontSize="8.5" fontWeight="bold">
+                ADMIN SLOT
+              </text>
+
+              <rect x="600" y="18" width="204" height="60" rx="10" fill="hsl(var(--card))" stroke="#f59e0b" strokeWidth="1.8" />
+              <text x="702" y="42" textAnchor="middle" fill="#f59e0b" fontSize="10" fontWeight="bold">
+                🔑 {result.eip1967?.admin_type || "PROXY ADMIN"}
+              </text>
+              <text x="702" y="60" textAnchor="middle" fill="hsl(var(--foreground))" fontSize="9.5">
+                {result.eip1967?.admin
+                  ? `${result.eip1967.admin.slice(0, 10)}…${result.eip1967.admin.slice(-6)}`
+                  : "No Admin / Zero"}
+              </text>
+            </svg>
+          </div>
+
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-lg border border-border bg-background p-3">
-              <p className="text-[10px] uppercase text-muted-foreground">EIP-1967 Implementation</p>
-              <p className="mt-1 truncate font-bold text-foreground">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] uppercase text-muted-foreground">EIP-1967 Implementation</p>
+                {result.eip1967?.implementation && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTool("flash");
+                      setInput1(result.eip1967.implementation);
+                    }}
+                    className="rounded border border-primary/40 bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary hover:bg-primary hover:text-primary-foreground"
+                  >
+                    ⚡ Scan Logic ↗
+                  </button>
+                )}
+              </div>
+              <p className="mt-1 truncate font-bold text-foreground select-all">
                 {result.eip1967?.implementation || "None (or custom slot)"}
               </p>
             </div>
@@ -5097,152 +5707,421 @@ const ToolsPanel = () => {
         </div>
       )}
 
-      {/* 11. Web3 Off-Chain Surface Mapper */}
-      {result && tool === "surface" && (
-        <div className="rounded-xl border border-border bg-card p-5 space-y-4 font-mono text-xs">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="text-sm font-bold text-primary">🌐 {result.domain}</span>
-              <span className="text-muted-foreground">({result.scanned_url})</span>
-              {result.linked_protocol && (
-                <span className="rounded border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400">
-                  ✓ {result.linked_protocol.name} {result.linked_protocol.symbol ? `($${result.linked_protocol.symbol})` : ""} · {result.linked_protocol.category}
+      {/* 11. Web3 Off-Chain Surface Mapper v2.0 (6 Passive OSINT Sources + TLS/RDAP/DNS/WAF/Takeover + Topology Graph) */}
+      {result && tool === "surface" && (() => {
+        const sRisk = Math.min(100, Math.max(0, Number(result.surface_risk_score ?? 25)));
+        const hdrScore = Math.min(100, Math.max(0, Number(result.avg_headers_score ?? 50)));
+        const rdap = result.rdap_intel || {};
+        const dns = result.dns_posture || {};
+        const tls = result.tls_info || {};
+        const pSources = result.passive_sources_breakdown || {};
+        const takeovers = result.takeover_alerts || [];
+        const exposures = result.exposed_files || [];
+        const aliveList = result.subdomains_alive || [];
+
+        const rG = 46;
+        const cG = 2 * Math.PI * rG;
+        const arcG = cG * 0.75;
+        const sRiskOffset = arcG - (sRisk / 100) * arcG;
+
+        return (
+          <div className="rounded-xl border border-border bg-card p-5 space-y-5 font-mono text-xs">
+            {/* Top Banner */}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="rounded-lg border border-primary/40 bg-primary/15 px-3 py-1 text-xs font-bold text-primary">
+                  🛰️ INFRA & SUBDOMAIN SURFACE MAPPER v2.0
                 </span>
-              )}
+                <span className="text-base font-black text-foreground">🌐 {result.domain}</span>
+                {result.linked_protocol && (
+                  <span className="rounded border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400">
+                    ✓ {result.linked_protocol.name} {result.linked_protocol.symbol ? `($${result.linked_protocol.symbol})` : ""} · {result.linked_protocol.category}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded border border-primary/40 bg-primary/15 px-2.5 py-1 text-[11px] font-bold text-primary">
+                  Alive Hosts: {result.subdomains_count || 0} / {result.subdomains_probed || 0} probed (Passive OSINT: {result.ct_discovered_count || 0})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTool("social");
+                    setInput1(result.domain);
+                  }}
+                  className="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-bold text-cyan-300 hover:bg-cyan-500 hover:text-black"
+                >
+                  🕵️‍♂️ Deep OSINT ({result.domain}) ↗
+                </button>
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded border border-primary/40 bg-primary/15 px-2.5 py-0.5 text-[11px] font-bold text-primary">
-                Alive Subdomains: {result.subdomains_count || 0} (Probed: {result.subdomains_probed || 38})
-              </span>
-              <span className="rounded border border-border bg-background px-2.5 py-0.5 text-[11px] text-foreground">
-                On-Chain / JS Contracts: {(result.contracts_enriched || result.frontend?.contracts || []).length}
-              </span>
-            </div>
-          </div>
 
-          {/* Linked Protocol Intelligence from Registry */}
-          {result.linked_protocol && (
-            <div className="rounded-lg border border-border bg-background p-3.5 flex flex-wrap items-center justify-between gap-3">
-              <div className="space-y-1">
-                <p className="text-[10px] uppercase text-primary font-bold">
-                  🔗 {isRu ? "Связанная инфраструктура протокола (Реестр 18,468 проектов)" : "Linked Protocol Infrastructure (18,468 Registry)"}
+            {/* CRITICAL TAKEOVER OR EXPOSED CONFIG ALERTS */}
+            {(takeovers.length > 0 || exposures.length > 0) && (
+              <div className="rounded-xl border border-red-500/60 bg-red-500/10 p-4 space-y-2">
+                <p className="text-xs font-bold uppercase text-red-300">
+                  🚨 {isRu ? "Обнаружены критические уязвимости периметра (Subdomain Takeover / Exposed Files):" : "Critical Perimeter Vulnerabilities Detected:"}
                 </p>
-                <div className="flex flex-wrap gap-2 pt-0.5">
-                  {(result.linked_protocol.github || []).map((gh: string, gi: number) => (
-                    <a
-                      key={gi}
-                      href={gh}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary hover:underline"
-                    >
-                      📦 {gh.replace("https://github.com/", "")} ↗
-                    </a>
-                  ))}
-                  {(result.linked_protocol.x || []).map((xUrl: string, xi: number) => (
-                    <a key={xi} href={xUrl} target="_blank" rel="noopener noreferrer" className="rounded border border-border bg-card px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground">
-                      𝕏 {xUrl.replace("https://x.com/", "@")}
-                    </a>
-                  ))}
-                  {(result.linked_protocol.telegram || []).map((tUrl: string, ti: number) => (
-                    <a key={ti} href={tUrl} target="_blank" rel="noopener noreferrer" className="rounded border border-border bg-card px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground">
-                      📨 {tUrl.replace("https://t.me/", "@")}
-                    </a>
-                  ))}
-                  {(result.linked_protocol.discord || []).map((dUrl: string, di: number) => (
-                    <a key={di} href={dUrl} target="_blank" rel="noopener noreferrer" className="rounded border border-border bg-card px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground">
-                      💬 Discord ↗
-                    </a>
-                  ))}
+                {takeovers.map((tk: any, ti: number) => (
+                  <div key={`tk_${ti}`} className="flex items-center justify-between rounded border border-red-500/40 bg-card px-3 py-2 text-[11px]">
+                    <span className="font-bold text-red-300">⚠️ CNAME Subdomain Takeover: {tk.host}</span>
+                    <span className="text-foreground">→ {tk.cname} ({tk.provider} · {tk.severity})</span>
+                  </div>
+                ))}
+                {exposures.map((exf: any, ei: number) => (
+                  <div key={`ex_${ei}`} className="flex items-center justify-between rounded border border-red-500/40 bg-card px-3 py-2 text-[11px]">
+                    <span className="font-bold text-red-300">🔥 {exf.label}</span>
+                    <a href={exf.url} target="_blank" rel="noopener noreferrer" className="text-primary underline">{exf.url} ↗</a>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 3-COLUMN HERO TELEMETRY DECK */}
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+              {/* COL 1 (4 cols): SVG Radial Surface Risk + Headers Score + TLS Certificate */}
+              <div className="rounded-xl border border-border bg-background/70 p-4 lg:col-span-4 flex flex-col justify-between space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                    🛡️ {isRu ? "Риск периметра, TLS и Заголовки" : "Perimeter Risk, TLS & Headers"}
+                  </span>
+                  <span className="rounded border border-border bg-card px-2 py-0.5 text-[10px] font-bold text-foreground">
+                    Headers Avg: {hdrScore}/100
+                  </span>
                 </div>
-              </div>
-            </div>
-          )}
 
-          {/* Subdomains Grid */}
-          {Array.isArray(result.subdomains_alive) && result.subdomains_alive.length > 0 && (
-            <div className="rounded-lg border border-border bg-background p-3.5">
-              <p className="mb-2 text-[10px] uppercase tracking-wider text-primary font-bold">
-                🛰️ {isRu ? "Обнаруженные живые поддомены и узлы" : "Discovered Alive Subdomains & Nodes"}
-              </p>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {result.subdomains_alive.map((s: any, i: number) => {
-                  const isPriv = (result.privileged_hosts || []).includes(s.host);
-                  return (
-                    <a
-                      key={i}
-                      href={s.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`flex items-center justify-between rounded border px-3 py-2 hover:border-primary ${
-                        isPriv ? "border-amber-500/50 bg-amber-500/10" : "border-border bg-card"
-                      }`}
-                    >
-                      <span className="font-bold text-foreground truncate">
-                        {isPriv ? "🔐 " : "🟢 "}
-                        {s.host}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">
-                        HTTP {s.status || "DNS"} ({fmt(s.body_len, 0)}B)
-                      </span>
-                    </a>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Enriched Smart Contracts & JS Artifacts */}
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            <div className="rounded-lg border border-border bg-background p-3.5 space-y-2">
-              <p className="text-[10px] uppercase text-primary font-bold">
-                📜 {isRu ? `Смарт-контракты протокола и JS-бандлов (${(result.contracts_enriched || []).length})` : `Protocol & JS Bundle Smart Contracts (${(result.contracts_enriched || []).length})`}
-              </p>
-              {(result.contracts_enriched || []).length === 0 ? (
-                <p className="text-[11px] text-muted-foreground">—</p>
-              ) : (
-                <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1">
-                  {(result.contracts_enriched || []).map((ce: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between gap-2 rounded border border-border bg-card px-2.5 py-1.5 text-[11px]">
-                      <span className="font-bold text-primary truncate">{ce.name}</span>
-                      <code className="text-[10px] text-muted-foreground select-all shrink-0">{ce.address}</code>
+                <div className="flex items-center gap-4">
+                  <div className="relative h-28 w-28 shrink-0">
+                    <svg viewBox="0 0 120 120" className="h-full w-full rotate-[135deg]">
+                      <circle cx="60" cy="60" r={rG} fill="transparent" stroke="hsl(var(--border))" strokeWidth="9" strokeDasharray={`${arcG} ${cG}`} strokeLinecap="round" />
+                      <circle cx="60" cy="60" r={rG} fill="transparent" stroke={sRisk >= 60 ? "#ef4444" : sRisk >= 35 ? "#f59e0b" : "#10b981"} strokeWidth="9" strokeDasharray={`${arcG} ${cG}`} strokeDashoffset={sRiskOffset} strokeLinecap="round" />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                      <span className="text-2xl font-black text-foreground">{sRisk}</span>
+                      <span className="text-[8px] uppercase text-muted-foreground">SURFACE RISK</span>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                  </div>
 
-            <div className="rounded-lg border border-border bg-background p-3.5 space-y-2">
-              <p className="text-[10px] uppercase text-primary font-bold">
-                🔌 RPC / API / GraphQL / Backend Endpoint Groups
-              </p>
-              <div className="max-h-56 overflow-y-auto space-y-1.5 text-[11px]">
-                {result.backend_groups &&
-                  Object.entries(result.backend_groups).map(([grp, paths]: [string, any]) =>
-                    Array.isArray(paths) && paths.length > 0 ? (
-                      <div key={grp} className="rounded border border-border bg-card p-2">
-                        <span className="font-bold uppercase text-primary">[{grp}]</span>{" "}
-                        <span className="text-muted-foreground">{paths.slice(0, 6).join(", ")}</span>
+                  <div className="flex-1 space-y-1.5 text-[11px]">
+                    <div className="rounded border border-border bg-card p-2">
+                      <p className="text-[9px] uppercase text-muted-foreground">🔒 TLS Certificate</p>
+                      <p className="font-bold text-foreground truncate">{tls.issuer || "Verified TLS"}</p>
+                      <p className="text-[10px] text-emerald-400">
+                        {tls.protocol || "TLSv1.3"} {tls.days_left !== null && tls.days_left !== undefined ? `· ${tls.days_left}d left` : ""}
+                      </p>
+                    </div>
+                    <div className="rounded border border-border bg-card p-2">
+                      <p className="text-[9px] uppercase text-muted-foreground">🔐 Privileged Nodes</p>
+                      <p className="font-bold text-amber-400">{(result.privileged_hosts || []).length} critical hosts</p>
+                    </div>
+                  </div>
+                </div>
+
+                {result.waf_breakdown && Object.keys(result.waf_breakdown).length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border/60 text-[10px]">
+                    <span className="text-muted-foreground">☁️ WAF/CDN:</span>
+                    {Object.entries(result.waf_breakdown).map(([wName, wCnt]: [string, any]) => (
+                      <span key={wName} className="rounded border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-cyan-300 font-semibold">
+                        {wName}: {wCnt}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* COL 2 (4 cols): 6-Source Passive OSINT Subdomain Discovery Funnel */}
+              <div className="rounded-xl border border-border bg-background/70 p-4 lg:col-span-4 flex flex-col justify-between space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                    📡 {isRu ? "6 Пассивных OSINT-источников поддоменов" : "6 Passive OSINT Subdomain Sources"}
+                  </span>
+                  <span className="text-[10px] text-emerald-400 font-bold">Zero-Key OSINT</span>
+                </div>
+
+                <div className="space-y-1.5">
+                  {[
+                    { k: "crt_sh", label: "Certificate Transparency (crt.sh)", color: "bg-primary" },
+                    { k: "rapiddns", label: "RapidDNS.io Passive Table", color: "bg-cyan-500" },
+                    { k: "alienvault_otx", label: "AlienVault OTX Passive DNS", color: "bg-emerald-500" },
+                    { k: "urlscan_io", label: "URLScan.io Public Index", color: "bg-purple-500" },
+                    { k: "hackertarget", label: "HackerTarget HostSearch", color: "bg-amber-500" },
+                    { k: "wayback_cdx", label: "Wayback Machine CDX Archive", color: "bg-pink-500" },
+                  ].map((src) => {
+                    const cnt = Number(pSources[src.k] ?? 0);
+                    const maxS = Math.max(1, ...Object.values(pSources).map((v: any) => Number(v || 0)));
+                    const wPct = Math.min(100, Math.max(4, (cnt / maxS) * 100));
+                    return (
+                      <div key={src.k} className="space-y-0.5 text-[10px]">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">{src.label}</span>
+                          <b className="text-foreground">{cnt} hosts</b>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-card border border-border/60">
+                          <div className={`h-full ${src.color}`} style={{ width: `${wPct}%` }} />
+                        </div>
                       </div>
-                    ) : null
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* COL 3 (4 cols): RDAP Domain Age & DNS Mail/Auth Posture */}
+              <div className="rounded-xl border border-border bg-background/70 p-4 lg:col-span-4 flex flex-col justify-between space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                    🏛️ {isRu ? "RDAP Домен, Почта (MX) & Владение" : "RDAP Domain, MX & Ownership"}
+                  </span>
+                  {rdap.age_years !== undefined && rdap.age_years !== null && (
+                    <span className="rounded border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+                      {rdap.age_years} yrs old
+                    </span>
                   )}
-                {[
-                  ...(result.frontend?.api || []),
-                  ...(result.frontend?.rpc || []),
-                  ...(result.frontend?.graphql || []),
-                  ...(result.frontend?.ws || []),
-                ]
-                  .slice(0, 12)
-                  .map((u: string, idx: number) => (
-                    <div key={idx} className="truncate text-muted-foreground select-all">
-                      • {u}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="rounded border border-border bg-card p-2">
+                    <p className="text-[9px] uppercase text-muted-foreground">Registered / Expires</p>
+                    <p className="font-bold text-foreground mt-0.5">{rdap.registered_at || "—"}</p>
+                    <p className="text-[9px] text-muted-foreground">Exp: {rdap.expires_at || "—"}</p>
+                  </div>
+                  <div className="rounded border border-border bg-card p-2">
+                    <p className="text-[9px] uppercase text-muted-foreground">Registrar / DNSSEC</p>
+                    <p className="font-bold text-foreground truncate mt-0.5">{rdap.registrar || "—"}</p>
+                    <p className="text-[9px] text-muted-foreground">DNSSEC: {rdap.dnssec ? "✅ YES" : "❌ NO"}</p>
+                  </div>
+                </div>
+
+                <div className="rounded border border-border bg-card p-2.5 space-y-1 text-[10px]">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">MX Mail Provider:</span>
+                    <b className="text-foreground">{dns.mail_provider || "None"}</b>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">DMARC / SPF:</span>
+                    <b className={dns.dmarc_enforced ? "text-emerald-400" : "text-amber-400"}>
+                      {dns.dmarc_enforced ? "✓ Strict DMARC" : dns.spf ? "SPF Present" : "No DMARC"}
+                    </b>
+                  </div>
+                  {dns.verified_services?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 pt-1 border-t border-border/60">
+                      {dns.verified_services.map((vs: string, vi: number) => (
+                        <span key={vi} className="rounded bg-primary/15 px-1.5 py-0.5 text-[9px] text-primary font-semibold">
+                          ✓ {vs}
+                        </span>
+                      ))}
                     </div>
-                  ))}
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* INTERACTIVE SVG ATTACK SURFACE TOPOLOGY GRAPH */}
+            {aliveList.length > 0 && (
+              <div className="rounded-xl border border-border bg-background/70 p-4 space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                    🕸️ {isRu ? "Топологический граф поверхности атаки (Поддомены → Корневой Домен → Ончейн-Контракты)" : "Interactive Attack Surface Topology Graph"}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    🟠 Privileged / API · 🟢 Public Edge / dApp · 🟣 Linked On-Chain Contracts
+                  </span>
+                </div>
+                <div className="overflow-x-auto">
+                  <svg viewBox="0 0 860 280" className="w-full min-w-[660px] h-auto rounded-lg bg-card/70 border border-border/60">
+                    {(() => {
+                      const leftSubs = aliveList.slice(0, 7);
+                      const rightContracts = (result.contracts_enriched || []).slice(0, 6);
+                      const cx = 430;
+                      const cy = 140;
+                      return (
+                        <>
+                          {leftSubs.map((s: any, idx: number) => {
+                            const sy = leftSubs.length === 1 ? 140 : 32 + idx * (216 / Math.max(1, leftSubs.length - 1));
+                            const isPriv = s.role === "PRIVILEGED_CORE" || s.role === "BACKEND_API_RPC" || (result.privileged_hosts || []).includes(s.host);
+                            const strokeCol = isPriv ? "#f59e0b" : "#10b981";
+                            return (
+                              <g key={`sub_${idx}`}>
+                                <path d={`M 245 ${sy} C 325 ${sy}, 335 ${cy}, ${cx - 80} ${cy}`} fill="none" stroke={strokeCol} strokeWidth="1.8" strokeOpacity="0.7" />
+                                <rect x="18" y={sy - 16} width="227" height="32" rx="7" fill="hsl(var(--card))" stroke={strokeCol} strokeWidth="1.2" />
+                                <text x="26" y={sy - 2} fill="hsl(var(--foreground))" fontSize="9.5" fontWeight="bold">
+                                  {isPriv ? "🔐 " : "🟢 "}{String(s.host).slice(0, 26)}
+                                </text>
+                                <text x="26" y={sy + 10} fill={strokeCol} fontSize="8.5">
+                                  HTTP {s.status} · {String(s.waf_cdn || "Direct").slice(0, 18)} · Hdr:{s.security_headers?.grade || "—"}
+                                </text>
+                              </g>
+                            );
+                          })}
+
+                          {rightContracts.map((ce: any, idx: number) => {
+                            const ey = rightContracts.length === 1 ? 140 : 35 + idx * (210 / Math.max(1, rightContracts.length - 1));
+                            return (
+                              <g key={`cnt_${idx}`}>
+                                <path d={`M ${cx + 80} ${cy} C 525 ${cy}, 535 ${ey}, 615 ${ey}`} fill="none" stroke="#a855f7" strokeWidth="1.8" strokeOpacity="0.7" />
+                                <rect x="615" y={ey - 16} width="227" height="32" rx="7" fill="hsl(var(--card))" stroke="#a855f7" strokeWidth="1.2" />
+                                <text x="624" y={ey - 2} fill="hsl(var(--foreground))" fontSize="9.5" fontWeight="bold">
+                                  📜 {String(ce.name || "Contract").slice(0, 25)}
+                                </text>
+                                <text x="624" y={ey + 10} fill="#c084fc" fontSize="8.5">
+                                  {String(ce.address).slice(0, 10)}…{String(ce.address).slice(-6)}
+                                </text>
+                              </g>
+                            );
+                          })}
+
+                          <rect x={cx - 80} y={cy - 32} width="160" height="64" rx="12" fill="hsl(var(--card))" stroke="hsl(var(--primary))" strokeWidth="2.2" />
+                          <text x={cx} y={cy - 8} textAnchor="middle" fill="hsl(var(--primary))" fontSize="11" fontWeight="bold">
+                            🌐 {String(result.domain).slice(0, 18)}
+                          </text>
+                          <text x={cx} y={cy + 7} textAnchor="middle" fill="hsl(var(--foreground))" fontSize="9">
+                            {aliveList.length} Alive Hosts · {(result.contracts_enriched || []).length} Contracts
+                          </text>
+                          <text x={cx} y={cy + 21} textAnchor="middle" fill="hsl(var(--muted-foreground))" fontSize="8.5">
+                            Risk: {sRisk}/100 · Headers: {hdrScore}/100
+                          </text>
+                        </>
+                      );
+                    })()}
+                  </svg>
+                </div>
+              </div>
+            )}
+
+            {/* DEEP SUBDOMAINS & INFRASTRUCTURE TABLE */}
+            {aliveList.length > 0 && (
+              <div className="rounded-xl border border-border bg-background/70 p-4 space-y-2.5">
+                <p className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                  🛰️ {isRu ? `Профилированные живые поддомены и узлы (${aliveList.length})` : `Profiled Alive Subdomains & Nodes (${aliveList.length})`}
+                </p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 max-h-80 overflow-y-auto pr-1">
+                  {aliveList.map((s: any, i: number) => {
+                    const isPriv = s.role === "PRIVILEGED_CORE" || (result.privileged_hosts || []).includes(s.host);
+                    const isApi = s.role === "BACKEND_API_RPC";
+                    const hdrG = s.security_headers?.grade || "—";
+                    return (
+                      <div
+                        key={i}
+                        className={`rounded-lg border p-3 space-y-1.5 transition-colors ${
+                          isPriv
+                            ? "border-amber-500/50 bg-amber-500/10"
+                            : isApi
+                            ? "border-cyan-500/40 bg-cyan-500/5"
+                            : "border-border bg-card"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <a
+                            href={s.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-bold text-foreground hover:text-primary hover:underline truncate"
+                          >
+                            {isPriv ? "🔐 " : isApi ? "🔌 " : "🟢 "}
+                            {s.host} ↗
+                          </a>
+                          <span className="rounded border border-border bg-background px-1.5 py-0.5 text-[9px] font-bold text-primary shrink-0">
+                            HTTP {s.status || "DNS"} · Hdr:{hdrG}
+                          </span>
+                        </div>
+                        {s.title && (
+                          <p className="truncate text-[10px] text-foreground/80" title={s.title}>
+                            📄 {s.title}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap items-center justify-between gap-1 text-[9px] text-muted-foreground">
+                          <span>☁️ {s.waf_cdn || "Direct"}</span>
+                          {s.ips?.length > 0 && <span>IP: {s.ips[0]}</span>}
+                        </div>
+                        {s.cname && (
+                          <p className="truncate text-[9px] text-cyan-300" title={s.cname}>
+                            CNAME → {s.cname}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ENRICHED SMART CONTRACTS (WITH 1-CLICK CROSS-TOOL AUDIT) & BACKEND ENDPOINTS */}
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+              <div className="rounded-xl border border-border bg-background/70 p-4 space-y-2">
+                <p className="text-[10px] uppercase text-primary font-bold">
+                  📜 {isRu ? `Смарт-контракты протокола и JS-бандлов (${(result.contracts_enriched || []).length})` : `Protocol & JS Bundle Smart Contracts (${(result.contracts_enriched || []).length})`}
+                </p>
+                {(result.contracts_enriched || []).length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground">—</p>
+                ) : (
+                  <div className="max-h-60 overflow-y-auto space-y-1.5 pr-1">
+                    {(result.contracts_enriched || []).map((ce: any, idx: number) => (
+                      <div key={idx} className="flex flex-wrap items-center justify-between gap-2 rounded border border-border bg-card px-2.5 py-1.5 text-[11px]">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-primary truncate">{ce.name}</p>
+                          <code className="text-[10px] text-muted-foreground select-all">{ce.address}</code>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTool("proxy");
+                              setInput1(ce.address);
+                            }}
+                            className="rounded border border-border bg-background px-1.5 py-0.5 text-[9px] hover:border-primary hover:text-primary"
+                            title="Inspect Proxy & Upgradeability"
+                          >
+                            🔗 Proxy
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTool("funds");
+                              setInput1(ce.address);
+                            }}
+                            className="rounded border border-border bg-background px-1.5 py-0.5 text-[9px] hover:border-primary hover:text-primary"
+                            title="Inspect Funds Flow"
+                          >
+                            💸 Flow
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-border bg-background/70 p-4 space-y-2">
+                <p className="text-[10px] uppercase text-primary font-bold">
+                  🔌 RPC / API / GraphQL / Backend Endpoint Groups
+                </p>
+                <div className="max-h-60 overflow-y-auto space-y-1.5 text-[11px]">
+                  {result.backend_groups &&
+                    Object.entries(result.backend_groups).map(([grp, paths]: [string, any]) =>
+                      Array.isArray(paths) && paths.length > 0 ? (
+                        <div key={grp} className="rounded border border-border bg-card p-2">
+                          <span className="font-bold uppercase text-primary">[{grp}]</span>{" "}
+                          <span className="text-muted-foreground">{paths.slice(0, 6).join(", ")}</span>
+                        </div>
+                      ) : null
+                    )}
+                  {[
+                    ...(result.frontend?.api || []),
+                    ...(result.frontend?.rpc || []),
+                    ...(result.frontend?.graphql || []),
+                    ...(result.frontend?.ws || []),
+                  ]
+                    .slice(0, 12)
+                    .map((u: string, idx: number) => (
+                      <div key={idx} className="truncate text-muted-foreground select-all">
+                        • {u}
+                      </div>
+                    ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* 12. Flash-Loan & Spot-Oracle + Bridge Signature Detector */}
       {result && tool === "flash" && (
@@ -5261,6 +6140,25 @@ const ToolsPanel = () => {
               {result.verdict} · Score: {result.composite_score}
             </span>
           </div>
+
+          {/* VISUAL TUG-OF-WAR BAR: SPOT MANIPULATION EXPOSURE vs TWAP/ORACLE DEFENSE */}
+          {(() => {
+            const spScore = Number(result.spot_oracle?.spot_score ?? 0) + Number(result.spot_oracle?.flash_score ?? 0);
+            const prScore = Number(result.spot_oracle?.protection_score ?? 0);
+            const totF = Math.max(1, spScore + prScore);
+            const atkPct = spScore === 0 && prScore === 0 ? 20 : Math.min(95, Math.max(10, Math.round((spScore / totF) * 100)));
+            return (
+              <div className="rounded-xl border border-border bg-background/70 p-3.5 space-y-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-red-400 font-bold">⚡ Attack Surface (Spot + Flash): {spScore} pts ({atkPct}%)</span>
+                  <span className="text-emerald-400 font-bold">🛡️ Oracle Defense (TWAP / Chainlink): {prScore} pts ({100 - atkPct}%)</span>
+                </div>
+                <div className="h-3 w-full overflow-hidden rounded-full bg-emerald-500/35 flex border border-border">
+                  <div className="h-full bg-gradient-to-r from-red-600 to-amber-500 transition-all duration-700" style={{ width: `${atkPct}%` }} />
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="rounded-lg border border-border bg-background p-3">
