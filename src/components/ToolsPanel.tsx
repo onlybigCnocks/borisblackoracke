@@ -763,19 +763,23 @@ const ToolsPanel = () => {
           }
 
           if (item.tool === "zk" && (!r.onchain_liveness || !r.proving_system_profile || !r.math_bytecode_profile)) {
+            setResult(r);
             setOpenedHistoryBanner(
               `📂 Открыт и обновлён до v5.5 отчёт из истории: ZK · ${rawTarget} [${itemChain.toUpperCase()}]`
             );
-            const resZk = await fetch(`${API_BASE}/api/tools/zk-audit`, {
+            setTimeout(() => {
+              (activeToolResultRef.current || resultsTopRef.current)?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 50);
+            fetch(`${API_BASE}/api/tools/zk-audit`, {
               method: "POST",
               headers: { "Content-Type": "application/json", ...authHeaders() },
               body: JSON.stringify({ address: rawTarget, chain: itemChain }),
-            });
-            const freshZk = await resZk.json().catch(() => r);
-            setResult(resZk.ok ? freshZk : r);
-            setTimeout(() => {
-              (activeToolResultRef.current || resultsTopRef.current)?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }, 80);
+            })
+              .then((resZk) => (resZk.ok ? resZk.json() : null))
+              .then((freshZk) => {
+                if (freshZk) setResult(freshZk);
+              })
+              .catch(() => {});
             return;
           }
         }
