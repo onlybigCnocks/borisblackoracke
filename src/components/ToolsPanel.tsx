@@ -4145,8 +4145,8 @@ const ToolsPanel = () => {
                           <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-primary font-bold">
                             <span>
                               {isRu
-                                ? `Детализация всех вхождений в репозитории (${findingDetail[f.id].occurrences_count})`
-                                : `All Secret Occurrences in Repository (${findingDetail[f.id].occurrences_count})`}
+                                ? `Вхождения в репозиториях (${findingDetail[f.id].occurrences_count})`
+                                : `Occurrences across repositories (${findingDetail[f.id].occurrences_count})`}
                             </span>
                             <a
                               href={f.repo_url}
@@ -4169,7 +4169,7 @@ const ToolsPanel = () => {
                                   rel="noopener noreferrer"
                                   className="font-semibold text-foreground hover:text-primary truncate max-w-[260px]"
                                 >
-                                  📄 {occ.path}{occ.line ? `:${occ.line}` : ""} ↗
+                                  📄 {occ.repo_url ? `${occ.repo_url.replace(/^https?:\/\/github\.com\//, "")} · ` : ""}{occ.path}{occ.line ? `:${occ.line}` : ""} ↗
                                 </a>
                                 <div className="flex items-center gap-2">
                                   {occ.cls && (
