@@ -47,6 +47,9 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
   const [omniBanner, setOmniBanner] = useState<string | null>(null);
   const [ospecWatcherRunning, setOspecWatcherRunning] = useState<boolean>(true);
   const [backfillRunning, setBackfillRunning] = useState<boolean>(true);
+  const [zkMassRunning, setZkMassRunning] = useState<boolean>(true);
+  const [zkMassBusy, setZkMassBusy] = useState<boolean>(false);
+  const [zkMassMsg, setZkMassMsg] = useState<string | null>(null);
   const [query, setQuery] = useState<string>("");
   const [minScore, setMinScore] = useState<number>(0);
 
@@ -135,6 +138,9 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
       }
       if (typeof data?.stats?.backfill_running === "boolean") {
         setBackfillRunning(data.stats.backfill_running);
+      }
+      if (typeof data?.stats?.zk_breakdown?.zk_mass_running === "boolean") {
+        setZkMassRunning(data.stats.zk_breakdown.zk_mass_running);
       }
       setFeed(data);
     } finally {
@@ -675,21 +681,125 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
         </div>
       )}
 
-      {/* ZK MATH MONSTER v5.0 RADAR CONTROL DECK */}
+      {/* ZK MATH MONSTER v5.5 RADAR CONTROL DECK + 363-KEY MASS SCANNER */}
       {tab === "zk" && !feed?.locked && (
         <div className="rounded-xl border border-primary/35 bg-card p-4 space-y-3 font-mono">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/15 px-2.5 py-1 text-xs font-bold text-primary">
-                📐 BORIS ZK MATH MONSTER v5.0 · MULTI-SYSTEM VERIFIER RADAR
+                📐 BORIS ZK MATH MONSTER v5.5 · 363-KEY MASS-SCANNER & RADAR
               </span>
               <span className="text-[11px] text-muted-foreground">
                 {isRu
-                  ? `Просканировано: ${fmt(feed?.stats?.zk_breakdown?.candidates_scanned || 1626315)} контрактов (2.37B блоков) · Найдено ZK-верификаторов: ${fmt(feed?.stats?.zk_verifiers || 48643)} · γ==δ CRITICAL: ${fmt(feed?.stats?.zk_breakdown?.gamma_eq_delta_count || 276)} · G₂ Collision: ${fmt(feed?.stats?.zk_breakdown?.g2_reuse_count || 1776)}`
-                  : `Scanned: ${fmt(feed?.stats?.zk_breakdown?.candidates_scanned || 1626315)} contracts (2.37B blocks) · Indexed ZK Verifiers: ${fmt(feed?.stats?.zk_verifiers || 48643)} · γ==δ CRITICAL: ${fmt(feed?.stats?.zk_breakdown?.gamma_eq_delta_count || 276)}`}
+                  ? `Просканировано: ${fmt(feed?.stats?.zk_breakdown?.candidates_scanned || 1626315)} контр. (2.37B блоков) · Верификаторов: ${fmt(feed?.stats?.zk_verifiers || 48649)} · γ==δ CRITICAL: ${fmt(feed?.stats?.zk_breakdown?.gamma_eq_delta_count || 276)} · G₂ Collision: ${fmt(feed?.stats?.zk_breakdown?.g2_reuse_count || 1773)}`
+                  : `Scanned: ${fmt(feed?.stats?.zk_breakdown?.candidates_scanned || 1626315)} contracts (2.37B blocks) · Indexed ZK Verifiers: ${fmt(feed?.stats?.zk_verifiers || 48649)} · γ==δ CRITICAL: ${fmt(feed?.stats?.zk_breakdown?.gamma_eq_delta_count || 276)}`}
               </span>
             </div>
+
+            {/* 363-Key ZK Mass-Scanner & MainContractFinder Controls */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                disabled={zkMassBusy}
+                onClick={async () => {
+                  setZkMassBusy(true);
+                  setZkMassMsg(null);
+                  try {
+                    const tok = localStorage.getItem("boris_token") || "";
+                    const r = await fetch("https://api.black-oracle.com/api/tools/zk-mass-scan-control", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
+                      body: JSON.stringify({ action: "toggle_daemon" }),
+                    }).then((res) => res.json());
+                    if (typeof r?.zk_mass_running === "boolean") setZkMassRunning(r.zk_mass_running);
+                    setZkMassMsg(r?.message || "Статус ZK Масс-Скана обновлён");
+                    loadFeed({ t: "zk", p: page });
+                  } catch (e: any) {
+                    setZkMassMsg(`⚠️ ${e.message}`);
+                  } finally {
+                    setZkMassBusy(false);
+                  }
+                }}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1 text-[11px] font-bold transition-all disabled:opacity-50 ${
+                  zkMassRunning
+                    ? "border-green-500/70 bg-green-500/20 text-green-300 hover:bg-amber-500 hover:text-black"
+                    : "border-amber-500/70 bg-amber-500/20 text-amber-300 hover:bg-green-500 hover:text-black"
+                }`}
+              >
+                <span className={`h-2 w-2 rounded-full ${zkMassRunning ? "bg-green-400 animate-pulse" : "bg-amber-400"}`} />
+                <span>
+                  {zkMassRunning
+                    ? isRu
+                      ? "🟢 ZK Масс-Скан (363 RPC): РАБОТАЕТ (⏸ Стоп)"
+                      : "🟢 ZK Mass-Scan (363 RPC): ON (⏸ Pause)"
+                    : isRu
+                    ? "⏸ ZK Масс-Скан: ПАУЗА (▶️ Старт)"
+                    : "⏸ ZK Mass-Scan: PAUSED (▶️ Start)"}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                disabled={zkMassBusy}
+                onClick={async () => {
+                  setZkMassBusy(true);
+                  setZkMassMsg(null);
+                  try {
+                    const tok = localStorage.getItem("boris_token") || "";
+                    const r = await fetch("https://api.black-oracle.com/api/tools/zk-mass-scan-control", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
+                      body: JSON.stringify({ action: "run_batch", batch_size: 120 }),
+                    }).then((res) => res.json());
+                    setZkMassMsg(r?.message || "⚡ Турбо-Батч ZK Масс-Скана выполнен!");
+                    loadFeed({ t: "zk", p: page });
+                  } catch (e: any) {
+                    setZkMassMsg(`⚠️ ${e.message}`);
+                  } finally {
+                    setZkMassBusy(false);
+                  }
+                }}
+                className="rounded-lg border border-amber-500/60 bg-amber-500/15 px-2.5 py-1 text-[11px] font-bold text-amber-300 transition-all hover:bg-amber-500 hover:text-black disabled:opacity-50"
+              >
+                ⚡ {isRu ? "Турбо-Батч (120 контр.)" : "Turbo Batch (120)"}
+              </button>
+
+              <button
+                type="button"
+                disabled={zkMassBusy}
+                onClick={async () => {
+                  setZkMassBusy(true);
+                  setZkMassMsg(null);
+                  try {
+                    const tok = localStorage.getItem("boris_token") || "";
+                    const r = await fetch("https://api.black-oracle.com/api/tools/zk-mass-scan-control", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
+                      body: JSON.stringify({ action: "run_tvl" }),
+                    }).then((res) => res.json());
+                    setZkMassMsg(r?.message || "💰 MainContractFinder (TVL) выполнен!");
+                    loadFeed({ t: "zk", p: page });
+                  } catch (e: any) {
+                    setZkMassMsg(`⚠️ ${e.message}`);
+                  } finally {
+                    setZkMassBusy(false);
+                  }
+                }}
+                className="rounded-lg border border-cyan-500/60 bg-cyan-500/15 px-2.5 py-1 text-[11px] font-bold text-cyan-300 transition-all hover:bg-cyan-500 hover:text-black disabled:opacity-50"
+              >
+                💰 {isRu ? "MainContractFinder (TVL $)" : "Find Callers & TVL ($)"}
+              </button>
+            </div>
           </div>
+
+          {zkMassMsg && (
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-green-500/50 bg-green-500/15 px-3 py-2 text-[11px] font-semibold text-green-300">
+              <span>{zkMassMsg}</span>
+              <button type="button" onClick={() => setZkMassMsg(null)} className="text-muted-foreground hover:text-foreground">
+                ✕
+              </button>
+            </div>
+          )}
 
           {/* 7 Proving System Filter Pills */}
           <div className="flex flex-wrap items-center gap-1.5">
