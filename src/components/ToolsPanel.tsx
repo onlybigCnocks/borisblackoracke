@@ -1946,439 +1946,1022 @@ const ToolsPanel = () => {
       {(() => {
         const renderMarketDossier = (result: any, onClose?: () => void) => {
           if (!result) return null;
+
+          const score = Math.min(100, Math.max(0, Number(result.score ?? 0)));
+          const conf = Math.min(100, Math.max(0, Number(result.confidence ?? 100)));
+          const manip = Math.min(100, Math.max(0, Number(result.manipulation_risk ?? 0)));
+          const fundWeak = Math.min(100, Math.max(0, Number(result.fundamental_weakness ?? 0)));
+          const crowd = Math.min(100, Math.max(0, Number(result.crowd_overcrowding ?? 0)));
+          const organic = Math.min(100, Math.max(0, Number(result.organic_probability ?? 100)));
+
+          const isHighRisk = result.level === "CRITICAL" || result.level === "HIGH" || score >= 60;
+          const isMedRisk = !isHighRisk && (result.level === "MEDIUM" || score >= 30);
+          const accentStroke = isHighRisk ? "#ef4444" : isMedRisk ? "#f59e0b" : "#10b981";
+          const accentBadge = isHighRisk
+            ? "bg-destructive/20 text-destructive border-destructive/40"
+            : isMedRisk
+            ? "bg-amber-500/20 text-amber-400 border-amber-500/40"
+            : "bg-emerald-500/15 text-emerald-400 border-emerald-500/40";
+
+          // 4-Axis Radar Polygon coordinates (center 90,90, radius 62)
+          // Top: Manipulation (0,-1), Right: Crowd (+1,0), Bottom: FundWeak (0,+1), Left: Organic (-1,0)
+          const rMax = 60;
+          const cx = 90;
+          const cy = 90;
+          const pTop = `${cx},${cy - (manip / 100) * rMax}`;
+          const pRight = `${cx + (crowd / 100) * rMax},${cy}`;
+          const pBottom = `${cx},${cy + (fundWeak / 100) * rMax}`;
+          const pLeft = `${cx - (organic / 100) * rMax},${cy}`;
+          const radarPoints = `${pTop} ${pRight} ${pBottom} ${pLeft}`;
+
+          // Momentum curve points from 30d -> 7d -> 24h -> Now (0%)
+          const ch30 = Number(result.snapshot?.price_change_30d ?? 0);
+          const ch7 = Number(result.snapshot?.price_change_7d ?? 0);
+          const ch24 = Number(result.snapshot?.price_change_24h ?? 0);
+          // Relative historical levels compared to current price = 100
+          const rel30 = 100 / (1 + ch30 / 100 || 1);
+          const rel7 = 100 / (1 + ch7 / 100 || 1);
+          const rel24 = 100 / (1 + ch24 / 100 || 1);
+          const relNow = 100;
+          const relArr = [rel30, rel7, rel24, relNow];
+          const minRel = Math.min(...relArr) * 0.985;
+          const maxRel = Math.max(...relArr) * 1.015;
+          const mapY = (v: number) => {
+            const norm = (v - minRel) / Math.max(0.0001, maxRel - minRel);
+            return Math.round(54 - norm * 42);
+          };
+          const y0 = mapY(rel30);
+          const y1 = mapY(rel7);
+          const y2 = mapY(rel24);
+          const y3 = mapY(relNow);
+          const curvePath = `M 16 ${y0} C 55 ${y0}, 65 ${y1}, 95 ${y1} C 125 ${y1}, 135 ${y2}, 168 ${y2} C 195 ${y2}, 210 ${y3}, 244 ${y3}`;
+          const areaPath = `${curvePath} L 244 62 L 16 62 Z`;
+          const curveColor = ch24 >= 0 ? "#10b981" : "#ef4444";
+
+          // Positioning metrics
+          const retailLong =
+            result.snapshot?.long_account_pct !== null && result.snapshot?.long_account_pct !== undefined
+              ? Math.min(100, Math.max(0, Number(result.snapshot.long_account_pct)))
+              : null;
+          const topLong =
+            result.snapshot?.top_trader_long_pct !== null && result.snapshot?.top_trader_long_pct !== undefined
+              ? Math.min(100, Math.max(0, Number(result.snapshot.top_trader_long_pct)))
+              : null;
+          const topDelta =
+            result.snapshot?.top_trader_delta !== null && result.snapshot?.top_trader_delta !== undefined
+              ? Number(result.snapshot.top_trader_delta)
+              : topLong !== null && retailLong !== null
+              ? Math.round(topLong - retailLong)
+              : null;
+
+          // Taker Buy/Sell
+          const takerBuyPct =
+            result.snapshot?.taker_buy_ratio !== null && result.snapshot?.taker_buy_ratio !== undefined
+              ? Math.min(100, Math.max(0, Number(result.snapshot.taker_buy_ratio) * 100))
+              : null;
+
+          // Orderbook Depth ±2%
+          const bid2 = Number(result.snapshot?.bid_depth_2pct ?? 0);
+          const ask2 = Number(result.snapshot?.ask_depth_2pct ?? 0);
+          const depthTot = Number(result.snapshot?.depth_2pct_total ?? bid2 + ask2);
+          const bidShare = depthTot > 0 ? Math.min(100, Math.max(0, (bid2 / depthTot) * 100)) : 50;
+
+          // Multi-exchange OI
+          const oiBn = Number(result.snapshot?.oi_binance ?? result.snapshot?.oi_usdt ?? 0);
+          const oiOkx = Number(result.snapshot?.oi_okx ?? 0);
+          const oiBb = Number(result.snapshot?.oi_bybit ?? 0);
+          const oiTotalMulti = Number(result.snapshot?.oi_total_multi ?? oiBn + oiOkx + oiBb);
+          const oiMaxEx = Math.max(oiBn, oiOkx, oiBb, 1);
+
+          // Radial speedometer dash
+          const rad = 52;
+          const circum = 2 * Math.PI * rad;
+          const arcLen = circum * 0.75; // 270 degree gauge
+          const arcOffset = arcLen - (score / 100) * arcLen;
+
           return (
             <div className="space-y-4 font-mono">
-          {/* CLI Header Banner */}
-          <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <span
-                  className={`rounded-full px-3.5 py-1 text-xs font-bold border ${
-                    result.level === "CRITICAL" || result.level === "HIGH"
-                      ? "bg-destructive/20 text-destructive border-destructive/40"
-                      : result.level === "MEDIUM"
-                      ? "bg-amber-500/20 text-amber-400 border-amber-500/40"
-                      : "bg-emerald-500/15 text-emerald-400 border-emerald-500/40"
-                  }`}
-                >
-                  {result.level === "LOW" ? "🟢" : result.level === "MEDIUM" ? "🟡" : "🔴"} MARKET RISK: {result.symbol} — {result.score}/100 ({result.level})
-                </span>
-                <span className="rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] text-muted-foreground">
-                  {result.pump_verdict || "✅ No significant pump indicators"}
-                </span>
-                {result.github_repo && (
-                  <>
-                    <a
-                      href={`https://github.com/${result.github_repo}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] text-primary hover:underline"
-                    >
-                      📦 {result.github_repo} ↗
-                    </a>
-                    {result.audit_button_unlocked && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          window.dispatchEvent(
-                            new CustomEvent("boris-quick-scan", { detail: { target: `https://github.com/${result.github_repo}` } })
-                          );
-                          document.getElementById("demo-scanner")?.scrollIntoView({ behavior: "smooth" });
-                        }}
-                        className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-primary-foreground hover:bg-primary-dim"
-                      >
-                        🔧 {isRu ? `Аудит ${result.github_repo.split("/").pop()}` : `Audit ${result.github_repo.split("/").pop()}`}
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-muted-foreground">Data Completeness:</span>
-                <div className="h-2.5 w-28 overflow-hidden rounded-full bg-background border border-border">
-                  <div
-                    className="h-full bg-primary transition-all"
-                    style={{ width: `${Math.min(100, Number(result.confidence || 100))}%` }}
-                  />
-                </div>
-                <b className="text-foreground">{result.confidence ?? 100}%</b>
-                {onClose && (
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="ml-2 rounded-lg border border-primary/40 bg-primary/15 px-2.5 py-1 text-[11px] font-bold text-primary hover:bg-primary hover:text-primary-foreground"
-                  >
-                    ✕ {isRu ? "Свернуть досье" : "Close Dossier"}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Risk Decomposition (4 CLI Bars) */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                {
-                  label: "Manipulation Risk",
-                  val: Number(result.manipulation_risk ?? 0),
-                  color: Number(result.manipulation_risk ?? 0) >= 50 ? "bg-destructive" : "bg-primary",
-                },
-                {
-                  label: "Fundamental Weakness",
-                  val: Number(result.fundamental_weakness ?? 0),
-                  color: Number(result.fundamental_weakness ?? 0) >= 50 ? "bg-amber-500" : "bg-primary",
-                },
-                {
-                  label: "Crowd Overcrowding",
-                  val: Number(result.crowd_overcrowding ?? 0),
-                  color: Number(result.crowd_overcrowding ?? 0) >= 50 ? "bg-amber-500" : "bg-primary",
-                },
-                {
-                  label: "Organic Probability",
-                  val: Number(result.organic_probability ?? 100),
-                  color: "bg-emerald-500",
-                },
-              ].map((bar, idx) => (
-                <div key={idx} className="rounded-xl border border-border bg-background p-3.5 space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">{bar.label}</span>
-                    <b className="text-foreground">{bar.val}/100</b>
-                  </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-card border border-border/60">
-                    <div className={`h-full ${bar.color} transition-all`} style={{ width: `${Math.min(100, bar.val)}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Market Data (7 CLI Metrics) */}
-            <div>
-              <p className="mb-2 text-[10px] uppercase tracking-wider text-primary font-bold">
-                📊 Market Data & Spot Telemetry
-              </p>
-              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-7">
-                {[
-                  {
-                    k: "Price",
-                    v:
-                      result.snapshot?.price_usd !== null && result.snapshot?.price_usd !== undefined
-                        ? `$${Number(result.snapshot.price_usd) < 1 ? Number(result.snapshot.price_usd).toFixed(4) : fmt(result.snapshot.price_usd)}`
-                        : "—",
-                  },
-                  { k: "MCap", v: result.snapshot?.market_cap ? `$${fmt(result.snapshot.market_cap)}` : "—" },
-                  { k: "Vol 24h", v: result.snapshot?.volume_24h ? `$${fmt(result.snapshot.volume_24h)}` : "—" },
-                  {
-                    k: "Δ 24h",
-                    v:
-                      result.snapshot?.price_change_24h !== null && result.snapshot?.price_change_24h !== undefined
-                        ? `${Number(result.snapshot.price_change_24h) >= 0 ? "+" : ""}${Number(result.snapshot.price_change_24h).toFixed(1)}%`
-                        : "—",
-                    tone: Number(result.snapshot?.price_change_24h ?? 0) >= 0 ? "text-emerald-400" : "text-destructive",
-                  },
-                  {
-                    k: "Δ 7d",
-                    v:
-                      result.snapshot?.price_change_7d !== null && result.snapshot?.price_change_7d !== undefined
-                        ? `${Number(result.snapshot.price_change_7d) >= 0 ? "+" : ""}${Number(result.snapshot.price_change_7d).toFixed(1)}%`
-                        : "—",
-                    tone: Number(result.snapshot?.price_change_7d ?? 0) >= 0 ? "text-emerald-400" : "text-destructive",
-                  },
-                  {
-                    k: "Δ 30d",
-                    v:
-                      result.snapshot?.price_change_30d !== null && result.snapshot?.price_change_30d !== undefined
-                        ? `${Number(result.snapshot.price_change_30d) >= 0 ? "+" : ""}${Number(result.snapshot.price_change_30d).toFixed(1)}%`
-                        : result.deep_unlocked
-                        ? "—"
-                        : "🔒 RAW+",
-                    tone:
-                      result.snapshot?.price_change_30d !== null && result.snapshot?.price_change_30d !== undefined
-                        ? Number(result.snapshot.price_change_30d) >= 0
-                          ? "text-emerald-400"
-                          : "text-destructive"
-                        : "text-muted-foreground",
-                  },
-                  {
-                    k: "Age",
-                    v:
-                      result.snapshot?.listing_age_days !== null && result.snapshot?.listing_age_days !== undefined
-                        ? `${result.snapshot.listing_age_days} days`
-                        : result.deep_unlocked
-                        ? "—"
-                        : "🔒 RAW+",
-                  },
-                ].map((m, idx) => (
-                  <div key={idx} className="rounded-lg border border-border bg-background p-3">
-                    <p className="text-[10px] uppercase text-muted-foreground">{m.k}</p>
-                    <p className={`mt-1 text-sm font-bold ${(m as any).tone || "text-foreground"}`}>{m.v}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Derivatives & Microstructure Section */}
-            <div className="space-y-3 pt-1">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-[10px] uppercase tracking-wider text-primary font-bold">
-                  ⚡ Derivatives, Orderflow & Multi-Exchange Matrix (BN · OKX · BB)
-                </p>
-                <span className="rounded border border-primary/40 bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold text-primary">
-                  {result.deep_unlocked
-                    ? "🔓 BLACKBOX / RAW FULL DERIVATIVES TELEMETRY"
-                    : "🔒 RADAR COMPACT VIEW (Upgrade to RAW/BLACKBOX for Cross-Exchange Matrix & Orderflow)"}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-8">
-                {[
-                  { k: "OI (Binance)", v: result.snapshot?.oi_usdt ? `$${fmt(result.snapshot.oi_usdt)}` : "—" },
-                  {
-                    k: "OI Δ24h",
-                    v:
-                      result.snapshot?.oi_change_24h_pct !== null && result.snapshot?.oi_change_24h_pct !== undefined
-                        ? `${Number(result.snapshot.oi_change_24h_pct) >= 0 ? "+" : ""}${Number(result.snapshot.oi_change_24h_pct).toFixed(1)}%`
-                        : "—",
-                  },
-                  {
-                    k: "OI Δ7d",
-                    v:
-                      result.snapshot?.oi_change_7d_pct !== null && result.snapshot?.oi_change_7d_pct !== undefined
-                        ? `${Number(result.snapshot.oi_change_7d_pct) >= 0 ? "+" : ""}${Number(result.snapshot.oi_change_7d_pct).toFixed(1)}%`
-                        : result.deep_unlocked
-                        ? "—"
-                        : "🔒 RAW+",
-                  },
-                  {
-                    k: "OI Velocity",
-                    v:
-                      result.snapshot?.oi_velocity !== null && result.snapshot?.oi_velocity !== undefined
-                        ? `${result.snapshot.oi_velocity}x vs base`
-                        : result.deep_unlocked
-                        ? "—"
-                        : "🔒 RAW+",
-                  },
-                  {
-                    k: "OI / Vol",
-                    v:
-                      result.snapshot?.oi_vol_ratio !== null && result.snapshot?.oi_vol_ratio !== undefined
-                        ? `${result.snapshot.oi_vol_ratio}x`
-                        : result.deep_unlocked
-                        ? "—"
-                        : "🔒 RAW+",
-                  },
-                  {
-                    k: "Funding",
-                    v:
-                      result.snapshot?.funding_rate !== null && result.snapshot?.funding_rate !== undefined
-                        ? Number(result.snapshot.funding_rate).toFixed(6)
-                        : "—",
-                  },
-                  { k: "F.Trend", v: result.snapshot?.funding_trend || "—" },
-                  {
-                    k: "F.Avg 7d",
-                    v:
-                      result.snapshot?.funding_avg_7d !== null && result.snapshot?.funding_avg_7d !== undefined
-                        ? Number(result.snapshot.funding_avg_7d).toFixed(6)
-                        : result.deep_unlocked
-                        ? "—"
-                        : "🔒 RAW+",
-                  },
-                ].map((d, idx) => (
-                  <div key={idx} className="rounded-lg border border-border bg-background p-2.5">
-                    <p className="text-[10px] uppercase text-muted-foreground">{d.k}</p>
-                    <p className="mt-1 text-xs font-bold text-foreground">{d.v}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Deep Derivatives: Positioning, Taker Flow, Depth 2%, Cross-Exchange Matrix */}
-              {result.deep_unlocked ? (
-                <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-                  {/* Card 1: Positioning & Taker Flow */}
-                  <div className="rounded-xl border border-border bg-background p-4 space-y-3 text-xs">
-                    <p className="text-[10px] uppercase text-primary font-bold">Positioning & Taker Flow</p>
-                    <div className="space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Longs (Accounts vs Top):</span>
-                        <b className="text-foreground">
-                          {result.snapshot?.long_account_pct !== null && result.snapshot?.long_account_pct !== undefined
-                            ? `${Number(result.snapshot.long_account_pct).toFixed(0)}% accts`
-                            : "—"}
-                          {result.snapshot?.top_trader_long_pct !== null && result.snapshot?.top_trader_long_pct !== undefined
-                            ? ` | top: ${Number(result.snapshot.top_trader_long_pct).toFixed(0)}% (${Number(result.snapshot.top_trader_delta ?? 0) >= 0 ? "+" : ""}${result.snapshot.top_trader_delta}%)`
-                            : ""}
-                        </b>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Bybit L/S Ratio:</span>
-                        <b className="text-foreground">
-                          {result.snapshot?.long_short_bybit !== null && result.snapshot?.long_short_bybit !== undefined
-                            ? `BB ${Number(result.snapshot.long_short_bybit).toFixed(0)}%L`
-                            : `L/S ${fmt(result.snapshot?.long_short_ratio)}`}
-                        </b>
-                      </div>
-                    </div>
-
-                    {/* Taker Buy/Sell Bar */}
-                    {result.snapshot?.taker_buy_ratio !== null && result.snapshot?.taker_buy_ratio !== undefined && (
-                      <div className="space-y-1 pt-1">
-                        <div className="flex justify-between text-[11px]">
-                          <span className="text-emerald-400 font-bold">
-                            Taker Buy {(Number(result.snapshot.taker_buy_ratio) * 100).toFixed(1)}%
-                          </span>
-                          <span className="text-destructive font-bold">
-                            Sell {(100 - Number(result.snapshot.taker_buy_ratio) * 100).toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className="h-2.5 w-full overflow-hidden rounded-full bg-destructive/40 flex">
-                          <div
-                            className="h-full bg-emerald-500"
-                            style={{ width: `${Math.min(100, Math.max(0, Number(result.snapshot.taker_buy_ratio) * 100))}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Orderbook Depth 2% */}
-                    <div className="flex items-center justify-between border-t border-border/60 pt-2 text-[11px]">
-                      <span className="text-muted-foreground">Depth ±2%:</span>
-                      <b className="text-foreground">
-                        {result.snapshot?.depth_2pct_total ? `$${fmt(result.snapshot.depth_2pct_total)}` : "—"}{" "}
-                        {result.snapshot?.depth_imbalance ? `(imb: ${Number(result.snapshot.depth_imbalance).toFixed(2)})` : ""}
-                      </b>
-                    </div>
-                  </div>
-
-                  {/* Card 2: Cross-Exchange Matrix (BN | OKX | BB) & Temporal ETM — BLACKBOX Exclusive */}
-                  <div className="rounded-xl border border-border bg-background p-4 space-y-2.5 text-xs">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase text-primary font-bold">Cross-Exchange (BN · OKX · BB) & Temporal</p>
-                      <span className="rounded border border-primary/40 bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary">
-                        BLACKBOX
+              {/* ══════════════════════════════════════════════════════════════════
+                  SECTION 1: HERO COMMAND BRIDGE (RADIAL GAUGE + 4-AXIS RADAR + SPOT CURVE)
+                  ══════════════════════════════════════════════════════════════════ */}
+              <div className="rounded-xl border border-border bg-card p-5 space-y-5 shadow-lg">
+                {/* Top Action & Status Bar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3.5">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <span className="rounded-xl border border-primary/40 bg-primary/15 px-3 py-1 text-sm font-black tracking-wide text-primary">
+                      ${result.symbol}
+                    </span>
+                    <span className={`rounded-full px-3.5 py-1 text-xs font-bold border ${accentBadge}`}>
+                      {isHighRisk ? "🔴" : isMedRisk ? "🟡" : "🟢"}{" "}
+                      {isRu ? "ИНДЕКС РИСКА РЫНКА:" : "MARKET RISK:"} {score}/100 ({result.level})
+                    </span>
+                    <span className="rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] text-muted-foreground">
+                      {result.pump_verdict || (isRu ? "✅ Нет признаков искусственного пампа" : "✅ No significant pump indicators")}
+                    </span>
+                    {result.snapshot?.market_regime && (
+                      <span className="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-bold text-cyan-300">
+                        ⚡ {result.snapshot.market_regime}
                       </span>
-                    </div>
-                    {result.cross_exchange_unlocked ? (
+                    )}
+                    {result.github_repo && (
                       <>
-                        <div className="rounded-lg border border-border bg-card p-2.5 space-y-1.5 text-[11px]">
-                          <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">F.xchg:</span>
-                            <span className="font-bold text-foreground">
-                              BN {result.snapshot?.funding_binance !== null && result.snapshot?.funding_binance !== undefined ? Number(result.snapshot.funding_binance).toFixed(6) : "—"} | OKX{" "}
-                              {result.snapshot?.funding_okx !== null && result.snapshot?.funding_okx !== undefined ? Number(result.snapshot.funding_okx).toFixed(6) : "—"} | BB{" "}
-                              {result.snapshot?.funding_bybit !== null && result.snapshot?.funding_bybit !== undefined ? Number(result.snapshot.funding_bybit).toFixed(6) : "—"}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">OI xchg:</span>
-                            <span className="font-bold text-foreground">
-                              BN ${fmt(result.snapshot?.oi_binance)} | OKX ${fmt(result.snapshot?.oi_okx)} | BB ${fmt(result.snapshot?.oi_bybit)}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between border-t border-border/60 pt-1.5">
-                            <span className="text-muted-foreground">OI Total / Div:</span>
-                            <span className="font-bold text-primary">
-                              ${fmt(result.snapshot?.oi_total_multi)} · div:{" "}
-                              {result.snapshot?.oi_exchange_divergence !== null && result.snapshot?.oi_exchange_divergence !== undefined
-                                ? Number(result.snapshot.oi_exchange_divergence).toFixed(2)
-                                : "—"}
-                            </span>
-                          </div>
-                        </div>
-                        {result.temporal && (
-                          <div className="rounded-lg border border-primary/30 bg-primary/5 p-2.5 space-y-1 text-[11px]">
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold text-primary">
-                                📊 Temporal ({result.temporal.scan_count} scans / {result.temporal.span_hours}h)
-                              </span>
-                              <span className="text-foreground font-bold">{result.temporal.regime}</span>
-                            </div>
-                            {Array.isArray(result.temporal.scores) && result.temporal.scores.length > 0 && (
-                              <div className="text-muted-foreground">
-                                Score: <b className="text-foreground">{result.temporal.scores.join(" → ")}</b> ({result.temporal.score_trend})
-                              </div>
-                            )}
-                            {result.temporal.etm_confidence >= 30 && result.temporal.etm_hours_low !== null && (
-                              <div className="text-amber-400 font-bold">
-                                ⏰ ETM: {result.temporal.etm_hours_low}h–{result.temporal.etm_hours_high}h | {result.temporal.etm_direction} ({result.temporal.etm_confidence}%)
-                              </div>
-                            )}
-                          </div>
+                        <a
+                          href={`https://github.com/${result.github_repo}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] text-primary hover:underline"
+                        >
+                          📦 {result.github_repo} ↗
+                        </a>
+                        {result.audit_button_unlocked && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              window.dispatchEvent(
+                                new CustomEvent("boris-quick-scan", { detail: { target: `https://github.com/${result.github_repo}` } })
+                              );
+                              document.getElementById("demo-scanner")?.scrollIntoView({ behavior: "smooth" });
+                            }}
+                            className="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-primary-foreground hover:bg-primary-dim"
+                          >
+                            🔧 {isRu ? `Аудит кода ${result.github_repo.split("/").pop()}` : `Audit ${result.github_repo.split("/").pop()}`}
+                          </button>
                         )}
                       </>
-                    ) : (
-                      <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-[11px] text-muted-foreground">
-                        🔒 {isRu
-                          ? "Кросс-биржевое сравнение OI и фандинга (Binance · OKX · Bybit) и темпоральный ETM-анализ доступны на тарифе BLACKBOX."
-                          : "Cross-Exchange OI & Funding (Binance · OKX · Bybit) and Temporal ETM analysis require BLACKBOX tier."}
-                      </div>
                     )}
                   </div>
 
-                  {/* Card 3: Supply & Data Sources + Score Breakdown */}
-                  <div className="rounded-xl border border-border bg-background p-4 space-y-2.5 text-xs">
-                    <p className="text-[10px] uppercase text-primary font-bold">Supply, Sources & Score Breakdown</p>
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-muted-foreground">Circulating Supply:</span>
-                      <b className="text-foreground">
-                        {result.snapshot?.circ_ratio_pct !== null && result.snapshot?.circ_ratio_pct !== undefined
-                          ? `${result.snapshot.circ_ratio_pct}% of total`
-                          : "—"}
-                      </b>
+                  <div className="flex items-center gap-2.5 text-xs">
+                    <span className="text-muted-foreground text-[11px]">
+                      {isRu ? "Полнота телеметрии:" : "Telemetry Completeness:"}
+                    </span>
+                    <div className="h-2.5 w-24 overflow-hidden rounded-full bg-background border border-border">
+                      <div
+                        className="h-full bg-primary transition-all duration-700"
+                        style={{ width: `${conf}%` }}
+                      />
                     </div>
-                    {Array.isArray(result.snapshot?.data_sources) && result.snapshot.data_sources.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {result.snapshot.data_sources.map((srcName: string, si: number) => (
-                          <span key={si} className="rounded border border-border bg-card px-2 py-0.5 text-[10px] text-muted-foreground">
-                            {srcName}
+                    <b className="text-foreground">{conf}%</b>
+                    {onClose && (
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        className="ml-2 rounded-lg border border-primary/40 bg-primary/15 px-2.5 py-1 text-[11px] font-bold text-primary hover:bg-primary hover:text-primary-foreground"
+                      >
+                        ✕ {isRu ? "Свернуть досье" : "Close Dossier"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 3-Column Visual Telemetry Deck */}
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+                  {/* COL 1 (4 cols): Animated Radial Risk Speedometer + Conclusion */}
+                  <div className="rounded-xl border border-border bg-background/70 p-4 lg:col-span-4 flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                        🎯 {isRu ? "Сводный радар риска и режима" : "Composite Risk Speedometer"}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">0–100 Scale</span>
+                    </div>
+
+                    <div className="flex items-center gap-4 my-2">
+                      <div className="relative h-32 w-32 shrink-0 flex items-center justify-center">
+                        <svg viewBox="0 0 130 130" className="h-full w-full rotate-[135deg]">
+                          {/* Background track (270 deg) */}
+                          <circle
+                            cx="65"
+                            cy="65"
+                            r={rad}
+                            fill="transparent"
+                            stroke="hsl(var(--border))"
+                            strokeWidth="10"
+                            strokeDasharray={`${arcLen} ${circum}`}
+                            strokeLinecap="round"
+                          />
+                          {/* Animated Foreground Arc */}
+                          <circle
+                            cx="65"
+                            cy="65"
+                            r={rad}
+                            fill="transparent"
+                            stroke={accentStroke}
+                            strokeWidth="10"
+                            strokeDasharray={`${arcLen} ${circum}`}
+                            strokeDashoffset={arcOffset}
+                            strokeLinecap="round"
+                            className="transition-all duration-1000 ease-out"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                          <span className="text-2xl font-black text-foreground leading-none">{score}</span>
+                          <span className="text-[9px] uppercase tracking-wider text-muted-foreground mt-1">
+                            {result.level || "LOW"}
                           </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 text-xs min-w-0 flex-1">
+                        <div className="rounded-lg border border-border bg-card p-2.5">
+                          <p className="text-[9px] uppercase text-muted-foreground">
+                            {isRu ? "Вердикт аналитика" : "Analyst Verdict"}
+                          </p>
+                          <p className="mt-1 text-[11px] font-bold text-foreground leading-snug">
+                            {result.conclusion ||
+                              (isRu
+                                ? "Умеренный риск: наблюдается расхождение позиций толпы и крупных игроков."
+                                : "Moderate risk profile: divergence detected between retail crowd and top traders.")}
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] px-1">
+                          <span className="text-muted-foreground">{isRu ? "Органика потока:" : "Organic Flow:"}</span>
+                          <b className="text-emerald-400">{organic}%</b>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/60 text-[10px]">
+                      <div className="rounded bg-card px-2.5 py-1.5 flex items-center justify-between">
+                        <span className="text-muted-foreground">{isRu ? "Сигналов:" : "Signals:"}</span>
+                        <b className="text-primary">{result.signals_total ?? (result.signals?.length || 0)}</b>
+                      </div>
+                      <div className="rounded bg-card px-2.5 py-1.5 flex items-center justify-between">
+                        <span className="text-muted-foreground">{isRu ? "Источников:" : "Sources:"}</span>
+                        <b className="text-foreground">{result.snapshot?.data_sources?.length || 4} CEX/DEX</b>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* COL 2 (4 cols): 4-Axis SVG Spider / Radar Polygon + 4 Risk Gauges */}
+                  <div className="rounded-xl border border-border bg-background/70 p-4 lg:col-span-4 flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                        🕸️ {isRu ? "4-осевая роза рисков (Spider Graph)" : "4-Axis Risk & Organic Topology"}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">Live Vector</span>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-3 my-1">
+                      {/* SVG Radar Chart */}
+                      <div className="relative h-36 w-36 shrink-0">
+                        <svg viewBox="0 0 180 180" className="h-full w-full">
+                          {/* Concentric diamond rings */}
+                          {[20, 40, 60].map((rStep) => (
+                            <polygon
+                              key={rStep}
+                              points={`${cx},${cy - rStep} ${cx + rStep},${cy} ${cx},${cy + rStep} ${cx - rStep},${cy}`}
+                              fill="none"
+                              stroke="hsl(var(--border))"
+                              strokeWidth="1"
+                              strokeDasharray={rStep === 60 ? "none" : "2 2"}
+                            />
+                          ))}
+                          {/* Cross axes */}
+                          <line x1={cx} y1={cy - 62} x2={cx} y2={cy + 62} stroke="hsl(var(--border))" strokeWidth="1" />
+                          <line x1={cx - 62} y1={cy} x2={cx + 62} y2={cy} stroke="hsl(var(--border))" strokeWidth="1" />
+                          {/* Data polygon */}
+                          <polygon
+                            points={radarPoints}
+                            fill="rgba(239, 68, 68, 0.22)"
+                            stroke="#ef4444"
+                            strokeWidth="2"
+                            className="transition-all duration-700"
+                          />
+                          {/* Axis vertices */}
+                          <circle cx={cx} cy={cy - (manip / 100) * rMax} r="3.5" fill="#ef4444" />
+                          <circle cx={cx + (crowd / 100) * rMax} cy={cy} r="3.5" fill="#f59e0b" />
+                          <circle cx={cx} cy={cy + (fundWeak / 100) * rMax} r="3.5" fill="#a855f7" />
+                          <circle cx={cx - (organic / 100) * rMax} cy={cy} r="3.5" fill="#10b981" />
+                          {/* Axis Labels */}
+                          <text x={cx} y="16" textAnchor="middle" fill="#f87171" fontSize="9" fontWeight="bold">
+                            MANIP {manip}
+                          </text>
+                          <text x="174" y={cy + 3} textAnchor="end" fill="#fbbf24" fontSize="8" fontWeight="bold">
+                            CROWD {crowd}
+                          </text>
+                          <text x={cx} y="172" textAnchor="middle" fill="#c084fc" fontSize="9" fontWeight="bold">
+                            FUND {fundWeak}
+                          </text>
+                          <text x="6" y={cy + 3} textAnchor="start" fill="#34d399" fontSize="8" fontWeight="bold">
+                            ORG {organic}%
+                          </text>
+                        </svg>
+                      </div>
+
+                      {/* 4 Annotated Progress Bars */}
+                      <div className="w-full space-y-2 text-[11px]">
+                        {[
+                          {
+                            label: isRu ? "🎭 Манипуляции" : "🎭 Manipulation",
+                            sub: isRu ? "Спуфинг / пампы / аномалии" : "Spoofing / pump anomalies",
+                            val: manip,
+                            bar: manip >= 50 ? "bg-destructive" : "bg-red-500/80",
+                          },
+                          {
+                            label: isRu ? "👥 Перегрев толпы" : "👥 Crowd Tilt",
+                            sub: isRu ? "Перекос ретейла в одну сторону" : "Retail one-sided crowding",
+                            val: crowd,
+                            bar: "bg-amber-500",
+                          },
+                          {
+                            label: isRu ? "🧱 Слабость базы" : "🧱 Fund. Weakness",
+                            sub: isRu ? "Токеномика / низкая ликвидность" : "Supply & liquidity fragility",
+                            val: fundWeak,
+                            bar: "bg-purple-500",
+                          },
+                          {
+                            label: isRu ? "🌱 Органика рынка" : "🌱 Organic Prob.",
+                            sub: isRu ? "Доля живого реального спроса" : "Genuine organic demand share",
+                            val: organic,
+                            bar: "bg-emerald-500",
+                          },
+                        ].map((b, bi) => (
+                          <div key={bi} className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="font-semibold text-foreground" title={b.sub}>
+                                {b.label}
+                              </span>
+                              <b className="text-foreground">{b.val}/100</b>
+                            </div>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-card border border-border/60">
+                              <div className={`h-full ${b.bar} transition-all duration-700`} style={{ width: `${b.val}%` }} />
+                            </div>
+                          </div>
                         ))}
                       </div>
+                    </div>
+                  </div>
+
+                  {/* COL 3 (4 cols): Spot Price Telemetry & 30d->7d->24h SVG Momentum Curve */}
+                  <div className="rounded-xl border border-border bg-background/70 p-4 lg:col-span-4 flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                          💹 {isRu ? "Спот-телеметрия и импульс цены" : "Spot Telemetry & Price Momentum"}
+                        </span>
+                        <p className="text-2xl font-black text-foreground mt-0.5">
+                          {result.snapshot?.price_usd !== null && result.snapshot?.price_usd !== undefined
+                            ? `$${
+                                Number(result.snapshot.price_usd) < 1
+                                  ? Number(result.snapshot.price_usd).toFixed(5)
+                                  : Number(result.snapshot.price_usd).toLocaleString(undefined, { maximumFractionDigits: 2 })
+                              }`
+                            : "—"}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span
+                          className={`inline-block rounded-lg border px-2.5 py-1 text-xs font-bold ${
+                            ch24 >= 0
+                              ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-400"
+                              : "border-destructive/40 bg-destructive/15 text-destructive"
+                          }`}
+                        >
+                          24h: {ch24 >= 0 ? "+" : ""}
+                          {ch24.toFixed(2)}%
+                        </span>
+                        {result.snapshot?.listing_age_days && (
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            ⏳ {isRu ? "Возраст:" : "Age:"} <b className="text-foreground">{result.snapshot.listing_age_days}d</b>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* SVG Momentum Trajectory (30d -> 7d -> 24h -> Now) */}
+                    <div className="my-2 rounded-lg border border-border/70 bg-card/80 p-2">
+                      <div className="flex items-center justify-between text-[9px] text-muted-foreground px-1 mb-1">
+                        <span>30D ({ch30 >= 0 ? "+" : ""}{ch30.toFixed(1)}%)</span>
+                        <span>7D ({ch7 >= 0 ? "+" : ""}{ch7.toFixed(1)}%)</span>
+                        <span>24H ({ch24 >= 0 ? "+" : ""}{ch24.toFixed(1)}%)</span>
+                        <span className="text-primary font-bold">NOW</span>
+                      </div>
+                      <svg viewBox="0 0 260 66" className="h-14 w-full overflow-visible">
+                        <defs>
+                          <linearGradient id={`grad-${result.symbol}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={curveColor} stopOpacity="0.35" />
+                            <stop offset="100%" stopColor={curveColor} stopOpacity="0.0" />
+                          </linearGradient>
+                        </defs>
+                        <path d={areaPath} fill={`url(#grad-${result.symbol})`} />
+                        <path d={curvePath} fill="none" stroke={curveColor} strokeWidth="2.5" strokeLinecap="round" />
+                        {[
+                          { x: 16, y: y0 },
+                          { x: 95, y: y1 },
+                          { x: 168, y: y2 },
+                          { x: 244, y: y3 },
+                        ].map((pt, pi) => (
+                          <circle
+                            key={pi}
+                            cx={pt.x}
+                            cy={pt.y}
+                            r={pi === 3 ? "4.5" : "3"}
+                            fill={pi === 3 ? curveColor : "#090d16"}
+                            stroke={curveColor}
+                            strokeWidth="2"
+                          />
+                        ))}
+                      </svg>
+                    </div>
+
+                    {/* Spot Key Metrics Grid */}
+                    <div className="grid grid-cols-3 gap-2 text-[11px]">
+                      <div className="rounded-lg border border-border bg-card p-2">
+                        <p className="text-[9px] uppercase text-muted-foreground">Market Cap</p>
+                        <p className="font-bold text-foreground mt-0.5">
+                          {result.snapshot?.market_cap ? `$${fmt(result.snapshot.market_cap)}` : "—"}
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-border bg-card p-2">
+                        <p className="text-[9px] uppercase text-muted-foreground">Volume 24h</p>
+                        <p className="font-bold text-foreground mt-0.5">
+                          {result.snapshot?.volume_24h ? `$${fmt(result.snapshot.volume_24h)}` : "—"}
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-border bg-card p-2">
+                        <p className="text-[9px] uppercase text-muted-foreground">Δ 7D / 30D</p>
+                        <p className="font-bold mt-0.5">
+                          <span className={ch7 >= 0 ? "text-emerald-400" : "text-destructive"}>
+                            {ch7 >= 0 ? "+" : ""}
+                            {ch7.toFixed(1)}%
+                          </span>
+                          {" / "}
+                          <span className={ch30 >= 0 ? "text-emerald-400" : "text-destructive"}>
+                            {ch30 >= 0 ? "+" : ""}
+                            {ch30.toFixed(1)}%
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ══════════════════════════════════════════════════════════════════
+                    SECTION 2: POSITIONING ARENA (RETAIL VS WHALES TUG-OF-WAR + ORDERBOOK & LIQUIDATIONS)
+                    ══════════════════════════════════════════════════════════════════ */}
+                {result.deep_unlocked && (
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 pt-1">
+                    {/* LEFT (6 cols): Retail Crowd vs Smart Money (Top Traders) Tug-of-War */}
+                    <div className="rounded-xl border border-border bg-background/70 p-4 lg:col-span-6 space-y-3.5">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5">
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                            ⚔️ {isRu ? "Позиционирование: Толпа (Retail) против Китов (Top Traders)" : "Positioning Arena: Retail Crowd vs Smart Money"}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {isRu
+                              ? "Сравнение доли лонгов среди всех розничных аккаунтов и среди крупнейших портфелей"
+                              : "Comparing Long/Short skew between all retail accounts and top whale accounts"}
+                          </p>
+                        </div>
+                        {topDelta !== null && (
+                          <span
+                            className={`rounded-lg border px-2.5 py-1 text-[11px] font-bold ${
+                              topDelta <= -10
+                                ? "border-red-500/50 bg-red-500/15 text-red-300"
+                                : topDelta >= 10
+                                ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-300"
+                                : "border-border bg-card text-foreground"
+                            }`}
+                          >
+                            Smart Money Δ: {topDelta > 0 ? `+${topDelta}%` : `${topDelta}%`}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Bar 1: Retail Crowd Accounts */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-foreground flex items-center gap-1.5">
+                            👥 {isRu ? "Розничная толпа (Все аккаунты):" : "Retail Crowd (All Accounts):"}
+                          </span>
+                          <span>
+                            <b className="text-emerald-400">
+                              {retailLong !== null ? `LONG ${retailLong.toFixed(0)}%` : "—"}
+                            </b>
+                            {" vs "}
+                            <b className="text-destructive">
+                              {retailLong !== null ? `SHORT ${(100 - retailLong).toFixed(0)}%` : "—"}
+                            </b>
+                          </span>
+                        </div>
+                        <div className="relative h-3.5 w-full overflow-hidden rounded-full bg-destructive/45 flex border border-border/60">
+                          <div
+                            className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-700"
+                            style={{ width: `${retailLong ?? 50}%` }}
+                          />
+                          <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/60" title="50% Neutral" />
+                        </div>
+                      </div>
+
+                      {/* Bar 2: Top Traders (Smart Money Whales) */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-foreground flex items-center gap-1.5">
+                            🐋 {isRu ? "Умные деньги (Топ-трейдеры по капиталу):" : "Smart Money (Top Whale Positions):"}
+                          </span>
+                          <span>
+                            <b className="text-emerald-400">
+                              {topLong !== null ? `LONG ${topLong.toFixed(0)}%` : "—"}
+                            </b>
+                            {" vs "}
+                            <b className="text-destructive">
+                              {topLong !== null ? `SHORT ${(100 - topLong).toFixed(0)}%` : "—"}
+                            </b>
+                          </span>
+                        </div>
+                        <div className="relative h-3.5 w-full overflow-hidden rounded-full bg-destructive/45 flex border border-border/60">
+                          <div
+                            className="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-all duration-700"
+                            style={{ width: `${topLong ?? 50}%` }}
+                          />
+                          <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/60" title="50% Neutral" />
+                        </div>
+                      </div>
+
+                      {/* Visual Explanation of Divergence */}
+                      {topDelta !== null && Math.abs(topDelta) >= 8 && (
+                        <div
+                          className={`rounded-lg border p-2.5 text-[11px] leading-relaxed ${
+                            topDelta < 0
+                              ? "border-amber-500/40 bg-amber-500/10 text-amber-200"
+                              : "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+                          }`}
+                        >
+                          {topDelta < 0 ? (
+                            <span>
+                              ⚠️ <b>{isRu ? "Медвежья дивергенция (Риск сквиза лонгов):" : "Bearish Smart-Money Divergence:"}</b>{" "}
+                              {isRu
+                                ? `Розничная толпа экстремально забилась в лонг (${retailLong?.toFixed(0)}%), тогда как доля лонгов у крупных игроков на ${Math.abs(topDelta)}% ниже (${topLong?.toFixed(0)}%). Крупный капитал хеджируется или набирает шорт об толпу.`
+                                : `Retail accounts are heavily crowded Long (${retailLong?.toFixed(0)}%), while top traders hold ${Math.abs(topDelta)}% less Long exposure (${topLong?.toFixed(0)}%). Elevated long-squeeze risk.`}
+                            </span>
+                          ) : (
+                            <span>
+                              🟢 <b>{isRu ? "Бычья дивергенция (Накопление китами):" : "Bullish Smart-Money Divergence:"}</b>{" "}
+                              {isRu
+                                ? `Топ-трейдеры держат на +${topDelta}% больше лонгов (${topLong?.toFixed(0)}%), чем розничная толпа (${retailLong?.toFixed(0)}%).`
+                                : `Top traders hold +${topDelta}% higher Long positioning (${topLong?.toFixed(0)}%) than retail accounts (${retailLong?.toFixed(0)}%).`}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* L/S Ratios Footer */}
+                      <div className="grid grid-cols-3 gap-2 pt-1 text-[11px]">
+                        <div className="rounded-lg border border-border bg-card p-2">
+                          <p className="text-[9px] uppercase text-muted-foreground">Binance L/S Ratio</p>
+                          <p className="font-bold text-foreground mt-0.5">{fmt(result.snapshot?.long_short_ratio)}</p>
+                        </div>
+                        <div className="rounded-lg border border-border bg-card p-2">
+                          <p className="text-[9px] uppercase text-muted-foreground">OKX L/S Ratio</p>
+                          <p className="font-bold text-foreground mt-0.5">
+                            {result.snapshot?.long_short_okx ? fmt(result.snapshot.long_short_okx) : "—"}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-border bg-card p-2">
+                          <p className="text-[9px] uppercase text-muted-foreground">Bybit Long %</p>
+                          <p className="font-bold text-foreground mt-0.5">
+                            {result.snapshot?.long_short_bybit !== null && result.snapshot?.long_short_bybit !== undefined
+                              ? `${Number(result.snapshot.long_short_bybit).toFixed(0)}% Long`
+                              : "—"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* RIGHT (6 cols): Taker Aggression + Orderbook Depth ±2% + Liquidations */}
+                    <div className="rounded-xl border border-border bg-background/70 p-4 lg:col-span-6 space-y-3.5 flex flex-col justify-between">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5">
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                            🌊 {isRu ? "Поток рыночных ордеров (Taker Flow) и Стакан ±2%" : "Taker Orderflow, Orderbook Depth ±2% & Liquidations"}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {isRu
+                              ? "Кто бьёт по рынку прямо сейчас (покупатели vs продавцы) и плотность лимитных стенок"
+                              : "Real-time market order aggression and limit orderbook wall density within ±2%"}
+                          </p>
+                        </div>
+                        {takerBuyPct !== null && (
+                          <span
+                            className={`rounded-lg border px-2.5 py-1 text-[11px] font-bold ${
+                              takerBuyPct >= 51.5
+                                ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+                                : takerBuyPct <= 48.5
+                                ? "border-red-500/40 bg-red-500/15 text-red-300"
+                                : "border-border bg-card text-muted-foreground"
+                            }`}
+                          >
+                            {takerBuyPct >= 51.5
+                              ? isRu ? "🟢 Доминация покупателей" : "🟢 Taker Buy Dominance"
+                              : takerBuyPct <= 48.5
+                              ? isRu ? "🔴 Доминация продавцов" : "🔴 Taker Sell Dominance"
+                              : isRu ? "⚖️ Баланс потока" : "⚖️ Balanced Flow"}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* 1. Taker Buy vs Sell Aggression Bar */}
+                      {takerBuyPct !== null && (
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-emerald-400 font-bold">
+                              🟢 Taker Buy (Покупки по рынку): {takerBuyPct.toFixed(1)}%
+                            </span>
+                            <span className="text-destructive font-bold">
+                              Sell (Продажи): {(100 - takerBuyPct).toFixed(1)}% 🔴
+                            </span>
+                          </div>
+                          <div className="relative h-4 w-full overflow-hidden rounded-full bg-destructive/50 flex border border-border/60">
+                            <div
+                              className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-700"
+                              style={{ width: `${takerBuyPct}%` }}
+                            />
+                            <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/70" />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 2. Orderbook Depth ±2% (Bids vs Asks) */}
+                      <div className="space-y-1.5 pt-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-emerald-400 font-bold">
+                            📗 Bids -2% (Стенки покупок): {bid2 > 0 ? `$${fmt(bid2)}` : "—"}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            Σ Depth ±2%: <b className="text-foreground">{depthTot > 0 ? `$${fmt(depthTot)}` : "—"}</b>
+                            {result.snapshot?.depth_imbalance !== null && result.snapshot?.depth_imbalance !== undefined
+                              ? ` (Imb: ${Number(result.snapshot.depth_imbalance) >= 0 ? "+" : ""}${Number(result.snapshot.depth_imbalance).toFixed(2)})`
+                              : ""}
+                          </span>
+                          <span className="text-destructive font-bold">
+                            Asks +2% (Продажи): {ask2 > 0 ? `$${fmt(ask2)}` : "—"} 📕
+                          </span>
+                        </div>
+                        <div className="relative h-3 w-full overflow-hidden rounded-full bg-destructive/40 flex border border-border/60">
+                          <div
+                            className="h-full bg-emerald-500/85 transition-all duration-700"
+                            style={{ width: `${bidShare}%` }}
+                          />
+                          <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/60" />
+                        </div>
+                      </div>
+
+                      {/* 3. Liquidations & Orderflow Telemetry Strip */}
+                      <div className="grid grid-cols-3 gap-2 pt-1 text-[11px]">
+                        <div className="rounded-lg border border-border bg-card p-2">
+                          <p className="text-[9px] uppercase text-muted-foreground">
+                            {isRu ? "Ликвидации 1ч" : "Liquidations 1h"}
+                          </p>
+                          <p className="font-bold text-foreground mt-0.5">
+                            {result.snapshot?.liquidation_1h ? `$${fmt(result.snapshot.liquidation_1h)}` : "$0"}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-border bg-card p-2">
+                          <p className="text-[9px] uppercase text-muted-foreground">
+                            {isRu ? "Ликвидации 24ч" : "Liquidations 24h"}
+                          </p>
+                          <p className="font-bold text-foreground mt-0.5">
+                            {result.snapshot?.liq_total_24h ? `$${fmt(result.snapshot.liq_total_24h)}` : "$0"}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-border bg-card p-2">
+                          <p className="text-[9px] uppercase text-muted-foreground">
+                            {isRu ? "Скорость OI (Velocity)" : "OI Velocity"}
+                          </p>
+                          <p className="font-bold text-primary mt-0.5">
+                            {result.snapshot?.oi_velocity !== null && result.snapshot?.oi_velocity !== undefined
+                              ? `${result.snapshot.oi_velocity}x vs base`
+                              : "1.0x"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ══════════════════════════════════════════════════════════════════
+                    SECTION 3: MULTI-EXCHANGE MATRIX (BINANCE · OKX · BYBIT) & DERIVATIVES PULSE
+                    ══════════════════════════════════════════════════════════════════ */}
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 pt-1">
+                  {/* LEFT (7 cols): Visual Cross-Exchange OI & Funding Comparison Bars */}
+                  <div className="rounded-xl border border-border bg-background/70 p-4 lg:col-span-7 space-y-3.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                          🏦 {isRu ? "Кросс-биржевая матрица деривативов (Binance · OKX · Bybit)" : "Multi-Exchange Derivatives Matrix (Binance · OKX · Bybit)"}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {isRu
+                            ? "Распределение открытого интереса (Open Interest $) и ставок фондирования (Funding Rate) по топ-3 биржам"
+                            : "Open Interest ($ USD) distribution and perpetual Funding Rates across top 3 CEX venues"}
+                        </p>
+                      </div>
+                      <span className="rounded-lg border border-primary/40 bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
+                        Σ Total OI: {oiTotalMulti > 0 ? `$${fmt(oiTotalMulti)}` : result.snapshot?.oi_usdt ? `$${fmt(result.snapshot.oi_usdt)}` : "—"}
+                      </span>
+                    </div>
+
+                    {result.cross_exchange_unlocked ? (
+                      <div className="space-y-3">
+                        {[
+                          {
+                            name: "🟡 Binance Futures",
+                            oi: oiBn,
+                            fund: result.snapshot?.funding_binance ?? result.snapshot?.funding_rate,
+                            ls: result.snapshot?.long_short_ratio ? `L/S ${fmt(result.snapshot.long_short_ratio)}` : null,
+                            barColor: "bg-amber-400",
+                          },
+                          {
+                            name: "⚪ OKX Swap",
+                            oi: oiOkx,
+                            fund: result.snapshot?.funding_okx,
+                            ls: result.snapshot?.long_short_okx ? `L/S ${fmt(result.snapshot.long_short_okx)}` : null,
+                            barColor: "bg-cyan-400",
+                          },
+                          {
+                            name: "🟠 Bybit Linear",
+                            oi: oiBb,
+                            fund: result.snapshot?.funding_bybit,
+                            ls:
+                              result.snapshot?.long_short_bybit !== null && result.snapshot?.long_short_bybit !== undefined
+                                ? `${Number(result.snapshot.long_short_bybit).toFixed(0)}% Long`
+                                : null,
+                            barColor: "bg-orange-400",
+                          },
+                        ].map((ex, ei) => {
+                          const sharePct = oiTotalMulti > 0 ? ((ex.oi / oiTotalMulti) * 100).toFixed(1) : "0.0";
+                          const barW = oiMaxEx > 0 ? Math.max(4, (ex.oi / oiMaxEx) * 100) : 4;
+                          const fVal = ex.fund !== null && ex.fund !== undefined ? Number(ex.fund) : null;
+                          return (
+                            <div key={ei} className="rounded-lg border border-border bg-card p-3 space-y-2">
+                              <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-foreground">{ex.name}</span>
+                                  <span className="text-[10px] text-muted-foreground">({sharePct}% of OI)</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-[11px]">
+                                  <span className="font-bold text-foreground">
+                                    OI: {ex.oi > 0 ? `$${fmt(ex.oi)}` : "—"}
+                                  </span>
+                                  {fVal !== null && (
+                                    <span
+                                      className={`rounded border px-2 py-0.5 text-[10px] font-bold ${
+                                        fVal > 0.0001
+                                          ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+                                          : fVal < -0.00001
+                                          ? "border-red-500/40 bg-red-500/15 text-red-300"
+                                          : "border-border bg-background text-muted-foreground"
+                                      }`}
+                                    >
+                                      Funding: {fVal >= 0 ? "+" : ""}
+                                      {fVal.toFixed(6)}
+                                    </span>
+                                  )}
+                                  {ex.ls && (
+                                    <span className="rounded border border-border bg-background px-2 py-0.5 text-[10px] text-primary font-semibold">
+                                      {ex.ls}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="h-2 w-full overflow-hidden rounded-full bg-background border border-border/50">
+                                <div className={`h-full ${ex.barColor} transition-all duration-700`} style={{ width: `${barW}%` }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground">
+                        🔒 {isRu
+                          ? "Кросс-биржевая матрица OI и фандинга (Binance · OKX · Bybit) открывается на тарифе BLACKBOX."
+                          : "Cross-Exchange OI & Funding Matrix (Binance · OKX · Bybit) requires BLACKBOX tier."}
+                      </div>
                     )}
+
+                    {/* Derivatives Metrics Strip (6 boxes) */}
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6 pt-1 text-[11px]">
+                      {[
+                        {
+                          k: "OI Δ 24h",
+                          v:
+                            result.snapshot?.oi_change_24h_pct !== null && result.snapshot?.oi_change_24h_pct !== undefined
+                              ? `${Number(result.snapshot.oi_change_24h_pct) >= 0 ? "+" : ""}${Number(result.snapshot.oi_change_24h_pct).toFixed(1)}%`
+                              : "—",
+                        },
+                        {
+                          k: "OI Δ 7d",
+                          v:
+                            result.snapshot?.oi_change_7d_pct !== null && result.snapshot?.oi_change_7d_pct !== undefined
+                              ? `${Number(result.snapshot.oi_change_7d_pct) >= 0 ? "+" : ""}${Number(result.snapshot.oi_change_7d_pct).toFixed(1)}%`
+                              : "—",
+                        },
+                        {
+                          k: "OI / Vol 24h",
+                          v:
+                            result.snapshot?.oi_vol_ratio !== null && result.snapshot?.oi_vol_ratio !== undefined
+                              ? `${result.snapshot.oi_vol_ratio}x`
+                              : "—",
+                        },
+                        {
+                          k: "Funding Trend",
+                          v: result.snapshot?.funding_trend || "neutral",
+                        },
+                        {
+                          k: "Funding 7d Avg",
+                          v:
+                            result.snapshot?.funding_avg_7d !== null && result.snapshot?.funding_avg_7d !== undefined
+                              ? Number(result.snapshot.funding_avg_7d).toFixed(6)
+                              : "—",
+                        },
+                        {
+                          k: "Exchange Div.",
+                          v:
+                            result.snapshot?.oi_exchange_divergence !== null && result.snapshot?.oi_exchange_divergence !== undefined
+                              ? Number(result.snapshot.oi_exchange_divergence).toFixed(2)
+                              : "0.00",
+                        },
+                      ].map((dm, dmi) => (
+                        <div key={dmi} className="rounded-lg border border-border bg-card p-2">
+                          <p className="text-[9px] uppercase text-muted-foreground">{dm.k}</p>
+                          <p className="font-bold text-foreground mt-0.5 truncate">{dm.v}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* RIGHT (5 cols): Temporal ETM Trajectory + Supply Circulation & Score Waterfall */}
+                  <div className="rounded-xl border border-border bg-background/70 p-4 lg:col-span-5 flex flex-col justify-between space-y-3.5">
+                    {/* 1. Temporal ETM Block */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between border-b border-border/60 pb-2">
+                        <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                          ⏱️ {isRu ? "Темпоральная динамика (ETM & Режим)" : "Temporal Trajectory & ETM Forecast"}
+                        </span>
+                        {result.temporal && (
+                          <span className="rounded border border-primary/40 bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
+                            {result.temporal.regime || "STABLE"}
+                          </span>
+                        )}
+                      </div>
+
+                      {result.temporal ? (
+                        <div className="rounded-lg border border-border bg-card p-3 space-y-2 text-xs">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="text-muted-foreground">
+                              {isRu ? `Сканов за ${result.temporal.span_hours}ч:` : `Scans over ${result.temporal.span_hours}h:`}{" "}
+                              <b className="text-foreground">{result.temporal.scan_count}</b>
+                            </span>
+                            <span className="text-muted-foreground">
+                              Trend: <b className="text-primary">{result.temporal.score_trend}</b>
+                            </span>
+                          </div>
+                          {Array.isArray(result.temporal.scores) && result.temporal.scores.length > 0 && (
+                            <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                              {result.temporal.scores.map((scVal: number, sci: number) => (
+                                <div key={sci} className="flex items-center gap-1">
+                                  <span className="rounded border border-border bg-background px-2 py-0.5 text-[11px] font-bold text-foreground">
+                                    {scVal}
+                                  </span>
+                                  {sci < result.temporal.scores.length - 1 && (
+                                    <span className="text-muted-foreground">→</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {result.temporal.etm_confidence >= 30 && result.temporal.etm_hours_low !== null && (
+                            <div className="rounded border border-amber-500/40 bg-amber-500/10 px-2.5 py-1.5 text-[11px] font-bold text-amber-300">
+                              ⏰ Expected Time to Move (ETM): {result.temporal.etm_hours_low}h–{result.temporal.etm_hours_high}h ·{" "}
+                              {result.temporal.etm_direction} ({result.temporal.etm_confidence}% conf)
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="rounded-lg border border-border bg-card p-3 text-[11px] text-muted-foreground">
+                          {isRu
+                            ? "Темпоральный трек накапливает серию снимков для оценки скорости изменения риска (ETM)."
+                            : "Temporal tracker accumulates sequential snapshots to estimate Expected Time to Move (ETM)."}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 2. Supply Circulation Gauge */}
+                    <div className="rounded-lg border border-border bg-card p-3 space-y-2 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">
+                          🪙 {isRu ? "Эмиссия в обращении (Circulating Supply)" : "Circulating Supply Ratio"}
+                        </span>
+                        <b className="text-foreground">
+                          {result.snapshot?.circ_ratio_pct !== null && result.snapshot?.circ_ratio_pct !== undefined
+                            ? `${result.snapshot.circ_ratio_pct}% in circulation`
+                            : "—"}
+                        </b>
+                      </div>
+                      <div className="h-2.5 w-full overflow-hidden rounded-full bg-background border border-border/60">
+                        <div
+                          className="h-full bg-gradient-to-r from-primary to-emerald-500 transition-all duration-700"
+                          style={{
+                            width: `${Math.min(100, Math.max(0, Number(result.snapshot?.circ_ratio_pct ?? 100)))}%`,
+                          }}
+                        />
+                      </div>
+                      {Array.isArray(result.snapshot?.data_sources) && result.snapshot.data_sources.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                          <span className="text-[10px] text-muted-foreground mr-1">
+                            {isRu ? "Каналы:" : "Feeds:"}
+                          </span>
+                          {result.snapshot.data_sources.map((srcName: string, si: number) => (
+                            <span
+                              key={si}
+                              className="rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300"
+                            >
+                              ✓ {srcName}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 3. Score Waterfall Breakdown */}
                     {Array.isArray(result.score_breakdown) && result.score_breakdown.length > 0 && (
-                      <div className="border-t border-border/60 pt-2">
-                        <p className="mb-1 text-[10px] uppercase text-muted-foreground">Score Breakdown:</p>
+                      <div className="rounded-lg border border-border bg-card p-3 space-y-2">
+                        <div className="flex items-center justify-between text-[10px] uppercase text-muted-foreground font-bold">
+                          <span>🧩 {isRu ? "Из чего сложился риск-скор:" : "Risk Score Waterfall:"}</span>
+                          <span className="text-primary font-bold">Σ {score}/100</span>
+                        </div>
                         <div className="flex flex-wrap gap-1.5">
                           {result.score_breakdown.map((sb: any, sbi: number) => (
-                            <span
+                            <div
                               key={sbi}
-                              className="rounded border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"
+                              className="flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px]"
                             >
-                              +{sb.score} {sb.name}
-                            </span>
+                              <span className="font-black text-primary">+{sb.score}</span>
+                              <span className="text-foreground font-semibold">{sb.name}</span>
+                            </div>
                           ))}
                         </div>
                       </div>
                     )}
                   </div>
                 </div>
-              ) : null}
-            </div>
 
-            {/* Signals List */}
-            {result.signals?.length > 0 && (
-              <div className="space-y-2 pt-2 border-t border-border">
-                <p className="text-[10px] uppercase tracking-wider text-primary font-bold">
-                  🚨 Detected Market & CEX Signals ({result.signals_total})
-                </p>
-                {result.signals.map((s: any, i: number) => (
-                  <div key={i} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-background px-3.5 py-2.5 text-xs">
-                    <div className="flex items-center gap-2.5">
-                      <span className="rounded border border-primary/40 bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
-                        +{s.score} [{String(s.category || "CEX").toUpperCase()}]
+                {/* ══════════════════════════════════════════════════════════════════
+                    SECTION 4: DETECTED MARKET & CEX SIGNALS (VISUAL INTELLIGENCE CARDS)
+                    ══════════════════════════════════════════════════════════════════ */}
+                {result.signals?.length > 0 && (
+                  <div className="space-y-2.5 pt-2 border-t border-border">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[11px] uppercase tracking-wider text-primary font-bold">
+                        🚨 {isRu ? `Обнаруженные рыночные и биржевые сигналы (${result.signals_total})` : `Detected Market & CEX Signals (${result.signals_total})`}
+                      </p>
+                      <span className="text-[10px] text-muted-foreground">
+                        {isRu ? "Детерминированные триггеры деривативов и стакана" : "Deterministic orderflow & derivatives triggers"}
                       </span>
-                      <span className="font-bold text-foreground">{s.name}</span>
-                      <span className="text-muted-foreground">— {s.detail}</span>
                     </div>
+                    <div className="grid grid-cols-1 gap-2.5 md:grid-cols-3">
+                      {result.signals.map((s: any, i: number) => {
+                        const sPts = Number(s.score ?? 0);
+                        const isHeavy = sPts >= 12;
+                        return (
+                          <div
+                            key={i}
+                            className={`rounded-xl border p-3.5 space-y-1.5 transition-all ${
+                              isHeavy
+                                ? "border-amber-500/50 bg-amber-500/10"
+                                : "border-border bg-background/80"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-bold text-xs text-foreground">{s.name}</span>
+                              <span
+                                className={`rounded-md border px-2 py-0.5 text-[10px] font-black ${
+                                  isHeavy
+                                    ? "border-amber-500 bg-amber-500/20 text-amber-300"
+                                    : "border-primary/40 bg-primary/15 text-primary"
+                                }`}
+                              >
+                                +{s.score} pts · {String(s.category || "CEX").toUpperCase()}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground leading-relaxed">{s.detail}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {result.signals_total > result.signals.length && (
+                      <p className="text-[11px] text-primary">
+                        +{result.signals_total - result.signals.length}{" "}
+                        {isRu
+                          ? "дополнительных сигналов доступно на тарифах RAW / BLACKBOX"
+                          : "more signals available in RAW / BLACKBOX"}
+                      </p>
+                    )}
                   </div>
-                ))}
-                {result.signals_total > result.signals.length && (
-                  <p className="text-[11px] text-primary">
-                    +{result.signals_total - result.signals.length} {isRu ? "дополнительных сигналов доступно на тарифах RAW / BLACKBOX" : "more signals available in RAW / BLACKBOX"}
-                  </p>
                 )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
           );
         };
 
