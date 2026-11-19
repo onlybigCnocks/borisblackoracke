@@ -3495,6 +3495,14 @@ const ToolsPanel = () => {
               </div>
             </div>
 
+            {result.data_coverage?.partial && (
+              <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-xs text-amber-300">
+                ⚠️ {isRu ? "Частичное покрытие: BSC Transfer-события из RPC; история BNB и внутренних транзакций недоступна." : "Partial coverage: BSC Transfer events from RPC; BNB and internal transaction history unavailable."}
+                {result.data_coverage.from_time_utc && ` · ${isRu ? "Начало выборки" : "Sample from"}: ${result.data_coverage.from_time_utc}`}
+                {result.data_coverage.truncated && (isRu ? " · Выборка усечена" : " · Sample truncated")}
+                {result.data_coverage.unavailable && (isRu ? " · RPC недоступен" : " · RPC unavailable")}
+              </div>
+            )}
             {/* 4 Score & Volume Cards */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
