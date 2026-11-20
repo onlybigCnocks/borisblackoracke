@@ -6410,6 +6410,290 @@ const ToolsPanel = () => {
         </div>
       )}
 
+            {/* 15. CROSS-CHAIN BRIDGE RADAR v2.0 (5,657 VAULTS + ANKR MULTICHAIN + 110 HACKS KB) */}
+      {result && tool === "bridges" && (
+        <div className="rounded-xl border border-border bg-card p-5 space-y-6 font-mono text-xs">
+          {/* Header & Global Stats Banner */}
+          <div className="rounded-xl border border-border/80 bg-background/90 p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-md border border-primary/50 bg-primary/15 px-2.5 py-1 text-xs font-bold uppercase text-primary">
+                  🌉 BORIS BRIDGE RADAR v2.0
+                </span>
+                <span className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-xs font-bold text-emerald-300">
+                  💰 TVL в Мостах: ${((result.stats?.global_bridge_tvl_usd || 65370000000) / 1e9).toFixed(2)}B USD
+                </span>
+                <span className="rounded border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-[11px] font-bold text-red-400">
+                  💥 Взломов: {result.stats?.bridge_hacks_count || 110} (${((result.stats?.bridge_hacks_total_loss_usd || 54911774029) / 1e9).toFixed(1)}B потерь)
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                <span className="rounded bg-background border border-border px-2.5 py-1 text-muted-foreground font-semibold">
+                  Контрактов: <b>{(result.stats?.total_contracts || 5657).toLocaleString()}</b>
+                </span>
+                <span className="rounded bg-background border border-border px-2.5 py-1 text-muted-foreground font-semibold">
+                  Протоколов: <b>{result.stats?.total_protocols || 375}</b>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => runTool()}
+                  className="rounded border border-primary/50 bg-primary/20 px-2.5 py-1 font-bold text-primary hover:bg-primary/30 transition-colors"
+                >
+                  ⚡ {isRu ? "Обновить" : "Refresh"}
+                </button>
+              </div>
+            </div>
+
+            {/* Signature Vulnerability & Security Posture Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-1 text-[11px]">
+              <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-center">
+                <div className="text-[10px] text-muted-foreground">Emergency Drain</div>
+                <div className="text-sm font-bold text-red-400">{result.signature_stats?.emergency_drain || 341}</div>
+              </div>
+              <div className="rounded-lg border border-purple-500/30 bg-purple-500/10 p-2 text-center">
+                <div className="text-[10px] text-muted-foreground">Arbitrary Call</div>
+                <div className="text-sm font-bold text-purple-300">{result.signature_stats?.arbitrary_call || 224}</div>
+              </div>
+              <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-2 text-center">
+                <div className="text-[10px] text-muted-foreground">EIP-1967 Proxy</div>
+                <div className="text-sm font-bold text-blue-300">{result.signature_stats?.upgradeable_proxy || 319}</div>
+              </div>
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2 text-center">
+                <div className="text-[10px] text-muted-foreground">Message Replay</div>
+                <div className="text-sm font-bold text-amber-300">{result.signature_stats?.message_replay || 28}</div>
+              </div>
+              <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 p-2 text-center">
+                <div className="text-[10px] text-muted-foreground">Flash Callback</div>
+                <div className="text-sm font-bold text-cyan-300">{result.signature_stats?.flash_callback || 19}</div>
+              </div>
+              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2 text-center">
+                <div className="text-[10px] text-muted-foreground">Аудитов в базе</div>
+                <div className="text-sm font-bold text-emerald-400">{result.stats?.audited_contracts || 511}</div>
+              </div>
+            </div>
+
+            {/* Multi-Chain Filter Pills */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border/50 text-[11px]">
+              <span className="text-muted-foreground">{isRu ? "Сеть:" : "Chain:"}</span>
+              {["all", "ethereum", "bsc", "base", "polygon", "arbitrum", "optimism", "avalanche"].map((chKey) => (
+                <button
+                  key={chKey}
+                  type="button"
+                  onClick={() => {
+                    setChain(chKey);
+                    fetch(`${API_BASE}/api/tools/bridges?q=${encodeURIComponent(input1.trim())}&chain=${chKey}&limit=40`, {
+                      headers: { ...authHeaders() },
+                    })
+                      .then((r) => r.json())
+                      .then((d) => setResult(d))
+                      .catch(() => {});
+                  }}
+                  className={`rounded-md border px-2 py-0.5 uppercase transition-all ${
+                    chain === chKey
+                      ? "border-primary bg-primary/20 text-primary font-bold"
+                      : "border-border bg-background text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {chKey}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Live Multichain Probe Result (if queried by 0x address) */}
+          {result.live_probed_target && (
+            <div className="rounded-xl border border-emerald-500/60 bg-emerald-500/10 p-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-500/30 pb-2">
+                <span className="font-bold text-xs text-emerald-300">
+                  ⚡ ЖИВОЙ MULTICHAIN ЗАМЕР ANKR ADVANCED API (14 СЕТЕЙ):
+                </span>
+                <span className="rounded bg-emerald-500/20 px-2.5 py-0.5 text-xs font-bold text-emerald-200">
+                  ${result.live_probed_target.total_multichain_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-[11px]">
+                {Object.entries(result.live_probed_target.by_chain_usd || {}).map(([chKey, usdVal]: [string, any]) => (
+                  <div key={chKey} className="rounded-lg border border-border bg-background/80 p-2">
+                    <span className="font-bold uppercase text-primary">{chKey}: </span>
+                    <span className="text-foreground font-semibold">${Number(usdVal).toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Bridges List Table & Cards */}
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-bold text-xs text-foreground uppercase tracking-wide">
+                🏛️ Найденные Хранилища и Контракты Мостов ({result.bridges?.length || 0}):
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                Сортировка: TVL @ Risk & Сигнатуры
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              {(result.bridges || []).map((b: any, bIdx: number) => {
+                const isCrit = b.risk_score >= 80;
+                const isHigh = b.risk_score >= 60 && b.risk_score < 80;
+                return (
+                  <div
+                    key={`${b.address}-${b.chain}-${bIdx}`}
+                    className={`rounded-xl border p-4 space-y-3 transition-all ${
+                      isCrit
+                        ? "border-red-500/50 bg-red-500/5 hover:border-red-500"
+                        : isHigh
+                        ? "border-amber-500/50 bg-amber-500/5 hover:border-amber-500"
+                        : "border-border bg-background/60 hover:border-primary/60"
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded bg-primary/20 border border-primary/40 px-2 py-0.5 text-[10px] font-bold uppercase text-primary">
+                          {b.chain}
+                        </span>
+                        <span className="font-bold text-foreground text-xs">{b.name}</span>
+                        <code className="text-[11px] text-muted-foreground">{b.address}</code>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(b.address);
+                            setCopiedSecretId(b.address);
+                            setTimeout(() => setCopiedSecretId(null), 1500);
+                          }}
+                          className="rounded p-1 hover:bg-background text-muted-foreground hover:text-foreground"
+                          title="Скопировать адрес"
+                        >
+                          {copiedSecretId === b.address ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={`rounded-md border px-2.5 py-0.5 text-[11px] font-bold ${
+                            isCrit
+                              ? "border-red-500 bg-red-500/20 text-red-300"
+                              : isHigh
+                              ? "border-amber-500 bg-amber-500/20 text-amber-300"
+                              : "border-green-500 bg-green-500/20 text-green-300"
+                          }`}
+                        >
+                          РИСК: {b.risk_score}/100 ({b.risk_level})
+                        </span>
+                        {b.audit_grade && (
+                          <span className="rounded-md border border-purple-500/40 bg-purple-500/15 px-2 py-0.5 text-[10px] font-bold text-purple-300">
+                            Аудит: {b.audit_grade}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-[11px]">
+                      <div className="rounded bg-background p-2 border border-border">
+                        <div className="text-[10px] text-muted-foreground">Залочено (TVL)</div>
+                        <div className="font-bold text-foreground text-sm">
+                          ${Number(b.tvl_usd || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                      </div>
+                      <div className="rounded bg-background p-2 border border-border">
+                        <div className="text-[10px] text-muted-foreground">Тип Моста</div>
+                        <div className="font-semibold text-foreground text-[11px] truncate">{b.bridge_type}</div>
+                      </div>
+                      <div className="rounded bg-background p-2 border border-border">
+                        <div className="text-[10px] text-muted-foreground">Нативный Баланс</div>
+                        <div className="font-semibold text-foreground">{b.native_balance || 0} {b.chain?.toUpperCase()}</div>
+                      </div>
+                      <div className="rounded bg-background p-2 border border-border">
+                        <div className="text-[10px] text-muted-foreground">Опасные Сигнатуры</div>
+                        <div className="flex flex-wrap gap-1 pt-0.5">
+                          {b.is_proxy === 1 && <span className="rounded bg-blue-500/20 px-1 py-0.2 text-[9px] font-bold text-blue-300">UPGRADE</span>}
+                          {b.has_drain_sig === 1 && <span className="rounded bg-red-500/20 px-1 py-0.2 text-[9px] font-bold text-red-300">DRAIN</span>}
+                          {b.has_arbcall_sig === 1 && <span className="rounded bg-purple-500/20 px-1 py-0.2 text-[9px] font-bold text-purple-300">ARBCALL</span>}
+                          {b.has_replay_sig === 1 && <span className="rounded bg-amber-500/20 px-1 py-0.2 text-[9px] font-bold text-amber-300">REPLAY</span>}
+                          {b.has_bls_epoch_sig === 1 && <span className="rounded bg-cyan-500/20 px-1 py-0.2 text-[9px] font-bold text-cyan-300">BLS</span>}
+                          {b.is_proxy === 0 && b.has_drain_sig === 0 && b.has_arbcall_sig === 0 && b.has_replay_sig === 0 && (
+                            <span className="text-[10px] text-muted-foreground">Стандарт</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Matched Historical Hacks */}
+                    {b.matched_hacks && b.matched_hacks.length > 0 && (
+                      <div className="rounded-lg border border-border/80 bg-background/50 p-2.5 space-y-1.5 text-[11px]">
+                        <div className="font-bold text-[10px] uppercase text-muted-foreground flex items-center gap-1.5">
+                          <span>⚔️ Релевантные эксплойты из базы 1,600+ взломов:</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {b.matched_hacks.map((hk: any, hIdx: number) => (
+                            <div key={hIdx} className="rounded border border-border/60 bg-card p-2 space-y-1">
+                              <div className="font-bold text-foreground text-xs">{hk.title}</div>
+                              <div className="text-[10px] text-muted-foreground">Вектор: <code className="text-primary">{hk.vector}</code></div>
+                              {hk.poc && (
+                                <div className="text-[10px] text-amber-400 font-mono truncate">
+                                  PoC: <code>{hk.poc}</code>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Historical Bridge Hacks KB Section */}
+          {result.bridge_hacks && result.bridge_hacks.length > 0 && (
+            <div className="space-y-3 pt-3 border-t border-border">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-bold text-xs text-foreground uppercase tracking-wide">
+                  💥 Историческая База Взломов Мостов (110 Эксплойтов с Foundry PoC):
+                </span>
+                <span className="text-[11px] text-red-400 font-bold">
+                  Общий ущерб: ${((result.stats?.bridge_hacks_total_loss_usd || 54911774029) / 1e9).toFixed(1)}B
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {result.bridge_hacks.slice(0, 10).map((hk: any) => (
+                  <div key={hk.hack_id} className="rounded-xl border border-red-500/30 bg-red-500/5 p-3.5 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold text-foreground text-xs">{hk.protocol}</span>
+                      <span className="rounded bg-red-500/20 border border-red-500/40 px-2 py-0.5 text-[10px] font-bold text-red-300">
+                        {hk.loss_text || `$${Number(hk.loss_usd).toLocaleString()}`}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-muted-foreground">{hk.attack_vector}</div>
+                    {hk.summary && <div className="text-[10px] text-foreground/80 line-clamp-2">{hk.summary}</div>}
+                    {hk.forge_cmd && (
+                      <div className="rounded bg-background p-1.5 border border-border flex items-center justify-between gap-2">
+                        <code className="text-[10px] text-amber-300 truncate">{hk.forge_cmd}</code>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(hk.forge_cmd);
+                            setCopiedSecretId(hk.hack_id);
+                            setTimeout(() => setCopiedSecretId(null), 1500);
+                          }}
+                          className="rounded p-1 hover:bg-card text-muted-foreground hover:text-foreground"
+                          title="Скопировать команду запуска PoC"
+                        >
+                          {copiedSecretId === hk.hack_id ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+
       {/* 14. Deployer & On-Chain Address Profiler (address_profiler.py + deploy_analyzer.py) */}
       {result && tool === "deployer" && result.primary && (
         <div className="rounded-xl border border-border bg-card p-5 space-y-4 font-mono text-xs">
