@@ -379,7 +379,7 @@ const ToolsPanel = () => {
       return;
     }
     if (tool === "bridges" && !result && !loading) {
-      runTool();
+      run();
     }
     if (tool === "ospec" && rank >= 1 && !result) {
       runOspecWithFilters({ q: "", sev: "", real: true, live: false, offset: 0 });
@@ -957,7 +957,7 @@ const ToolsPanel = () => {
                               const d = await res.json().catch(() => ({}));
                               throw new Error(d.detail || `HTTP ${res.status}`);
                             }
-                            await runTool();
+                            await run();
                           } catch (e: any) {
                             setError(e.message || "Harvest failed");
                           } finally {
@@ -974,7 +974,7 @@ const ToolsPanel = () => {
 
                       <button
                         type="button"
-                        onClick={() => runTool()}
+                        onClick={() => run()}
                         disabled={loading}
                         className="rounded border border-primary/50 bg-primary/20 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/30 transition-colors"
                       >
@@ -6541,7 +6541,7 @@ const ToolsPanel = () => {
                         throw new Error(d.detail || `HTTP ${res.status}`);
                       }
                       const d = await res.json();
-                      await runTool();
+                      await run();
                     } catch (e: any) {
                       setError(e.message || "Harvest failed");
                     } finally {
@@ -6555,7 +6555,7 @@ const ToolsPanel = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => runTool()}
+                  onClick={() => run()}
                   className="rounded border border-primary/50 bg-primary/20 px-2.5 py-1 font-bold text-primary hover:bg-primary/30 transition-colors"
                 >
                   ⚡ {isRu ? "Обновить" : "Refresh"}
