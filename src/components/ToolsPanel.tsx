@@ -1057,6 +1057,7 @@ const ToolsPanel = () => {
                 <span>{loading ? (isRu ? "Считаю…" : "Running…") : isRu ? "Запустить" : "Run"}</span>
               </button>
             </div>
+          </div>
           )}
 
           {/* Quick presets for Holders & Whales */}
