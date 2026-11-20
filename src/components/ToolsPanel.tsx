@@ -378,6 +378,9 @@ const ToolsPanel = () => {
       skipAutoOspecRef.current = false;
       return;
     }
+    if (tool === "bridges" && !result && !loading) {
+      runTool();
+    }
     if (tool === "ospec" && rank >= 1 && !result) {
       runOspecWithFilters({ q: "", sev: "", real: true, live: false, offset: 0 });
     }
@@ -921,16 +924,104 @@ const ToolsPanel = () => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-              <input
-                ref={tool === "ospec" ? ospecSearchInputRef : undefined}
+            <div className="space-y-3">
+              {/* ALWAYS-VISIBLE BRIDGE RADAR COMMAND BAR */}
+              {tool === "bridges" && (
+                <div className="rounded-xl border border-border/80 bg-background/90 p-3.5 space-y-3 font-mono text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-md border border-primary/50 bg-primary/20 px-2.5 py-1 text-xs font-bold uppercase text-primary">
+                        🌉 Cross-Chain Bridge Radar v2.0
+                      </span>
+                      <span className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-xs font-bold text-emerald-300">
+                        💰 5,731 Контрактов · $65.3B TVL
+                      </span>
+                      <span className="rounded border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-[11px] font-bold text-red-400">
+                        💥 110 Взломов ($54.9B)
+                      </span>
+                    </div>
+
+                    {/* THE PROMINENT RADAR CONVEYOR BUTTON */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setLoading(true);
+                          setError(null);
+                          try {
+                            const res = await fetch(`${API_BASE}/api/tools/bridges/harvest`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json", ...authHeaders() },
+                            });
+                            if (!res.ok) {
+                              const d = await res.json().catch(() => ({}));
+                              throw new Error(d.detail || `HTTP ${res.status}`);
+                            }
+                            await runTool();
+                          } catch (e: any) {
+                            setError(e.message || "Harvest failed");
+                          } finally {
+                            setLoading(false);
+                          }
+                        }}
+                        disabled={loading}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/60 bg-amber-500/20 px-3.5 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-500/30 transition-all shadow-sm active:scale-95 btn-glow"
+                        title="Запустить конвейер поиска и сбора мостов по всем сетям (DefiLlama + Blockscout + Ankr)"
+                      >
+                        {loading ? <Loader2 size={13} className="animate-spin" /> : <span>🛰️</span>}
+                        <span>{loading ? (isRu ? "Сканирую все сети…" : "Harvesting all chains…") : (isRu ? "🛰️ Запустить Радар-Конвейер (Все сети)" : "🛰️ Run Multichain Radar Conveyor")}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => runTool()}
+                        disabled={loading}
+                        className="rounded border border-primary/50 bg-primary/20 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/30 transition-colors"
+                      >
+                        ⚡ {isRu ? "Обновить" : "Refresh"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Multi-Chain Filter Pills */}
+                  <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                    <span className="text-muted-foreground">{isRu ? "Фильтр сети:" : "Chain filter:"}</span>
+                    {["all", "ethereum", "bsc", "base", "polygon", "arbitrum", "optimism"].map((chKey) => (
+                      <button
+                        key={chKey}
+                        type="button"
+                        onClick={() => {
+                          setChain(chKey);
+                          fetch(`${API_BASE}/api/tools/bridges?q=${encodeURIComponent(input1.trim())}&chain=${chKey}&limit=40`, {
+                            headers: { ...authHeaders() },
+                          })
+                            .then((r) => r.json())
+                            .then((d) => setResult(d))
+                            .catch(() => {});
+                        }}
+                        className={`rounded-md border px-2.5 py-0.5 uppercase transition-all ${
+                          chain === chKey
+                            ? "border-primary bg-primary/25 text-primary font-bold shadow-sm"
+                            : "border-border bg-background text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {chKey}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                <input
+                  ref={tool === "ospec" ? ospecSearchInputRef : undefined}
                 value={input1}
                 onChange={(e) => setInput1(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && (tool === "ospec" || tool === "hacks" || input1) && run()}
                 placeholder={active.placeholder}
                 className="rounded-xl border border-border bg-background px-4 py-3 font-mono text-xs text-foreground outline-none focus:border-primary sm:col-span-2"
               />
-              {(tool === "holders" || tool === "funds" || tool === "zk" || tool === "hacks" || tool === "proxy" || tool === "flash" || tool === "deployer") ? (
+              {(tool === "holders" || tool === "funds" || tool === "zk" || tool === "hacks" || tool === "proxy" || tool === "flash" || tool === "deployer" || tool === "bridges") ? (
                 <select
                   value={chain}
                   onChange={(e) => setChain(e.target.value)}
