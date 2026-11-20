@@ -73,6 +73,7 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
   const [ghAlerts, setGhAlerts] = useState<boolean>(Boolean(tgMeta.radar_alerts_enabled));
   const [defiAlerts, setDefiAlerts] = useState<boolean>(Boolean(tgMeta.defillama_alerts_enabled));
   const [explAlerts, setExplAlerts] = useState<boolean>(Boolean(tgMeta.explorer_alerts_enabled));
+  const [ospecAlerts, setOspecAlerts] = useState<boolean>(Boolean(tgMeta.ospec_alerts_enabled));
   const [savingAlerts, setSavingAlerts] = useState<boolean>(false);
   const [alertMsg, setAlertMsg] = useState<string | null>(null);
 
@@ -104,6 +105,7 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
       setGhAlerts(Boolean(user.tg_meta.radar_alerts_enabled));
       setDefiAlerts(Boolean(user.tg_meta.defillama_alerts_enabled));
       setExplAlerts(Boolean(user.tg_meta.explorer_alerts_enabled));
+      setOspecAlerts(Boolean(user.tg_meta.ospec_alerts_enabled));
     }
   }, [user?.tg_meta]);
 
@@ -201,22 +203,25 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
     }
   };
 
-  const handleToggleAlert = async (field: "gh" | "defi" | "expl") => {
+  const handleToggleAlert = async (field: "gh" | "defi" | "expl" | "ospec") => {
     if (!user?.tg_id) return;
     setSavingAlerts(true);
     setAlertMsg(null);
     const nextGh = field === "gh" ? !ghAlerts : ghAlerts;
     const nextDefi = field === "defi" ? !defiAlerts : defiAlerts;
     const nextExpl = field === "expl" ? !explAlerts : explAlerts;
+    const nextOspec = field === "ospec" ? !ospecAlerts : ospecAlerts;
     try {
       await apiUpdateRadarSettings({
         radar_alerts_enabled: nextGh,
         defillama_alerts_enabled: nextDefi,
         explorer_alerts_enabled: nextExpl,
+        ospec_alerts_enabled: nextOspec,
       });
       setGhAlerts(nextGh);
       setDefiAlerts(nextDefi);
       setExplAlerts(nextExpl);
+      setOspecAlerts(nextOspec);
       setAlertMsg(isRu ? "✅ Настройки ТГ-алертов обновлены" : "✅ Telegram radar alerts updated");
       setTimeout(() => setAlertMsg(null), 2500);
     } catch (e: any) {
@@ -483,6 +488,18 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
               }`}
             >
               {explAlerts ? "🔔 Contracts: ON" : "🔕 Contracts: OFF"}
+            </button>
+            <button
+              type="button"
+              disabled={savingAlerts}
+              onClick={() => handleToggleAlert("ospec")}
+              className={`rounded-lg border px-3 py-1 text-[11px] font-semibold transition-all ${
+                ospecAlerts
+                  ? "border-green-500/50 bg-green-500/15 text-green-400"
+                  : "border-border bg-background text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {ospecAlerts ? "🔔 OSPEC: ON" : "🔕 OSPEC: OFF"}
             </button>
             {alertMsg && <span className="text-[11px] text-primary">{alertMsg}</span>}
           </div>

@@ -96,6 +96,8 @@ const ToolsPanel = () => {
   const [ospecDaemonRunning, setOspecDaemonRunning] = useState<boolean>(true);
   const [ospecDaemonBusy, setOspecDaemonBusy] = useState<boolean>(false);
   const [ospecDaemonMsg, setOspecDaemonMsg] = useState<string | null>(null);
+  const [ospecBellOn, setOspecBellOn] = useState<boolean>(Boolean(user?.tg_meta?.ospec_alerts_enabled));
+  const [ospecBellBusy, setOspecBellBusy] = useState<boolean>(false);
   const [zkShowcaseTab, setZkShowcaseTab] = useState<"active_tvl" | "benchmarks">("active_tvl");
   const [zkActiveContracts, setZkActiveContracts] = useState<any[]>([]);
   const [zkActiveLoading, setZkActiveLoading] = useState<boolean>(false);
@@ -1665,6 +1667,61 @@ const ToolsPanel = () => {
 
                 {/* Daemon Controls (BLACKBOX exclusive) */}
                 <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={ospecBellBusy}
+                    onClick={async () => {
+                      if (!user?.tg_id) {
+                        setError(
+                          isRu
+                            ? "🔗 Сначала привяжите ваш Telegram-аккаунт в профиле, чтобы получать пуш-уведомления OSPEC."
+                            : "🔗 Please link your Telegram account first to receive OSPEC push alerts."
+                        );
+                        return;
+                      }
+                      setOspecBellBusy(true);
+                      setOspecDaemonMsg(null);
+                      const nextBell = !ospecBellOn;
+                      try {
+                        const res = await fetch(`${API_BASE}/api/auth/radar-settings`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", ...authHeaders() },
+                          body: JSON.stringify({ ospec_alerts_enabled: nextBell }),
+                        });
+                        const d = await res.json().catch(() => ({}));
+                        if (!res.ok) throw new Error(d.detail || `HTTP ${res.status}`);
+                        setOspecBellOn(nextBell);
+                        setOspecDaemonMsg(
+                          nextBell
+                            ? isRu
+                              ? "🔔 Пуш-уведомления OSPEC в Telegram ВКЛЮЧЕНЫ!"
+                              : "🔔 Telegram OSPEC push alerts ENABLED!"
+                            : isRu
+                            ? "🔕 Пуш-уведомления OSPEC в Telegram ВЫКЛЮЧЕНЫ."
+                            : "🔕 Telegram OSPEC push alerts DISABLED."
+                        );
+                      } catch (e: any) {
+                        setError(e.message);
+                      } finally {
+                        setOspecBellBusy(false);
+                      }
+                    }}
+                    className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 font-semibold transition-all disabled:opacity-50 ${
+                      ospecBellOn
+                        ? "border-green-500/70 bg-green-500/20 text-green-300"
+                        : "border-border bg-background text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span>
+                      {ospecBellOn
+                        ? isRu
+                          ? "🔔 ТГ-Уведы OSPEC: ON"
+                          : "🔔 TG Alerts: ON"
+                        : isRu
+                        ? "🔕 ТГ-Уведы OSPEC: OFF"
+                        : "🔕 TG Alerts: OFF"}
+                    </span>
+                  </button>
                   <button
                     type="button"
                     disabled={ospecDaemonBusy}

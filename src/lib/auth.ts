@@ -30,6 +30,7 @@ export interface BorisUser {
     explorer_alerts_enabled?: boolean;
     explorer_min_score?: number;
     explorer_chains?: string[];
+    ospec_alerts_enabled?: boolean;
   };
   auth_provider: "email" | "google";
   created_at: number;
@@ -331,6 +332,7 @@ export async function apiUpdateRadarSettings(payload: {
   defillama_alerts_enabled?: boolean;
   explorer_alerts_enabled?: boolean;
   explorer_min_score?: number;
+  ospec_alerts_enabled?: boolean;
 }): Promise<any> {
   const token = getSavedToken();
   if (!token) throw new Error("Not authenticated");
