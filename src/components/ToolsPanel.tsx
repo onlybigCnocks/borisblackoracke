@@ -6436,6 +6436,33 @@ const ToolsPanel = () => {
                 </span>
                 <button
                   type="button"
+                  onClick={async () => {
+                    setLoading(true);
+                    setError(null);
+                    try {
+                      const res = await fetch(`${API_BASE}/api/tools/bridges/harvest`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", ...authHeaders() },
+                      });
+                      if (!res.ok) {
+                        const d = await res.json().catch(() => ({}));
+                        throw new Error(d.detail || `HTTP ${res.status}`);
+                      }
+                      const d = await res.json();
+                      await runTool();
+                    } catch (e: any) {
+                      setError(e.message || "Harvest failed");
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="rounded border border-amber-500/50 bg-amber-500/20 px-2.5 py-1 font-bold text-amber-300 hover:bg-amber-500/30 transition-colors shadow-sm"
+                  title="Запустить мультичейн харвестер новых мостов (DefiLlama + Blockscout + Ankr)"
+                >
+                  🛰️ {isRu ? "Запустить Радар-Конвейер (Все сети)" : "Run Multichain Harvester"}
+                </button>
+                <button
+                  type="button"
                   onClick={() => runTool()}
                   className="rounded border border-primary/50 bg-primary/20 px-2.5 py-1 font-bold text-primary hover:bg-primary/30 transition-colors"
                 >
@@ -6569,6 +6596,30 @@ const ToolsPanel = () => {
                         </button>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTool("funds");
+                            setInput1(b.address);
+                            setChain(b.chain || "ethereum");
+                          }}
+                          className="rounded border border-cyan-500/40 bg-cyan-500/15 px-2 py-0.5 text-[10px] font-bold text-cyan-300 hover:bg-cyan-500/30 transition-colors"
+                          title="Просмотреть 14-дневные потоки средств хранилища"
+                        >
+                          💸 Funds Flow
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTool("proxy");
+                            setInput1(b.address);
+                            setChain(b.chain || "ethereum");
+                          }}
+                          className="rounded border border-blue-500/40 bg-blue-500/15 px-2 py-0.5 text-[10px] font-bold text-blue-300 hover:bg-blue-500/30 transition-colors"
+                          title="Инспектировать EIP-1967 слоты админа и имплементации"
+                        >
+                          🔗 Proxy & Slots
+                        </button>
                         <span
                           className={`rounded-md border px-2.5 py-0.5 text-[11px] font-bold ${
                             isCrit
