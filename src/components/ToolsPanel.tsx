@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Users,
+  Network,
   ArrowLeftRight,
   TrendingUp,
   ShieldCheck,
@@ -40,6 +41,7 @@ const API_BASE = "https://api.black-oracle.com";
 
 type ToolId =
   | "holders"
+  | "bridges"
   | "funds"
   | "market"
   | "social"
@@ -399,6 +401,7 @@ const ToolsPanel = () => {
     minRank: number;
     placeholder: string;
   }> = [
+    { id: "bridges", labelRu: "Cross-Chain Мосты & Валидаторы (5.6K)", labelEn: "Bridge Radar v2.0 (5.6K Vaults)", icon: Network, minRank: 0, placeholder: "0x... адрес хранилища ИЛИ поиск: Wormhole, LayerZero, Stargate, Across, CCTP, Ronin" },
     { id: "holders", labelRu: "Холдеры и киты", labelEn: "Holders & Whales", icon: Users, minRank: 0, placeholder: "0xA0b86991...B48" },
     { id: "market", labelRu: "Рынок и деривативы", labelEn: "Market & Derivatives", icon: TrendingUp, minRank: 0, placeholder: "BTC / ETH / SOL / PEPE" },
     { id: "funds", labelRu: "Потоки средств 14д", labelEn: "Funds Flow 14d", icon: ArrowLeftRight, minRank: 1, placeholder: "0xA0b86991...B48" },
@@ -621,7 +624,10 @@ const ToolsPanel = () => {
     try {
       let path = "";
       let body: any = {};
-      if (tool === "holders") {
+      if (tool === "bridges") {
+        path = "/api/tools/bridges";
+        body = { q: input1.trim(), chain };
+      } else if (tool === "holders") {
         path = "/api/tools/holders";
         body = { address: input1.trim(), chain };
       } else if (tool === "funds") {
@@ -1152,6 +1158,34 @@ const ToolsPanel = () => {
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+                    {/* Quick presets for Cross-Chain Bridge Radar */}
+          {tool === "bridges" && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-1 font-mono text-[11px]">
+              <span className="text-muted-foreground">{isRu ? "Хранилища & Мосты:" : "Major Bridge Vaults:"}</span>
+              {[
+                { label: "Polygon PoS ($1.7B)", val: "0x40ec5B33f54e0E8A33A975908C5BA1c14e5BbbDf" },
+                { label: "Arbitrum Delayed Inbox ($2.7B)", val: "0x4dbd4fc535ac27206064b68ffcf827b0a60bab3f" },
+                { label: "Base Portal ($3.6M)", val: "0x49048044d57e1c92a77f79988d21fa8faf74e97e" },
+                { label: "Wormhole Portal ($6.9B)", val: "0x3ee18b2214aff97000d974cf647e7c347e8fa585" },
+                { label: "Across Protocol V3", val: "0x5c7bcd6e7de5423a257d81b442095a1a6ced35c5" },
+                { label: "Stargate Finance Router", val: "0x8731d54e9d02c286767d56ac03e8037c07e01e98" },
+                { label: "Orbit Chain ($81.5M Hack)", val: "0x1bf68a9d1eaee7826b3593c20a0ca93293cb489a" },
+              ].map((p) => (
+                <button
+                  key={p.val}
+                  type="button"
+                  onClick={() => {
+                    setInput1(p.val);
+                    setTool("bridges");
+                  }}
+                  className="rounded-lg border border-border bg-background px-2.5 py-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
           )}
 
