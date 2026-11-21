@@ -70,7 +70,6 @@ const Header = () => {
   const navLinks = [
     { type: "action" as const, action: scrollToScanner, label: t("nav.scanner") },
     { type: "link" as const, to: "/dashboard", label: isRu ? "Терминал / Радары" : "Terminal / Radars" },
-    { type: "link" as const, to: "/market", label: isRu ? "Рынок" : "Market" },
     { type: "link" as const, to: "/pricing", label: t("nav.pricing") },
     { type: "link" as const, to: "/about", label: t("nav.about") },
   ];
