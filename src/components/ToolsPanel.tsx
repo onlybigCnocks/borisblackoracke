@@ -1147,6 +1147,7 @@ const ToolsPanel = () => {
                 />
                 {(tool === "holders" || tool === "funds" || tool === "zk" || tool === "hacks" || tool === "proxy" || tool === "flash" || tool === "deployer" || tool === "bridges") ? (
                   <select
+                    aria-label={isRu ? "Сеть блокчейна" : "Blockchain network"}
                     value={chain}
                     onChange={(e) => setChain(e.target.value)}
                     className="rounded-xl border border-border bg-background px-3 py-3 font-mono text-xs text-foreground outline-none focus:border-primary"
