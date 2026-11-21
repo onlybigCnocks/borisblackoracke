@@ -1,3 +1,4 @@
+import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -92,6 +93,7 @@ const Report = () => {
               </h1>
               <p className="mt-1 truncate font-mono text-[11px] text-muted-foreground">{data.target}</p>
             </div>
+            <AddToWatchlistButton target={data.target || r.target || ""} chain={r.deep_dossier?.detected_chain || r.chain || data.chain} label={typeof r.project === "string" ? r.project : undefined} />
             <button
               onClick={share}
               className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 font-mono text-xs text-muted-foreground hover:border-primary hover:text-primary"

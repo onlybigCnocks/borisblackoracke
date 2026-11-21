@@ -1,0 +1,22 @@
+import { afterEach, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import ToolsPanel from "./ToolsPanel";
+vi.mock("react-i18next", () => ({ useTranslation: () => ({ i18n: { language: "en" } }) }));
+vi.mock("@/lib/auth", async original => ({ ...await original<object>(), apiGetToolHistory: async () => [] }));
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); localStorage.clear(); });
+it("prefills holders from the completed request rather than edited tool input", async () => {
+ localStorage.setItem("boris_auth_token", "fixture"); localStorage.setItem("boris_auth_user", JSON.stringify({ tier: "RADAR" }));
+ vi.stubGlobal("fetch", vi.fn().mockImplementation(async () => new Response(JSON.stringify({ token_name: "Fixture token", chain: "base", top_holders: [], distribution_segments: [] }))));
+ render(<ToolsPanel />);
+ fireEvent.click(screen.getByRole("button", { name: /Holders & Whales/ }));
+ const input = screen.getByPlaceholderText("0xA0b86991...B48");
+ fireEvent.change(input, { target: { value: "0x" + "3a7b".repeat(10) } });
+ fireEvent.change(screen.getByRole("combobox", { name: "Blockchain network" }), { target: { value: "base" } });
+ fireEvent.click(screen.getByRole("button", { name: /Run|Launch|Analyze/i }));
+ await screen.findByText(/Fixture token/);
+ fireEvent.change(input, { target: { value: "0x" + "4".repeat(40) } });
+ fireEvent.click(screen.getByRole("button", { name: "+ Watch" }));
+ expect(screen.getByLabelText("Contract address")).toHaveValue("0x" + "3a7b".repeat(10));
+ expect(screen.getByLabelText("Chain")).toHaveValue("base");
+ expect(screen.getByRole("checkbox", { name: /Top holders/ })).toBeChecked();
+});

@@ -1,3 +1,4 @@
+import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { useState, useEffect } from "react";
 import RadarDaemonDeck, { type ControlledRadar } from "./RadarDaemonDeck";
 import { useTranslation } from "react-i18next";
@@ -1165,6 +1166,7 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
               </div>
 
               <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+                <AddToWatchlistButton target={item.source === "github" ? (item.url || item.identifier || "") : (item.identifier || "")} chain={item.chain} label={item.name} />
                 {item.source === "defillama" && item.identifier && (
                   <button
                     type="button"
@@ -1342,6 +1344,7 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
                                   >
                                     📦 {gh.replace("https://github.com/", "")}
                                   </a>
+                                  <AddToWatchlistButton target={gh} kind="repo" />
                                   <button
                                     type="button"
                                     onClick={() => onPrefillScan(gh)}
@@ -1371,15 +1374,14 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
                                 {enrichedProtocols[item.identifier].contracts.map((ca: string, ci: number) => {
                                   const cleanAddr = ca.includes(":") ? ca.split(":").pop()! : ca;
                                   return (
-                                    <button
-                                      key={ci}
+                                    <div key={ci} className="flex min-w-0 flex-wrap gap-2"><AddToWatchlistButton target={cleanAddr} kind="contract" chain={ca.includes(":") ? ca.split(":")[0] : undefined} /><button
                                       type="button"
                                       onClick={() => onPrefillScan(cleanAddr)}
                                       className="inline-flex items-center gap-1.5 rounded-lg border border-primary/40 bg-card px-3 py-1.5 text-[11px] text-foreground hover:border-primary hover:text-primary"
                                     >
                                       <code>{ca}</code>
                                       <Zap size={11} className="text-primary" />
-                                    </button>
+                                    </button></div>
                                   );
                                 })}
                               </div>

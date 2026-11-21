@@ -250,10 +250,12 @@ export async function apiAddWatchlist(target: string, label?: string): Promise<B
 export async function apiRemoveWatchlist(id: number): Promise<void> {
   const token = getSavedToken();
   if (!token) throw new Error("Not authenticated");
-  await fetch(`${API_BASE}/api/auth/watchlist/${id}`, {
+  const res = await fetch(`${API_BASE}/api/auth/watchlist/${id}`, {
     method: "DELETE",
-    headers: { Authorization: "Bearer " + token },
+    headers: authHeaders(),
   });
+  const data = await res.json().catch(() => null);
+  if (!res.ok || data?.ok !== true) throw new Error(typeof data?.detail === "string" ? data.detail : "Failed to remove watchlist item");
 }
 
 export async function apiGetRadarFeed(params?: {

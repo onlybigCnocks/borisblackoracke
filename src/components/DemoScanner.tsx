@@ -1,3 +1,4 @@
+import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { CheckCircle, Send, ShieldAlert, Lock, Sparkles, Terminal, Download, Layers, Users, Code, Activity } from "lucide-react";
@@ -767,7 +768,7 @@ const DemoScanner = () => {
       )}
 
       {/* Result — Compact Teaser + Deep Dossier */}
-      {result && <ResultTeaser result={result} isRu={isRu} taskId={taskId} />}
+      {result && <><AddToWatchlistButton target={result.target} chain={result.deep_dossier?.detected_chain} label={result.project} /><ResultTeaser result={result} isRu={isRu} taskId={taskId} /></>}
     </section>
   );
 };
@@ -1149,6 +1150,7 @@ export function ResultTeaser({ result, isRu, taskId }: { result: DemoScanResult;
                         <span className="font-bold text-foreground">
                           {abi.contract_name} <span className="text-primary">[{abi.chain.toUpperCase()}]</span>
                         </span>
+                        <AddToWatchlistButton target={abi.address || ""} kind="contract" chain={abi.chain} label={abi.contract_name} />
                         <span className="text-[11px] text-muted-foreground">
                           Functions: <strong className="text-foreground">{abi.total_functions}</strong> · State-changing:{" "}
                           <strong className="text-foreground">{abi.state_changing}</strong> · View:{" "}

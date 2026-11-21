@@ -1,3 +1,4 @@
+import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -698,7 +699,9 @@ const ToolsPanel = () => {
         const d = await res.json().catch(() => ({}));
         throw new Error(d.detail || `HTTP ${res.status}`);
       }
-      setResult(await res.json());
+      const completed = await res.json();
+      // Preserve the completed request identity; never use editable input for watch actions.
+      setResult({ ...completed, watch_context: { target: body.address || body.repo_url || body.target || "", chain: body.chain } });
       loadHistory(historyFilter);
     } catch (e: any) {
       setError(e.message || "Error");
@@ -714,7 +717,7 @@ const ToolsPanel = () => {
       const data = await apiGetToolHistoryItem(item.id);
       if (data && data.result) {
         skipAutoOspecRef.current = true;
-        const r = data.result;
+        const r = { ...data.result, watch_context: { target: item.target, chain: item.chain } };
         const rawTarget = String(item.target || "").trim();
         const isFilterTarget = rawTarget.toLowerCase().startsWith("filter:");
         const filterSuffix = isFilterTarget ? rawTarget.slice(7).trim().toUpperCase() : "";
@@ -1688,8 +1691,7 @@ const ToolsPanel = () => {
                         const txs = Number(ac.effective_tx_count || ac.normal_tx_count || 0);
                         const isCrit = String(ac.risk_level || "").toUpperCase() === "CRITICAL";
                         return (
-                          <button
-                            key={`${ac.chain}:${ac.address}`}
+                          <div key={`${ac.chain}:${ac.address}`} className="min-w-0 space-y-2"><AddToWatchlistButton target={ac.address || ""} kind="contract" chain={ac.chain} /><button
                             type="button"
                             onClick={async () => {
                               setInput1(ac.address);
@@ -1749,7 +1751,7 @@ const ToolsPanel = () => {
                               </span>
                             </div>
                             <p className="mt-1 truncate text-[10px] text-muted-foreground">{ac.address}</p>
-                          </button>
+                          </button></div>
                         );
                       })}
                     </div>
@@ -1769,8 +1771,7 @@ const ToolsPanel = () => {
                     { label: "🟡 STARK / FRI Transparent (19KB)", addr: "0xd4d6d145d26e948e7f7b98b06a742d1aed34e1cf", ch: "ethereum" },
                     { label: "⚡ zkVM Receipt (SP1 / RISC Zero)", addr: "0x16613999219f9b56bededbf3722e44c4c2045300", ch: "ethereum" },
                   ].map((zp) => (
-                    <button
-                      key={`${zp.ch}:${zp.addr}`}
+                    <div key={`${zp.ch}:${zp.addr}`} className="flex flex-wrap gap-1"><AddToWatchlistButton target={zp.addr} kind="contract" chain={zp.ch} /><button
                       type="button"
                       onClick={async () => {
                         setInput1(zp.addr);
@@ -1800,7 +1801,7 @@ const ToolsPanel = () => {
                       }`}
                     >
                       {zp.label}
-                    </button>
+                    </button></div>
                   ))}
                 </div>
               )}
@@ -2402,6 +2403,7 @@ const ToolsPanel = () => {
       )}
 
       <div ref={activeToolResultRef} className="scroll-mt-20">
+        {result && <div className="mb-3 flex flex-wrap gap-2"><AddToWatchlistButton target={result.repo_url || result.address || result.target || result.watch_context?.target || ""} chain={result.chain || result.watch_context?.chain} monitor_holders={tool === "holders"} /></div>}
         {openedHistoryBanner && result && (
           <div className="mb-3 flex items-center justify-between gap-2 rounded-xl border border-green-500/60 bg-green-500/15 px-4 py-2.5 font-mono text-xs font-semibold text-green-300 shadow-sm">
             <span>✅ {openedHistoryBanner}</span>
@@ -2547,6 +2549,7 @@ const ToolsPanel = () => {
                         >
                           📦 {result.github_repo} ↗
                         </a>
+                        <AddToWatchlistButton target={result.github_repo} kind="repo" />
                         {result.audit_button_unlocked && (
                           <button
                             type="button"
@@ -3806,6 +3809,7 @@ const ToolsPanel = () => {
                           {badgeIcon}
                         </span>
                         <span className="truncate font-semibold text-foreground select-all">{h.address}</span>
+                        {h.holder_type === "contract" && <AddToWatchlistButton target={h.address || ""} kind="contract" chain={result.chain} />}
                         {h.label && h.label.toLowerCase() !== htype && (
                           <span className="truncate rounded bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
                             {h.label}
@@ -5809,6 +5813,7 @@ const ToolsPanel = () => {
                         >
                           📦 {f.ticker || f.repo_url}
                         </a>
+                        <AddToWatchlistButton target={f.repo_url || ""} kind="repo" />
                         {f.gh_url ? (
                           <a
                             href={f.gh_url}
@@ -5926,7 +5931,8 @@ const ToolsPanel = () => {
                                 >
                                   📄 {occ.repo_url ? `${occ.repo_url.replace(/^https?:\/\/github\.com\//, "")} · ` : ""}{occ.path}{occ.line ? `:${occ.line}` : ""} ↗
                                 </a>
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <AddToWatchlistButton target={occ.repo_url || f.repo_url || ""} kind="repo" />
                                   {occ.cls && (
                                     <span
                                       className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${
@@ -6266,6 +6272,7 @@ const ToolsPanel = () => {
               <p className="mt-1 truncate font-bold text-foreground select-all">
                 {result.eip1967?.implementation || "None (or custom slot)"}
               </p>
+              {result.eip1967?.implementation && <AddToWatchlistButton target={result.eip1967.implementation} kind="contract" chain={result.chain} />}
             </div>
             <div className="rounded-lg border border-border bg-background p-3">
               <p className="text-[10px] uppercase text-muted-foreground">Proxy Admin Slot</p>
@@ -6280,6 +6287,7 @@ const ToolsPanel = () => {
               <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
                 Beacon: {result.eip1967?.beacon || "—"}
               </p>
+              {result.eip1967?.beacon && <AddToWatchlistButton target={result.eip1967.beacon} kind="contract" chain={result.chain} />}
             </div>
           </div>
 
@@ -6289,6 +6297,7 @@ const ToolsPanel = () => {
                 <span className="font-bold text-foreground">
                   [{tc.target?.toUpperCase()}] {tc.addr}
                 </span>
+                <AddToWatchlistButton target={tc.addr || ""} kind="contract" chain={result.chain} />
                 <div className="flex gap-2 text-[10px]">
                   <span className="rounded border border-border bg-card px-2 py-0.5">
                     upgradeSelector: <b>{tc.has_upgrade ? "YES" : "NO"}</b>
@@ -6678,6 +6687,7 @@ const ToolsPanel = () => {
                         <div className="min-w-0 flex-1">
                           <p className="font-bold text-primary truncate">{ce.name}</p>
                           <code className="text-[10px] text-muted-foreground select-all">{ce.address}</code>
+                          <AddToWatchlistButton target={ce.address || ""} kind="contract" chain={ce.chain} label={ce.name} />
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           <button
@@ -7068,6 +7078,7 @@ const ToolsPanel = () => {
                           </span>
                           <span className="font-bold text-foreground text-xs">{b.name}</span>
                           <code className="text-[11px] text-muted-foreground">{b.address}</code>
+                          <AddToWatchlistButton target={b.address || ""} kind="contract" chain={b.chain} label={b.name} />
                           <button
                             type="button"
                             onClick={() => {
@@ -7357,6 +7368,7 @@ const ToolsPanel = () => {
                 </span>
               )}
               <span className="text-primary font-bold">{result.primary.address}</span>
+              {result.primary.type === "CONTRACT" && <AddToWatchlistButton target={result.primary.address || ""} kind="contract" chain={result.primary.chain} />}
               <span className="text-muted-foreground">({String(result.primary.chain || "").toUpperCase()})</span>
             </div>
             <span className="rounded border border-border bg-background px-2.5 py-0.5 text-[11px] font-bold text-foreground">
@@ -7540,6 +7552,7 @@ const ToolsPanel = () => {
                     {item.summary} · {new Date(item.created_at * 1000).toLocaleString()}
                   </p>
                 </div>
+                <AddToWatchlistButton target={item.target} chain={item.chain} monitor_holders={item.tool === "holders"} />
                 <button
                   onClick={() => handleOpenHistoryItem(item)}
                   disabled={loadingHistoryId === item.id}

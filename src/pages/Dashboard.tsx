@@ -1,3 +1,5 @@
+import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
+import { WatchlistPanel } from "@/components/WatchlistPanel";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -32,8 +34,8 @@ import {
   apiGetMe,
   apiRotateKey,
   apiGetArchivedScan,
-  apiAddWatchlist,
-  apiRemoveWatchlist,
+
+
   apiGetRadarFeed,
   apiGetReferral,
   apiBindReferral,
@@ -53,7 +55,7 @@ import {
   authHeaders,
   type BorisUser,
   type BorisScanRecord,
-  type BorisWatchlistItem,
+
   type BorisRadarAudit,
 } from "@/lib/auth";
 
@@ -79,7 +81,7 @@ const Dashboard = () => {
   const [scans, setScans] = useState<BorisScanRecord[]>([]);
   const [histPage, setHistPage] = useState<number>(1);
   const [histPerPage, setHistPerPage] = useState<number>(10);
-  const [watchlist, setWatchlist] = useState<BorisWatchlistItem[]>([]);
+
   const [radarAudits, setRadarAudits] = useState<BorisRadarAudit[]>([]);
   const [activeTab, setActiveTab] = useDashboardTab(user?.id, location.search, location.hash);
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
@@ -124,9 +126,9 @@ const Dashboard = () => {
   const [rotating, setRotating] = useState(false);
   const [loadingScanId, setLoadingScanId] = useState<string | null>(null);
 
-  const [watchTarget, setWatchTarget] = useState("");
-  const [watchLabel, setWatchLabel] = useState("");
-  const [addingWatch, setAddingWatch] = useState(false);
+
+
+
   const [driftBusy, setDriftBusy] = useState<string | null>(null);
   const [driftInfo, setDriftInfo] = useState<any>(null);
   const [refData, setRefData] = useState<any>(null);
@@ -279,7 +281,7 @@ const Dashboard = () => {
         .then((data) => {
           setUser(data.user);
           setScans(data.scans || []);
-          setWatchlist(data.watchlist || []);
+
         })
         .catch(() => {})
         .finally(() => setLoading(false));
@@ -360,7 +362,7 @@ const Dashboard = () => {
       .then((data) => {
         setUser(data.user);
         setScans(data.scans || []);
-        setWatchlist(data.watchlist || []);
+
       })
       .catch(() => {});
   };
@@ -386,31 +388,6 @@ const Dashboard = () => {
       }
     } finally {
       setLoadingScanId(null);
-    }
-  };
-
-  const handleAddWatch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!watchTarget.trim()) return;
-    setAddingWatch(true);
-    try {
-      const updated = await apiAddWatchlist(watchTarget.trim(), watchLabel.trim());
-      setWatchlist(updated);
-      setWatchTarget("");
-      setWatchLabel("");
-    } catch {
-      // ignore
-    } finally {
-      setAddingWatch(false);
-    }
-  };
-
-  const handleDeleteWatch = async (id: number) => {
-    try {
-      await apiRemoveWatchlist(id);
-      setWatchlist((prev) => prev.filter((item) => item.id !== id));
-    } catch {
-      // ignore
     }
   };
 
@@ -737,7 +714,7 @@ const Dashboard = () => {
                 { id: "history" as const, icon: Activity, label: isRu ? `История сканов (${scans.length})` : `Scan History (${scans.length})` },
                 { id: "tools" as const, icon: Wrench, label: isRu ? "Инструменты разведки" : "Intelligence Tools" },
                 { id: "radar" as const, icon: Radar, label: "24/7 Live Radar Feed" },
-                { id: "watchlist" as const, icon: Bell, label: isRu ? "Мониторинг 24/7 · SOON" : "24/7 Watchlist · SOON" },
+                { id: "watchlist" as const, icon: Bell, label: isRu ? "Мониторинг 24/7" : "24/7 Watchlist" },
               ].map(({ id, icon: Icon, label }) => (
                 <button key={id} type="button" aria-pressed={activeTab === id} aria-controls="dashboard-panel" onClick={() => setActiveTab(id)}
                   className={`inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-left font-mono text-xs font-semibold transition-colors ${activeTab === id ? "border-primary/40 bg-primary/10 text-primary" : "border-transparent text-muted-foreground hover:bg-accent hover:text-foreground"}`}>
@@ -1279,6 +1256,7 @@ const Dashboard = () => {
                                 </button>
                               ) : null}
 
+                              <AddToWatchlistButton target={s.target} label={s.project} />
                               <Link
                                 to={`/report/${s.task_id}`}
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
@@ -1320,36 +1298,7 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* TAB 2: Watchlist & Contract Drift Alerts — SOON Stub */}
-        {activeTab === "watchlist" && (
-          <div className="rounded-2xl border border-primary/30 bg-card p-10 text-center bg-radial-red">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/40 bg-primary/15 text-primary">
-              <Bell size={28} />
-            </div>
-            <span className="rounded-full border border-primary/40 bg-primary/15 px-3 py-1 font-mono text-xs font-bold uppercase tracking-widest text-primary">
-              COMING SOON // 24/7 DRIFT WATCHER
-            </span>
-            <h4 className="mt-4 text-xl font-bold text-foreground">
-              {isRu
-                ? "Непрерывный 24/7 мониторинг смарт-контрактов и GitHub-репозиториев (RADAR+)"
-                : "Continuous 24/7 Smart Contract & GitHub Repository Drift Monitoring (RADAR+)"}
-            </h4>
-            <p className="mx-auto mt-2 max-w-xl font-mono text-xs text-muted-foreground leading-relaxed">
-              {isRu
-                ? "Автоматический демон отслеживания новых коммитов после аудита (Audit Drift), смены Proxy-имплементации и движений топ-холдеров готовится к запуску для подписчиков RADAR / RAW / BLACKBOX. Для разового сравнения двух сканов используйте кнопку «Rescan и Drift» в истории сканов."
-                : "Autonomous daemon for tracking post-audit commits (Audit Drift), proxy implementation upgrades, and whale movements is preparing for launch for RADAR+ tiers. Use 'Rescan & Drift' in your scan history for on-demand drift comparison."}
-            </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Link
-                to="/pricing"
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
-              >
-                <span>{isRu ? "Тарифы доступа (RADAR / RAW / BLACKBOX)" : "View Access Tiers"}</span>
-                <ArrowUpRight size={14} />
-              </Link>
-            </div>
-          </div>
-        )}
+        {activeTab === "watchlist" && <WatchlistPanel tier={user?.tier || "GUEST"} />}
 
         {/* TAB 3: 24/7 Live Autonomous Radar Feed (Connected to runtime boris-server DBs) */}
         {activeTab === "radar" && (
