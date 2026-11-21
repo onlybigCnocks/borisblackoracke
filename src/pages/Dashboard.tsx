@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useDashboardTab } from "@/lib/dashboard-state";
 import { RevealOnScroll, GlowCard } from "@/components/ui-boris";
 import DemoScanner from "@/components/DemoScanner";
 import ToolsPanel from "@/components/ToolsPanel";
@@ -72,6 +73,7 @@ const Dashboard = () => {
   const { i18n } = useTranslation();
   const isRu = i18n.language === "ru";
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [user, setUser] = useState<BorisUser | null>(getSavedUser());
   const [scans, setScans] = useState<BorisScanRecord[]>([]);
@@ -79,7 +81,9 @@ const Dashboard = () => {
   const [histPerPage, setHistPerPage] = useState<number>(10);
   const [watchlist, setWatchlist] = useState<BorisWatchlistItem[]>([]);
   const [radarAudits, setRadarAudits] = useState<BorisRadarAudit[]>([]);
-  const [activeTab, setActiveTab] = useState<"history" | "tools" | "watchlist" | "radar" | "referral" | "billing">("history");
+  const [activeTab, setActiveTab] = useDashboardTab(user?.id, location.search, location.hash);
+  const [revealedKey, setRevealedKey] = useState<string | null>(null);
+  const keyVisible = !!user?.api_key && revealedKey === `${user.id}:${user.api_key}`;
 
   useEffect(() => {
     const onOpenOspecRepo = (ev: Event) => {
@@ -105,7 +109,7 @@ const Dashboard = () => {
       window.removeEventListener("boris-open-ospec-repo", onOpenOspecRepo);
       window.removeEventListener("boris-open-zk-audit", onOpenZkAudit);
     };
-  }, []);
+  }, [setActiveTab]);
 
   // Billing & Referral Payout states
   const [billingData, setBillingData] = useState<any>(null);
@@ -421,36 +425,30 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="container mx-auto min-h-screen px-4 py-12">
+    <div data-dashboard-shell className="mx-auto min-h-screen w-full max-w-[1920px] min-w-0 px-3 py-5 sm:px-6 lg:px-8 lg:py-6">
       <RevealOnScroll>
         {/* Top Profile Header */}
-        <div className="mb-8 rounded-2xl border border-primary/30 bg-card p-6 bg-radial-red">
+        <div className="mb-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
               {user?.avatar_url ? (
                 <img
                   src={user.avatar_url}
                   alt={user.name}
-                  className="h-14 w-14 rounded-full border border-primary/50 object-cover"
+                  className="h-12 w-12 shrink-0 rounded-full border border-primary/50 object-cover"
                 />
               ) : (
-                <div className="flex h-14 w-14 items-center justify-center rounded-full border border-primary/40 bg-primary/15 font-mono text-xl font-bold text-primary">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-primary/15 font-mono text-xl font-bold text-primary">
                   {(user?.name || user?.email || "B")[0].toUpperCase()}
                 </div>
               )}
-              <div>
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <h1 className="font-mono text-xl font-bold text-foreground md:text-2xl">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="break-words font-mono text-lg font-bold text-foreground md:text-xl">
                     {user?.name || "Operator"}
                   </h1>
                   <span className="rounded border border-primary/40 bg-primary/15 px-2.5 py-0.5 font-mono text-xs font-bold text-primary">
                     {user?.tier || "GUEST"}
-                  </span>
-                  <span className="rounded border border-green-500/40 bg-green-500/10 px-2.5 py-0.5 font-mono text-[10px] font-bold text-green-400">
-                    BORIS Beta v1.44
-                  </span>
-                  <span className="rounded border border-amber-500/40 bg-amber-500/10 px-2.5 py-0.5 font-mono text-[10px] font-bold text-amber-400">
-                    ⚡ AI CORTEX & SWARM · SOON v1.5 (RAW+)
                   </span>
                   {user?.tier_expires_at ? (
                     <span className="rounded border border-border bg-background/80 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
@@ -467,15 +465,18 @@ const Dashboard = () => {
                     <span>{isRu ? "Настройки профиля" : "Edit Profile"}</span>
                   </button>
                 </div>
-                <p className="font-mono text-xs text-muted-foreground">{user?.email}</p>
+                <p className="mt-1 break-all font-mono text-xs text-muted-foreground">{user?.email}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex w-full flex-wrap items-center gap-2 xl:w-auto">
+              <a href="#demo-scanner" className="btn-action inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm">
+                <Shield size={14} />{isRu ? "Новый скан" : "New scan"}
+              </a>
               <button
                 type="button"
                 onClick={() => openCryptoCheckout({ tier: "raw" })}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-primary/50 bg-primary/10 px-4 py-2.5 text-sm font-semibold text-primary transition-all hover:bg-primary/20"
               >
                 <Sparkles size={14} />
                 <span>{isRu ? "Оплатить / Повысить тариф" : "Upgrade with Crypto"}</span>
@@ -568,8 +569,17 @@ const Dashboard = () => {
           )}
         </div>
 
+        <div className="mb-4 flex flex-wrap items-center gap-2" aria-label={isRu ? "Версия платформы" : "Platform version"}>
+                  <span className="rounded border border-green-500/40 bg-green-500/10 px-2.5 py-0.5 font-mono text-[10px] font-bold text-green-400">
+                    BORIS Beta v1.44
+                  </span>
+                  <span className="rounded border border-amber-500/40 bg-amber-500/10 px-2.5 py-0.5 font-mono text-[10px] font-bold text-amber-400">
+                    ⚡ AI CORTEX & SWARM · SOON v1.5 (RAW+)
+                  </span>
+        </div>
+
         {/* Stats Grid */}
-        <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="mb-4 grid grid-cols-2 gap-2 [&>div]:min-w-0 [&>div]:p-3 sm:gap-3 md:grid-cols-4 [&_p]:break-words">
           <GlowCard>
             <p className="font-mono text-xs text-muted-foreground">
               {isRu ? "Всего сканов" : "Total Scans"}
@@ -613,8 +623,13 @@ const Dashboard = () => {
           </GlowCard>
         </div>
 
+        <details className="mb-4 rounded-xl border border-border bg-card/40">
+          <summary className="cursor-pointer px-4 py-3 font-mono text-xs font-semibold text-muted-foreground hover:text-foreground">
+            {isRu ? "Аккаунт и интеграции · API-ключ / Telegram" : "Account & integrations · API key / Telegram"}
+          </summary>
+          <div className="grid min-w-0 gap-3 p-3 pt-0 xl:grid-cols-2">
         {/* API Key Management Card */}
-        <GlowCard className="mb-8 border-primary/30">
+        <GlowCard className="min-w-0 !p-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-primary">
@@ -627,7 +642,15 @@ const Dashboard = () => {
                   : "Pass in X-Boris-Api-Key header to authenticate direct calls to api.black-oracle.com"}
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setRevealedKey(keyVisible ? null : user?.api_key ? `${user.id}:${user.api_key}` : null)}
+                aria-label={isRu ? keyVisible ? "Скрыть API-ключ" : "Показать API-ключ" : keyVisible ? "Hide API key" : "Show API key"}
+                aria-pressed={keyVisible}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-background px-3 font-mono text-xs text-muted-foreground hover:text-foreground"
+              >
+                <Eye size={14} />{isRu ? keyVisible ? "Скрыть" : "Показать" : keyVisible ? "Hide" : "Reveal"}
+              </button>
               <button
                 onClick={handleCopyKey}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground transition-colors hover:border-primary"
@@ -646,12 +669,12 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="mt-3 rounded-lg border border-border bg-background px-4 py-3 font-mono text-xs text-foreground select-all overflow-x-auto">
-            {user?.api_key || "boris_live_••••••••••••••••••••••••••••••••"}
+            {keyVisible ? user?.api_key : "boris_••••••••••••••••••••••••"}
           </div>
         </GlowCard>
 
         {/* Telegram Account Sync Card (Native App Launch + Fallback) */}
-        <GlowCard className="mb-8 border-primary/30">
+        <GlowCard className="min-w-0 !p-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-primary font-semibold">
@@ -704,97 +727,41 @@ const Dashboard = () => {
           {tgMsg && <p className="mt-2 font-mono text-xs text-primary">{tgMsg}</p>}
         </GlowCard>
 
-        {/* Embedded Live Scanner right inside the Operator Cabinet */}
-        <div className="mb-10 rounded-2xl border border-border bg-card/40 px-2">
-          <DemoScanner />
-        </div>
-
-        {/* Navigation Tabs: History vs Watchlist vs 24/7 Radar Feed */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setActiveTab("history")}
-              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-mono text-xs font-semibold transition-all ${
-                activeTab === "history"
-                  ? "bg-primary text-primary-foreground shadow"
-                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Activity size={14} />
-              <span>{isRu ? `История сканов (${scans.length})` : `Scan History (${scans.length})`}</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("tools")}
-              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-mono text-xs font-semibold transition-all ${
-                activeTab === "tools"
-                  ? "bg-primary text-primary-foreground shadow"
-                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Wrench size={14} />
-              <span>{isRu ? "Инструменты разведки" : "Intelligence Tools"}</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("referral")}
-              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-mono text-xs font-semibold transition-all ${
-                activeTab === "referral"
-                  ? "bg-primary text-primary-foreground shadow"
-                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Users size={14} />
-              <span>{isRu ? "Партнёрка" : "Referral"}</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("billing")}
-              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-mono text-xs font-semibold transition-all ${
-                activeTab === "billing"
-                  ? "bg-primary text-primary-foreground shadow"
-                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Wallet size={14} />
-              <span>{isRu ? "Подписка и Счета" : "Crypto Billing"}</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("watchlist")}
-              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-mono text-xs font-semibold transition-all ${
-                activeTab === "watchlist"
-                  ? "bg-primary text-primary-foreground shadow"
-                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Bell size={14} />
-              <span>{isRu ? "Мониторинг 24/7" : "24/7 Watchlist"}</span>
-              <span className="rounded border border-primary/40 bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold text-primary">
-                SOON
-              </span>
-            </button>
-            <button
-              onClick={() => setActiveTab("radar")}
-              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-mono text-xs font-semibold transition-all ${
-                activeTab === "radar"
-                  ? "bg-primary text-primary-foreground shadow"
-                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Radar size={14} />
-              <span>24/7 Live Radar Feed</span>
-              <span className="rounded border border-green-500/40 bg-green-500/15 px-1.5 py-0.5 text-[9px] font-bold text-green-400">
-                LIVE
-              </span>
-            </button>
           </div>
+        </details>
 
-          <button
-            onClick={refreshHistory}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
-          >
-            <RefreshCw size={12} />
-            <span>{isRu ? "Обновить" : "Refresh"}</span>
-          </button>
-        </div>
-
+        <nav aria-label={isRu ? "Рабочая область" : "Workspace"} className="xl:sticky top-16 z-20 mb-5 rounded-xl border border-border bg-background/95 p-2 shadow-sm backdrop-blur">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="grid min-w-0 flex-1 grid-cols-2 gap-1 sm:flex sm:flex-wrap" role="group" aria-label={isRu ? "Разведка" : "Intelligence"}>
+              {[
+                { id: "history" as const, icon: Activity, label: isRu ? `История сканов (${scans.length})` : `Scan History (${scans.length})` },
+                { id: "tools" as const, icon: Wrench, label: isRu ? "Инструменты разведки" : "Intelligence Tools" },
+                { id: "radar" as const, icon: Radar, label: "24/7 Live Radar Feed" },
+                { id: "watchlist" as const, icon: Bell, label: isRu ? "Мониторинг 24/7 · SOON" : "24/7 Watchlist · SOON" },
+              ].map(({ id, icon: Icon, label }) => (
+                <button key={id} type="button" aria-pressed={activeTab === id} aria-controls="dashboard-panel" onClick={() => setActiveTab(id)}
+                  className={`inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-left font-mono text-xs font-semibold transition-colors ${activeTab === id ? "border-primary/40 bg-primary/10 text-primary" : "border-transparent text-muted-foreground hover:bg-accent hover:text-foreground"}`}>
+                  <Icon size={15} className="shrink-0" /><span>{label}</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-1 border-t border-border pt-2 xl:border-l xl:border-t-0 xl:pl-2 xl:pt-0" role="group" aria-label={isRu ? "Аккаунт" : "Account"}>
+              {[
+                { id: "referral" as const, icon: Users, label: isRu ? "Партнёрка" : "Referral" },
+                { id: "billing" as const, icon: Wallet, label: isRu ? "Подписка и Счета" : "Crypto Billing" },
+              ].map(({ id, icon: Icon, label }) => (
+                <button key={id} type="button" aria-pressed={activeTab === id} aria-controls="dashboard-panel" onClick={() => setActiveTab(id)}
+                  className={`inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-left font-mono text-xs font-semibold transition-colors ${activeTab === id ? "border-primary/40 bg-primary/10 text-primary" : "border-transparent text-muted-foreground hover:bg-accent hover:text-foreground"}`}>
+                  <Icon size={15} className="shrink-0" /><span>{label}</span>
+                </button>
+              ))}
+              <button type="button" onClick={refreshHistory} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 font-mono text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
+                <RefreshCw size={14} /><span>{isRu ? "Обновить" : "Refresh"}</span>
+              </button>
+            </div>
+          </div>
+        </nav>
+        <div id="dashboard-panel" className="min-w-0" data-active-tab={activeTab}>
         {/* TAB 1: User Scan History */}
         {driftInfo && (
           <div className="mb-6 rounded-xl border border-primary/40 bg-card p-5">
@@ -1396,6 +1363,10 @@ const Dashboard = () => {
             }}
           />
         )}
+        </div>
+        <section aria-label={isRu ? "Новый скан" : "New scan"} className="mt-6 min-w-0 rounded-2xl border border-border bg-card/40 px-2 [&_#demo-scanner]:scroll-mt-24">
+          <DemoScanner />
+        </section>
       </RevealOnScroll>
     </div>
   );

@@ -64,7 +64,7 @@ const Index = () => {
           <div className="flex flex-wrap gap-4 mb-16">
             <button
               onClick={scrollToScanner}
-              className="rounded-lg bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary-dim btn-glow"
+              className="rounded-lg btn-action px-8 py-3.5 text-base transition-all duration-200"
             >
               {t("hero.cta1")}
             </button>
@@ -383,7 +383,7 @@ const Index = () => {
                     className={`block w-full rounded-lg py-2.5 text-center text-sm font-semibold transition-all duration-200 ${
                       tier === "guest"
                         ? "border border-border text-foreground hover:border-primary hover:text-primary"
-                        : "bg-primary text-primary-foreground hover:bg-primary-dim btn-glow"
+                        : "btn-action"
                     }`}
                   >
                     {tier === "guest" ? t("pricing.free") : t("pricing.subscribe")}
@@ -403,7 +403,7 @@ const Index = () => {
             <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">{t("cta.title")}</h2>
             <p className="mb-8 text-muted-foreground">{t("cta.desc")}</p>
             <div className="flex flex-wrap justify-center gap-4">
-              <button onClick={scrollToScanner} className="rounded-lg bg-primary px-8 py-3.5 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow">
+              <button onClick={scrollToScanner} className="rounded-lg btn-action px-8 py-3.5 transition-all">
                 {t("cta.btn1")}
               </button>
               <Link to="/about" className="rounded-lg border border-border px-8 py-3.5 font-semibold text-foreground transition-all hover:border-primary hover:text-primary">

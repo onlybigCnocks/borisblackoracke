@@ -79,7 +79,7 @@ const ContactCTA = () => {
           </div>
           <button
             onClick={() => setOpen(true)}
-            className="shrink-0 rounded-lg bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary-dim btn-glow"
+            className="shrink-0 rounded-lg btn-action px-8 py-3.5 text-base transition-all duration-200"
           >
             {t("contactCta.cta")}
           </button>

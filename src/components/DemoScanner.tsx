@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { CheckCircle, Send, ShieldAlert, Lock, Sparkles, Terminal, Download, Layers, Users, Code, Activity } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { getSavedToken, getSavedUser, getScanExportUrl } from "@/lib/auth";
+import { publicEngineDetail, publicProgressEvent, publicProgressStep } from "@/lib/public-progress";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://api.black-oracle.com";
 
@@ -290,15 +291,6 @@ const DemoScanner = () => {
     };
   }, []);
 
-  const getStepText = useCallback((step: string): string => {
-    switch (step) {
-      case "queued": return isRu ? "⏳ Ожидание в очереди..." : "⏳ Waiting in queue...";
-      case "cloning": return isRu ? "📦 Загрузка исходного кода..." : "📦 Fetching source code...";
-      case "static_analysis": return isRu ? "🔍 Статический анализ" : "🔍 Static analysis";
-      case "done": return isRu ? "✅ Завершено" : "✅ Complete";
-      default: return isRu ? "📊 Анализ..." : "📊 Analyzing...";
-    }
-  }, [isRu]);
 
   const saveActiveScans = useCallback((slots: ActiveScanSlot[]) => {
     if (slots.length === 0) {
@@ -409,9 +401,7 @@ const DemoScanner = () => {
         body: JSON.stringify({ target: trimmed }),
       });
       if (res.status === 429) {
-        const errData = await res.json().catch(() => ({}));
         setErrorMsg(
-          errData.detail ||
             (isRu
               ? "Лимит сканов или параллельных воркеров исчерпан. Повысьте тариф для расширения квоты."
               : "Scan quota or parallel worker limit reached. Upgrade tier for more capacity.")
@@ -420,12 +410,13 @@ const DemoScanner = () => {
         return;
       }
       if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        if (res.status === 400 && errBody.detail) {
-          setValidationError(errBody.detail);
+        if (res.status === 400) {
+          setValidationError(isRu ? "Проверьте адрес контракта или ссылку на репозиторий." : "Check the contract address or repository link.");
           return;
         }
-        throw new Error(errBody.detail || "API error");
+        setErrorMsg(isRu ? "Не удалось запустить сканирование. Повторите попытку или обратитесь в поддержку." : "Could not start the scan. Try again or contact support.");
+        if (activeScans.length === 0) setState("error");
+        return;
       }
       const data = await res.json();
       const newTaskId = data.task_id;
@@ -506,12 +497,14 @@ const DemoScanner = () => {
             window.dispatchEvent(new Event("boris-scan-done"));
           } else if (data.status === "error") {
             changed = true;
-            setErrorMsg(data.message || "Unknown error");
+            setErrorMsg(data.message === "Scan was cancelled."
+              ? (isRu ? "Сканирование отменено." : "Scan was cancelled.")
+              : (isRu ? "Сканирование завершилось ошибкой. Повторите попытку или обратитесь в поддержку." : "Scan failed. Try again or contact support."));
           } else if (data.status === "scanning") {
-            const nextStep = data.step ? getStepText(data.step) : slot.step;
+            const nextStep = typeof data.step === "string" ? data.step : slot.step;
             const nextProg = typeof data.progress === "number" ? data.progress : slot.progress;
-            const nextTail = Array.isArray(data.tail) ? data.tail : slot.tail;
-            if (nextStep !== slot.step || nextProg !== slot.progress || nextTail.length !== slot.tail.length) {
+            const nextTail = Array.isArray(data.tail) ? data.tail.filter((line): line is string => typeof line === "string") : slot.tail;
+            if (nextStep !== slot.step || nextProg !== slot.progress || nextTail.length !== slot.tail.length || nextTail.some((line, i) => line !== slot.tail[i])) {
               changed = true;
             }
             remaining.push({
@@ -537,7 +530,7 @@ const DemoScanner = () => {
       }
     }, POLL_INTERVAL);
     return () => clearInterval(interval);
-  }, [activeScans, isRu, getStepText, saveActiveScans]);
+  }, [activeScans, isRu, saveActiveScans]);
 
   // Listen to custom event from Cabinet History ("Open Report")
   useEffect(() => {
@@ -596,6 +589,7 @@ const DemoScanner = () => {
       <div className="flex flex-col gap-3 sm:flex-row">
         <input
           type="text"
+          aria-label={isRu ? "Цель сканирования" : "Scan target"}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && !isInputLocked && startScan()}
@@ -609,12 +603,12 @@ const DemoScanner = () => {
               : "github.com/protocol/repo or 0x1234...abcd"
           }
           disabled={isInputLocked}
-          className="flex-1 rounded-xl border border-border bg-card py-4 px-5 font-mono text-sm text-foreground outline-none transition-all focus:border-primary focus:shadow-[0_0_20px_hsl(var(--primary)/0.3)] disabled:opacity-50"
+          className="min-w-0 flex-1 rounded-xl border border-border bg-card py-4 px-5 font-mono text-base sm:text-sm text-foreground outline-none transition-all focus:border-primary focus:shadow-[0_0_20px_hsl(var(--primary)/0.3)] disabled:opacity-50"
         />
         <button
           onClick={() => startScan()}
           disabled={isInputLocked || !input.trim()}
-          className="rounded-xl bg-primary px-8 py-4 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow disabled:opacity-50 whitespace-nowrap"
+          className="btn-action min-h-12 rounded-xl bg-primary px-6 py-4 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow disabled:opacity-50 whitespace-normal sm:shrink-0"
         >
           {isInputLocked
             ? isRu
@@ -682,9 +676,9 @@ const DemoScanner = () => {
           {activeScans.map((slot, idx) => (
             <div
               key={slot.taskId}
-              className="rounded-xl border border-primary/30 bg-card p-6 shadow-[0_0_30px_hsl(var(--primary)/0.08)]"
+              className="min-w-0 rounded-xl border border-primary/30 bg-card p-4 sm:p-6 shadow-[0_0_30px_hsl(var(--primary)/0.08)]"
             >
-              <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <span className="relative flex h-3 w-3">
                     <span className="pulse-dot absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
@@ -701,8 +695,8 @@ const DemoScanner = () => {
                 </span>
               </div>
               <div className="mb-3 flex items-center gap-3 font-mono text-sm">
-                <CheckCircle size={14} className="text-green-500 shrink-0" />
-                <span className="text-muted-foreground">{slot.step}</span>
+                <Activity size={14} className="text-primary shrink-0" />
+                <span className="text-muted-foreground">{publicProgressStep(slot.step, isRu ? "ru" : "en")}</span>
               </div>
               {slot.progress > 0 && (
                 <div className="mb-3">
@@ -714,7 +708,7 @@ const DemoScanner = () => {
               )}
               {slot.tail.length > 0 && (
                 <div className="mt-3 rounded-lg border border-border bg-background/90 p-3.5 max-h-36 overflow-y-auto font-mono text-[11px] text-muted-foreground space-y-1">
-                  {slot.tail.map((line, i) => (
+                  {slot.tail.map((line) => publicProgressEvent(line, isRu ? "ru" : "en")).filter(Boolean).map((line, i) => (
                     <p key={i} className="leading-relaxed">
                       <span className="text-primary/70 mr-2">›</span>
                       {line}
@@ -724,8 +718,8 @@ const DemoScanner = () => {
               )}
               <p className="mt-4 font-mono text-xs text-muted-foreground">
                 {isRu
-                  ? "Запущены реальные анализаторы (AST, Slither/Semgrep, On-Chain Граф). Подождите завершения."
-                  : "Real engines active (AST, Slither/Semgrep, On-Chain Graph). Please wait."}
+                  ? "Этапы анализа зависят от цели и доступных данных. Дождитесь отчёта о выполненных проверках."
+                  : "Analysis stages depend on the target and available data. Wait for the report of completed checks."}
               </p>
             </div>
           ))}
@@ -734,7 +728,7 @@ const DemoScanner = () => {
 
       {/* Error State */}
       {errorMsg && (
-        <div className="mt-8 rounded-xl border-l-[3px] p-5" style={{ borderColor: '#F59E0B', background: 'rgba(245, 158, 11, 0.08)' }}>
+        <div role="alert" className="mt-8 rounded-xl border-l-[3px] p-5" style={{ borderColor: '#F59E0B', background: 'rgba(245, 158, 11, 0.08)' }}>
           <p className="font-mono text-sm" style={{ color: '#F59E0B' }}>{errorMsg}</p>
           <a href="https://t.me/BlackOracleBORIS_bot" target="_blank" rel="noopener noreferrer"
             className="mt-3 inline-flex items-center gap-2 font-mono text-sm text-primary hover:underline">
@@ -1017,9 +1011,9 @@ export function ResultTeaser({ result, isRu, taskId }: { result: DemoScanResult;
                   <li key={item.key} className="flex items-start gap-1.5 font-mono text-xs">
                     <span className="shrink-0">{item.status === "done" ? "✅" : "⬜"}</span>
                     <span>
-                      <span className="text-foreground">{item.label?.[lang] || item.label?.en || item.key}</span>
+                      <span className="text-foreground">{item.key === "static_engines" ? (isRu ? "Анализ кода" : "Code analysis") : item.label?.[lang] || item.label?.en || item.key}</span>
                       {item.detail?.[lang] && (
-                        <span className="ml-1.5 text-muted-foreground">({item.detail[lang]})</span>
+                        <span className="ml-1.5 text-muted-foreground">({item.key === "static_engines" ? publicEngineDetail(item.detail[lang], lang) : item.detail[lang]})</span>
                       )}
                     </span>
                   </li>

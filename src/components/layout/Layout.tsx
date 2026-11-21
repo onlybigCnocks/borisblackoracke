@@ -4,7 +4,7 @@ import Footer from "./Footer";
 import CryptoCheckoutModal from "@/components/CryptoCheckoutModal";
 
 const Layout = ({ children }: { children: ReactNode }) => (
-  <div className="min-h-screen bg-background">
+  <div className="site-readable min-h-screen bg-background">
     <div className="film-grain" />
     <Header />
     <main className="pt-16">{children}</main>

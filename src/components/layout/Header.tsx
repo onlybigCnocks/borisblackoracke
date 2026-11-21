@@ -22,7 +22,8 @@ const Header = () => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<BorisUser | null>(getSavedUser());
   const [theme, setTheme] = useState<BorisTheme>(() => {
-    return (localStorage.getItem(LS_THEME) as BorisTheme) || "crimson";
+    const saved = localStorage.getItem(LS_THEME);
+    return THEMES.some((x) => x.id === saved) ? saved as BorisTheme : "crimson";
   });
   const location = useLocation();
   const navigate = useNavigate();
@@ -31,6 +32,13 @@ const Header = () => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem(LS_THEME, theme);
   }, [theme]);
+
+  useEffect(() => { setOpen(false); }, [location.pathname]);
+  useEffect(() => {
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, []);
 
   const cycleTheme = () => {
     const idx = THEMES.findIndex((x) => x.id === theme);
@@ -79,15 +87,15 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-[9998] border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-3">
+        <Link to="/" className="flex shrink-0 items-center gap-2 sm:gap-3">
           <BorisLogo size={32} />
           <span className="text-lg font-bold tracking-wider text-foreground">BORIS</span>
-          <span className="rounded border border-primary/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary">
+          <span className="hidden sm:inline-block rounded border border-primary/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary">
             {t("common.beta")}
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-6 md:flex">
+        <nav className="hidden items-center gap-4 xl:flex">
           {navLinks.map((l, i) =>
             l.type === "action" ? (
               <button
@@ -111,7 +119,7 @@ const Header = () => {
           )}
         </nav>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2.5">
           {/* Theme Switcher Pills (Desktop) */}
           <div className="hidden sm:flex items-center gap-1 rounded-lg border border-border bg-card/80 p-1">
             {THEMES.map((th) => {
@@ -143,6 +151,7 @@ const Header = () => {
             type="button"
             onClick={cycleTheme}
             title="Switch Theme"
+            aria-label={isRu ? "Сменить тему" : "Switch theme"}
             className="sm:hidden rounded border border-border p-1.5 text-muted-foreground hover:border-primary hover:text-primary"
           >
             <Palette size={15} />
@@ -175,19 +184,19 @@ const Header = () => {
 
           <button
             onClick={scrollToScanner}
-            className="hidden rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary-dim btn-glow md:block"
+            className="btn-action hidden rounded-lg px-4 py-2 text-sm transition-all duration-200 xl:block"
           >
             {t("nav.launch")}
           </button>
 
-          <button onClick={() => setOpen(!open)} className="text-foreground md:hidden">
+          <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="mobile-navigation" aria-label={isRu ? (open ? "Закрыть меню" : "Открыть меню") : (open ? "Close menu" : "Open menu")} className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-foreground xl:hidden">
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>
 
       {open && (
-        <div className="border-t border-border bg-background p-4 md:hidden">
+        <nav id="mobile-navigation" aria-label={isRu ? "Основная навигация" : "Main navigation"} className="max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-border bg-background p-4 xl:hidden">
           {navLinks.map((l, i) =>
             l.type === "action" ? (
               <button
@@ -232,11 +241,11 @@ const Header = () => {
           </Link>
           <button
             onClick={scrollToScanner}
-            className="mt-3 block w-full rounded-lg bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground"
+            className="btn-action mt-3 block w-full rounded-lg px-4 py-2.5 text-center text-sm"
           >
             {t("nav.launch")}
           </button>
-        </div>
+        </nav>
       )}
     </header>
   );

@@ -24,7 +24,10 @@
     --secondary-foreground: 0 0% 94.1%;
 
     --muted: 0 0% 11.8%;
-    --muted-foreground: 0 0% 55%;
+    --muted-foreground: 220 10% 72%;
+    --action: 38 94% 61%;
+    --action-foreground: 222 35% 10%;
+    --action-hover: 38 100% 70%;
 
     --accent: 0 0% 8.6%;
     --accent-foreground: 0 0% 94.1%;
@@ -61,7 +64,10 @@
     --secondary-foreground: 0 0% 96%;
 
     --muted: 0 0% 13%;
-    --muted-foreground: 0 0% 58%;
+    --muted-foreground: 220 8% 73%;
+    --action: 194 88% 65%;
+    --action-foreground: 220 40% 9%;
+    --action-hover: 194 95% 75%;
 
     --accent: 0 0% 10%;
     --accent-foreground: 0 0% 96%;
@@ -96,7 +102,10 @@
     --secondary-foreground: 150 15% 94%;
 
     --muted: 155 15% 12%;
-    --muted-foreground: 150 10% 55%;
+    --muted-foreground: 150 10% 72%;
+    --action: 38 94% 65%;
+    --action-foreground: 155 30% 7%;
+    --action-hover: 38 100% 73%;
 
     --accent: 155 18% 9.5%;
     --accent-foreground: 150 15% 94%;
@@ -131,7 +140,10 @@
     --secondary-foreground: 222 47% 11%;
 
     --muted: 210 16% 92%;
-    --muted-foreground: 215 16% 40%;
+    --muted-foreground: 215 18% 35%;
+    --action: 216 82% 36%;
+    --action-foreground: 0 0% 100%;
+    --action-hover: 216 82% 28%;
 
     --accent: 210 20% 94%;
     --accent-foreground: 222 47% 11%;
@@ -158,6 +170,44 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-sans;
   }
+}
+
+/* Shared readability and action hierarchy. Technical data keeps monospace. */
+@layer base {
+  html { scroll-padding-top: 5.5rem; }
+  body { font-size: 16px; line-height: 1.6; text-rendering: optimizeLegibility; }
+  button, input, select, textarea { font: inherit; }
+  button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+  :focus-visible { outline: 2px solid hsl(var(--action)); outline-offset: 3px; }
+  ::selection { background: hsl(var(--action) / .3); color: hsl(var(--foreground)); }
+}
+@layer components {
+  .btn-action.btn-action {
+    background: hsl(var(--action)); color: hsl(var(--action-foreground));
+    border-color: hsl(var(--action)); min-height: 44px; font-weight: 650;
+    box-shadow: 0 4px 18px hsl(var(--action) / .14);
+  }
+  .btn-action.btn-action:hover:not(:disabled) { background: hsl(var(--action-hover)); color: hsl(var(--action-foreground)); }
+  .btn-action.btn-action:disabled { opacity: .5; box-shadow: none; cursor: not-allowed; }
+  .site-readable .text-xs { font-size: .8125rem; line-height: 1.55; }
+  .site-readable .text-sm { font-size: .9375rem; line-height: 1.6; }
+  .site-readable :is(.text-\[9px\], .text-\[10px\], .text-\[11px\]) { font-size: .75rem; line-height: 1.5; }
+  .site-readable button { touch-action: manipulation; }
+  .site-readable :is(input, select, textarea) { min-height: 42px; }
+  .site-readable :is(pre, table) { max-width: 100%; }
+  .site-readable pre { overflow-x: auto; }
+  .site-readable .font-mono { font-variant-numeric: tabular-nums; }
+}
+@media (max-width: 767px) {
+  .site-readable :is(input, select, textarea) { font-size: 16px; }
+  .site-readable button:not([role="switch"]):not([role="checkbox"]),
+  .site-readable header a { min-height: 44px; }
+  .site-readable .container { padding-left: 1rem; padding-right: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .radar-scanline, .film-grain { display: none; }
 }
 
 /* Radar Scanline */

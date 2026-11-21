@@ -5,13 +5,13 @@ export const MODULES = [
     nameRu: "Мультиязычный статический анализ",
     points: [
       "12 language backends: Solidity, Vyper, Rust, Move, Go, Python, TypeScript, Java, C++, Elixir, Shell, TON",
-      "External tools: Slither, Mythril, Aderyn, Semgrep",
+      "Static analysis, symbolic checks and security pattern validation",
       "500+ vulnerability detectors with contextual severity",
       "Test/mock detection — no false positives from test code",
     ],
     pointsRu: [
       "12 языковых бэкендов: Solidity, Vyper, Rust, Move, Go, Python, TypeScript, Java, C++, Elixir, Shell, TON",
-      "Внешние тулзы: Slither, Mythril, Aderyn, Semgrep",
+      "Статический анализ, символьные проверки и анализ паттернов безопасности",
       "500+ детекторов уязвимостей с контекстной severity",
       "Детекция тестов/моков — без false positives из тестового кода",
     ],

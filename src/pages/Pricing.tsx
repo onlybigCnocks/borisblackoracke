@@ -112,7 +112,7 @@ const Pricing = () => {
                   className={`flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-center font-mono text-xs font-bold transition-all duration-200 ${
                     tier === "guest"
                       ? "border border-border text-muted-foreground cursor-default"
-                      : "bg-primary text-primary-foreground hover:bg-primary-dim btn-glow"
+                      : "btn-action"
                   }`}
                 >
                   {tier === "guest" ? (
@@ -183,7 +183,7 @@ const Pricing = () => {
             href="https://t.me/V_swarm"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block rounded-lg bg-primary px-8 py-3 font-semibold text-primary-foreground transition-all hover:bg-primary-dim btn-glow"
+            className="btn-action inline-block rounded-lg px-8 py-3 transition-all"
           >
             {lang === "ru" ? "Стать партнёром" : "Become a Partner"}
           </a>

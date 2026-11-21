@@ -834,7 +834,7 @@ const ToolsPanel = () => {
   };
 
   return (
-    <div ref={resultsTopRef} className="space-y-5">
+    <div ref={resultsTopRef} className="min-w-0 space-y-5">
       {openedHistoryBanner && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/50 bg-primary/10 px-4 py-2.5 font-mono text-xs text-primary">
           <span>
@@ -843,6 +843,7 @@ const ToolsPanel = () => {
           </span>
           <button
             type="button"
+            aria-label={isRu ? "Закрыть баннер истории" : "Close history banner"}
             onClick={() => setOpenedHistoryBanner(null)}
             className="text-muted-foreground hover:text-foreground"
           >
@@ -851,7 +852,7 @@ const ToolsPanel = () => {
         </div>
       )}
       {/* Tool selector */}
-      <div className="flex flex-wrap gap-2">
+      <div aria-label={isRu ? "Инструменты анализа" : "Analysis tools"} className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
         {TOOLS.map((t) => {
           const Icon = t.icon;
           const isLocked = rank < t.minRank;
@@ -865,13 +866,15 @@ const ToolsPanel = () => {
                 setInput1("");
                 setInput2("");
               }}
-              className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2.5 font-mono text-xs font-semibold transition-all ${
+              aria-pressed={tool === t.id}
+              type="button"
+              className={`inline-flex min-w-0 items-center gap-2 rounded-xl px-3 py-3 text-left text-sm font-semibold transition-all ${
                 tool === t.id
                   ? "bg-primary text-primary-foreground shadow"
                   : "border border-border bg-card text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Icon size={14} />
+              <Icon size={16} className="shrink-0" />
               <span>{isRu ? t.labelRu : t.labelEn}</span>
               {isLocked && <Lock size={11} className="opacity-70" />}
             </button>
@@ -927,7 +930,7 @@ const ToolsPanel = () => {
                 <button
                   onClick={run}
                   disabled={loading || !input1.trim()}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-40 btn-glow"
+                  className="btn-action inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm transition-all disabled:opacity-40"
                 >
                   {loading ? <Loader2 size={14} className="animate-spin" /> : <Terminal size={14} />}
                   <span>{loading ? (isRu ? "Изоляция v16.2…" : "Isolating v16.2…") : isRu ? "Запустить в Matrix Sandbox v16.2" : "Run in Matrix Sandbox v16.2"}</span>
@@ -1172,7 +1175,7 @@ const ToolsPanel = () => {
                 <button
                   onClick={run}
                   disabled={loading || (tool !== "ospec" && tool !== "hacks" && tool !== "bridges" && !(tool === "market" && marketMode === "trending") && !input1)}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-mono text-xs font-semibold text-primary-foreground transition-all hover:bg-primary-dim disabled:opacity-40 btn-glow"
+                  className="btn-action inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm transition-all disabled:opacity-40"
                 >
                   {loading ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
                   <span>{loading ? (isRu ? "Считаю…" : "Running…") : isRu ? "Запустить" : "Run"}</span>

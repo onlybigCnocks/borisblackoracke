@@ -31,6 +31,7 @@ export default {
           bright: "hsl(var(--primary-bright))",
           dim: "hsl(var(--primary-dim))",
         },
+        action: { DEFAULT: "hsl(var(--action))", foreground: "hsl(var(--action-foreground))", hover: "hsl(var(--action-hover))" },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
