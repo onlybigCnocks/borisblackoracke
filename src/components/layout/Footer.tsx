@@ -11,6 +11,7 @@ const Footer = () => {
           <div className="flex items-center gap-3">
             <BorisLogo size={28} />
             <span className="font-bold tracking-wider text-foreground">BORIS</span>
+            <span className="text-xs font-mono text-muted-foreground">{t("common.beta")}</span>
             <span className="text-sm text-muted-foreground">© 2026</span>
           </div>
           <div className="flex flex-wrap gap-6">

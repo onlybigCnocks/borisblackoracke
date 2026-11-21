@@ -9,7 +9,7 @@ const en = {
     login: "Login",
   },
   hero: {
-    badge: "BORIS Beta v1.44 · Security Intelligence Platform",
+    badge: "BORIS Beta v1.45 · Security Intelligence Platform",
     title1: "Black Oracle",
     title2: "Risk Inspection System",
     subtitle: "// Not a hack. A warning.",
@@ -263,7 +263,7 @@ const en = {
     close: "Close",
     save: "Save",
     cancel: "Cancel",
-    beta: "BETA",
+    beta: "BETA v1.45",
   },
 };
 

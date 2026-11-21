@@ -1,4 +1,14 @@
-# Welcome to your Lovable project
+# BORIS Beta v1.45
+
+![Status](https://img.shields.io/badge/status-live_v1.45-brightgreen)
+
+Production: [black-oracle.com](https://black-oracle.com). Public documentation and release notes: [BORIS](https://github.com/BlackOracleRiskInspectorSystem/BORIS).
+
+Beta v1.45 adds continuous public Git repository and EVM contract watchlists for RADAR+, reusable **+ Watch** actions, configurable intervals, pause/delete controls, change notifications, and reliability improvements. Periodic lightweight checks remain separate from full scans.
+
+AI Cortex and Agent Swarm remain on the v1.5 roadmap.
+
+## Frontend development
 
 ## Project info
 
