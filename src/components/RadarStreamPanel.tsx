@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import RadarDaemonDeck, { type ControlledRadar } from "./RadarDaemonDeck";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import {
@@ -22,6 +23,7 @@ import {
   apiEnrichDefillama,
   apiRunGithubOmniHarvest,
   apiControlOspecDaemon,
+  authHeaders,
   type BorisUser,
 } from "@/lib/auth";
 
@@ -47,7 +49,7 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
   const [omniBanner, setOmniBanner] = useState<string | null>(null);
   const [ospecWatcherRunning, setOspecWatcherRunning] = useState<boolean>(true);
   const [backfillRunning, setBackfillRunning] = useState<boolean>(true);
-  const [zkMassRunning, setZkMassRunning] = useState<boolean>(true);
+
   const [zkMassBusy, setZkMassBusy] = useState<boolean>(false);
   const [zkMassMsg, setZkMassMsg] = useState<string | null>(null);
   const [query, setQuery] = useState<string>("");
@@ -141,9 +143,7 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
       if (typeof data?.stats?.backfill_running === "boolean") {
         setBackfillRunning(data.stats.backfill_running);
       }
-      if (typeof data?.stats?.zk_breakdown?.zk_mass_running === "boolean") {
-        setZkMassRunning(data.stats.zk_breakdown.zk_mass_running);
-      }
+
       setFeed(data);
     } finally {
       setLoading(false);
@@ -698,6 +698,10 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
         </div>
       )}
 
+      {["zk", "soroban", "contracts", "defillama"].includes(tab) && isPaid && (tab !== "zk" || isDeep) && !feed?.locked && (
+        <RadarDaemonDeck key={tab} radar={tab as ControlledRadar} isRu={isRu} onChain={(value) => { setChain(value); setPage(1); }} />
+      )}
+
       {/* ZK MATH MONSTER v5.5 RADAR CONTROL DECK + 363-KEY MASS SCANNER */}
       {tab === "zk" && !feed?.locked && (
         <div className="rounded-xl border border-primary/35 bg-card p-4 space-y-3 font-mono">
@@ -715,45 +719,7 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
 
             {/* 363-Key ZK Mass-Scanner & MainContractFinder Controls */}
             <div className="flex flex-wrap items-center gap-1.5">
-              <button
-                type="button"
-                disabled={zkMassBusy}
-                onClick={async () => {
-                  setZkMassBusy(true);
-                  setZkMassMsg(null);
-                  try {
-                    const tok = localStorage.getItem("boris_token") || "";
-                    const r = await fetch("https://api.black-oracle.com/api/tools/zk-mass-scan-control", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json", ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
-                      body: JSON.stringify({ action: "toggle_daemon" }),
-                    }).then((res) => res.json());
-                    if (typeof r?.zk_mass_running === "boolean") setZkMassRunning(r.zk_mass_running);
-                    setZkMassMsg(r?.message || "Статус ZK Масс-Скана обновлён");
-                    loadFeed({ t: "zk", p: page });
-                  } catch (e: any) {
-                    setZkMassMsg(`⚠️ ${e.message}`);
-                  } finally {
-                    setZkMassBusy(false);
-                  }
-                }}
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1 text-[11px] font-bold transition-all disabled:opacity-50 ${
-                  zkMassRunning
-                    ? "border-green-500/70 bg-green-500/20 text-green-300 hover:bg-amber-500 hover:text-black"
-                    : "border-amber-500/70 bg-amber-500/20 text-amber-300 hover:bg-green-500 hover:text-black"
-                }`}
-              >
-                <span className={`h-2 w-2 rounded-full ${zkMassRunning ? "bg-green-400 animate-pulse" : "bg-amber-400"}`} />
-                <span>
-                  {zkMassRunning
-                    ? isRu
-                      ? "🟢 ZK Масс-Скан (363 RPC): РАБОТАЕТ (⏸ Стоп)"
-                      : "🟢 ZK Mass-Scan (363 RPC): ON (⏸ Pause)"
-                    : isRu
-                    ? "⏸ ZK Масс-Скан: ПАУЗА (▶️ Старт)"
-                    : "⏸ ZK Mass-Scan: PAUSED (▶️ Start)"}
-                </span>
-              </button>
+
 
               <button
                 type="button"
@@ -762,12 +728,16 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
                   setZkMassBusy(true);
                   setZkMassMsg(null);
                   try {
-                    const tok = localStorage.getItem("boris_token") || "";
+                    // Use the shared authenticated session headers.
                     const r = await fetch("https://api.black-oracle.com/api/tools/zk-mass-scan-control", {
                       method: "POST",
-                      headers: { "Content-Type": "application/json", ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
+                      headers: { "Content-Type": "application/json", ...authHeaders() },
                       body: JSON.stringify({ action: "run_batch", batch_size: 120 }),
-                    }).then((res) => res.json());
+                    }).then(async (res) => {
+                      const data = await res.json();
+                      if (!res.ok || data.ok === false) throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+                      return data;
+                    });
                     setZkMassMsg(r?.message || "⚡ Турбо-Батч ZK Масс-Скана выполнен!");
                     loadFeed({ t: "zk", p: page });
                   } catch (e: any) {
@@ -788,12 +758,16 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
                   setZkMassBusy(true);
                   setZkMassMsg(null);
                   try {
-                    const tok = localStorage.getItem("boris_token") || "";
+                    // Use the shared authenticated session headers.
                     const r = await fetch("https://api.black-oracle.com/api/tools/zk-mass-scan-control", {
                       method: "POST",
-                      headers: { "Content-Type": "application/json", ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
+                      headers: { "Content-Type": "application/json", ...authHeaders() },
                       body: JSON.stringify({ action: "run_tvl" }),
-                    }).then((res) => res.json());
+                    }).then(async (res) => {
+                      const data = await res.json();
+                      if (!res.ok || data.ok === false) throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+                      return data;
+                    });
                     setZkMassMsg(r?.message || "💰 MainContractFinder (TVL) выполнен!");
                     loadFeed({ t: "zk", p: page });
                   } catch (e: any) {
