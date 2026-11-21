@@ -1593,8 +1593,33 @@ const ToolsPanel = () => {
           {/* Quick presets for Stellar / Soroban */}
           {tool === "soroban" && (
             <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[11px]">
-              <span className="text-muted-foreground">{isRu ? "Быстрые активы Stellar / Soroban:" : "Quick Stellar / Soroban assets:"}</span>
-              {["USDC", "AQUA", "YXLM", "EURC", "XLM"].map((tk) => (
+              <span className="text-muted-foreground">{isRu ? "Быстрые цели & Эксплойт-векторы:" : "Quick Targets & Exploit Vectors:"}</span>
+              {[
+                { label: "AQUA (Ghost Depth)", val: "AQUA" },
+                { label: "USTRY (YieldBlox Vector)", val: "USTRY" },
+                { label: "FOMO (Oracle Inflation)", val: "FOMO" },
+                { label: "USDC (Circle)", val: "USDC" },
+                { label: "yUSDC (Blend Reserve)", val: "yUSDC" },
+                { label: "SHX (Stronghold)", val: "SHX" },
+                { label: "XLM (Native)", val: "XLM" },
+              ].map((pItem) => (
+                <button
+                  key={pItem.val}
+                  type="button"
+                  onClick={() => {
+                    setInput1(pItem.val);
+                    setTool("soroban");
+                  }}
+                  className="rounded-lg border border-border bg-background px-2.5 py-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                >
+                  {pItem.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {false && tool === "soroban" && (
+            <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[11px]">
+              {["USDC"].map((tk) => (
                 <button
                   key={tk}
                   type="button"
@@ -5104,42 +5129,293 @@ const ToolsPanel = () => {
       })()}
 
       {result && tool === "soroban" && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[
-              { k: isRu ? "Вердикт" : "Verdict", v: result.verdict || "—" },
-              { k: "Overall Risk", v: `${result.overall_risk_score ?? 0}/100` },
-              { k: "Trustlines", v: fmt(result.asset_profile?.trustlines, 0) },
-              { k: "Bid Depth", v: `$${fmt(result.orderbook?.bid_depth_usd)}` },
-            ].map((c, i) => (
-              <div key={i} className="rounded-xl border border-border bg-card p-4">
-                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{c.k}</p>
-                <p className="mt-1 font-mono text-lg font-bold text-foreground">{c.v}</p>
+        <div className="rounded-xl border border-border bg-card p-5 space-y-6 font-mono text-xs">
+          {/* 1. Header & Verdict Banner */}
+          <div className="rounded-xl border border-border/80 bg-background/90 p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-md border border-primary/50 bg-primary/20 px-2.5 py-1 text-xs font-bold uppercase text-primary">
+                  🪐 Soroban SIM v2.0
+                </span>
+                <span className="font-bold text-foreground text-sm">
+                  {result.target}
+                </span>
+                <span className="rounded bg-background border border-border px-2 py-0.5 text-[10px] uppercase text-muted-foreground">
+                  {result.target_type || "asset"}
+                </span>
+                {result.asset_profile?.home_domain && (
+                  <span className="rounded border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
+                    🌐 {result.asset_profile.home_domain}
+                  </span>
+                )}
               </div>
-            ))}
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`rounded-lg border px-3 py-1 text-xs font-bold ${
+                    result.overall_risk_score >= 80
+                      ? "border-red-500 bg-red-500/20 text-red-300"
+                      : result.overall_risk_score >= 50
+                      ? "border-amber-500 bg-amber-500/20 text-amber-300"
+                      : "border-green-500 bg-green-500/20 text-green-300"
+                  }`}
+                >
+                  {result.verdict || "RISK EVALUATED"} · РИСК: {result.overall_risk_score ?? 0}/100
+                </span>
+              </div>
+            </div>
+
+            {/* Risk Breakdown Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px]">
+              <div className="rounded-lg border border-border bg-background p-2.5 text-center">
+                <div className="text-[10px] text-muted-foreground uppercase">Market Risk</div>
+                <div className="text-base font-bold text-amber-400">{result.market_risk_score ?? 0}/100</div>
+              </div>
+              <div className="rounded-lg border border-border bg-background p-2.5 text-center">
+                <div className="text-[10px] text-muted-foreground uppercase">Oracle Risk</div>
+                <div className="text-base font-bold text-purple-400">{result.oracle_risk_score ?? 0}/100</div>
+              </div>
+              <div className="rounded-lg border border-border bg-background p-2.5 text-center">
+                <div className="text-[10px] text-muted-foreground uppercase">Asset Risk</div>
+                <div className="text-base font-bold text-blue-400">{result.asset_risk_score ?? 0}/100</div>
+              </div>
+              <div className="rounded-lg border border-border bg-background p-2.5 text-center">
+                <div className="text-[10px] text-muted-foreground uppercase">LP Pools / Reserves</div>
+                <div className="text-base font-bold text-emerald-400">
+                  {result.lp_pool_count ?? 0} pools (${fmt(result.lp_total_reserves_usd ?? 0)})
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="rounded-xl border border-border bg-card p-5 font-mono text-xs space-y-2">
-            <p className="text-foreground font-bold">{result.target} ({result.target_type})</p>
-            {result.verdict_detail && <p className="text-muted-foreground">{result.verdict_detail}</p>}
-            {result.asset_profile?.home_domain && (
-              <p className="text-primary">Domain: {result.asset_profile.home_domain} · LP Pools: {result.lp_pool_count ?? 0}</p>
-            )}
-            {result.signals?.length > 0 && (
-              <div className="mt-3 space-y-1.5">
-                {result.signals.map((s: any, i: number) => (
-                  <div key={i} className="rounded-lg border border-border bg-background p-2.5">
-                    <div className="flex justify-between">
-                      <span className="font-bold text-foreground">{s.title || s.id}</span>
-                      <span className="text-muted-foreground">{s.severity}</span>
-                    </div>
-                    <p className="mt-1 text-muted-foreground">{s.description}</p>
+
+          {/* 2. FOMOCASH & USTRY EXPLOIT PATTERN RADAR DECK */}
+          {result.fomocash_ustry_pattern && (
+            <div
+              className={`rounded-xl border p-4 space-y-3.5 ${
+                result.fomocash_ustry_pattern.severity === "CRITICAL"
+                  ? "border-red-500/60 bg-red-500/10"
+                  : result.fomocash_ustry_pattern.severity === "HIGH"
+                  ? "border-amber-500/60 bg-amber-500/10"
+                  : "border-border bg-background/80"
+              }`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-bold text-xs uppercase tracking-wide text-foreground">
+                    🎯 ВЕКТОРНЫЙ АНАЛИЗАТОР ОРАКУЛЬНЫХ АТАК (FOMOCASH / USTRY / YIELDBLOX):
+                  </span>
+                  <span
+                    className={`rounded-md border px-2 py-0.5 text-[10px] font-bold ${
+                      result.fomocash_ustry_pattern.attack_feasibility === "CRITICAL"
+                        ? "border-red-500 bg-red-500 text-white"
+                        : result.fomocash_ustry_pattern.attack_feasibility === "HIGH"
+                        ? "border-amber-500 bg-amber-500 text-black"
+                        : "border-green-500 bg-green-500/20 text-green-300"
+                    }`}
+                  >
+                    УЯЗВИМОСТЬ: {result.fomocash_ustry_pattern.attack_feasibility}
+                  </span>
+                </div>
+                <span className="text-[11px] font-bold text-primary">
+                  {result.fomocash_ustry_pattern.exploit_pattern}
+                </span>
+              </div>
+
+              <p className="text-xs text-foreground/90 leading-relaxed font-sans">
+                {result.fomocash_ustry_pattern.technical_summary}
+              </p>
+
+              {/* Manipulation Metrics Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                <div className="rounded-lg border border-border bg-card p-2">
+                  <div className="text-[10px] text-muted-foreground">Сдвиг цены 2.0x</div>
+                  <div className="text-xs font-bold text-amber-400">
+                    ${fmt(result.fomocash_ustry_pattern.manipulation_cost_2x)} USD
                   </div>
-                ))}
+                </div>
+                <div className="rounded-lg border border-border bg-card p-2">
+                  <div className="text-[10px] text-muted-foreground">Сдвиг цены 5.0x</div>
+                  <div className="text-xs font-bold text-amber-400">
+                    ${fmt(result.fomocash_ustry_pattern.manipulation_cost_5x)} USD
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border bg-card p-2">
+                  <div className="text-[10px] text-muted-foreground">Асимметрия Bids/Asks</div>
+                  <div className="text-xs font-bold text-foreground">
+                    {result.fomocash_ustry_pattern.depth_ratio}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border bg-card p-2">
+                  <div className="text-[10px] text-muted-foreground">Плечо дрейна (Borrow)</div>
+                  <div className="text-xs font-bold text-red-400">
+                    {result.fomocash_ustry_pattern.borrow_leverage_ratio}
+                  </div>
+                </div>
               </div>
-            )}
+
+              {/* Triggers badges */}
+              {result.fomocash_ustry_pattern.pattern_triggers?.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-[10px] text-muted-foreground">Триггеры вектора:</span>
+                  {result.fomocash_ustry_pattern.pattern_triggers.map((trig: string) => (
+                    <span
+                      key={trig}
+                      className="rounded bg-background border border-border px-1.5 py-0.5 text-[9px] font-bold text-red-300"
+                    >
+                      ⚠️ {trig}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 3. PRICE IMPACT CURVE VISUAL CHART */}
+          {Array.isArray(result.price_impact_curve) && result.price_impact_curve.length > 0 && (
+            <div className="rounded-xl border border-border bg-background/80 p-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2">
+                <span className="font-bold text-xs text-foreground uppercase tracking-wide">
+                  📈 КРИВАЯ СТОИМОСТИ МАНИПУЛЯЦИИ ОРАКУЛОМ (PRICE IMPACT CURVE):
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  Затраты USD на искусственный сдвиг цены в SDEX
+                </span>
+              </div>
+
+              <div className="space-y-2 pt-1">
+                {(() => {
+                  const maxCost = Math.max(
+                    1,
+                    ...result.price_impact_curve.map((it: any) => Number(it.cost_usd || 0))
+                  );
+                  return result.price_impact_curve.map((it: any, idx: number) => {
+                    const cost = Number(it.cost_usd || 0);
+                    const pctWidth = Math.min(100, Math.max(4, Math.round((cost / maxCost) * 100)));
+                    return (
+                      <div key={idx} className="flex items-center gap-3 text-[11px]">
+                        <span className="w-14 shrink-0 font-bold text-primary text-right">
+                          {it.multiplier}x →
+                        </span>
+                        <div className="flex-1 bg-card rounded-md h-5 overflow-hidden border border-border relative flex items-center">
+                          <div
+                            className={`h-full transition-all duration-500 ${
+                              cost < 5000
+                                ? "bg-red-500/70"
+                                : cost < 50000
+                                ? "bg-amber-500/70"
+                                : "bg-emerald-500/70"
+                            }`}
+                            style={{ width: `${pctWidth}%` }}
+                          />
+                          <span className="absolute left-2 text-[10px] font-bold text-foreground drop-shadow">
+                            ${fmt(cost)} USD
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+          )}
+
+          {/* 4. ASSET PROFILE & STELLAR GOVERNANCE FLAGS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="rounded-xl border border-border bg-background/80 p-4 space-y-2.5">
+              <span className="font-bold text-xs text-foreground uppercase tracking-wide">
+                🏛️ Профиль Ассета & Эмитента
+              </span>
+              <div className="space-y-1.5 text-[11px]">
+                <div className="flex justify-between border-b border-border/40 pb-1">
+                  <span className="text-muted-foreground">Trustlines (Холдеры):</span>
+                  <span className="font-bold text-foreground">{fmt(result.asset_profile?.trustlines, 0)}</span>
+                </div>
+                <div className="flex justify-between border-b border-border/40 pb-1">
+                  <span className="text-muted-foreground">Total Supply:</span>
+                  <span className="font-bold text-foreground">{fmt(result.asset_profile?.total_supply)}</span>
+                </div>
+                <div className="flex justify-between border-b border-border/40 pb-1">
+                  <span className="text-muted-foreground">Bid Depth (USDC+XLM):</span>
+                  <span className="font-bold text-emerald-400">${fmt(result.orderbook?.bid_depth_usd)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Ask Depth (USDC+XLM):</span>
+                  <span className="font-bold text-purple-400">${fmt(result.orderbook?.ask_depth_usd)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-background/80 p-4 space-y-2.5">
+              <span className="font-bold text-xs text-foreground uppercase tracking-wide">
+                🔒 Флаги Управления Stellar (Clawback / Revocable)
+              </span>
+              <div className="space-y-1.5 text-[11px]">
+                <div className="flex justify-between border-b border-border/40 pb-1">
+                  <span className="text-muted-foreground">AUTH_CLAWBACK:</span>
+                  <span className={result.asset_profile?.auth_clawback ? "font-bold text-red-400" : "text-emerald-400"}>
+                    {result.asset_profile?.auth_clawback ? "🚨 ДА (Эмитент может сжечь токены)" : "✅ НЕТ"}
+                  </span>
+                </div>
+                <div className="flex justify-between border-b border-border/40 pb-1">
+                  <span className="text-muted-foreground">AUTH_REVOCABLE:</span>
+                  <span className={result.asset_profile?.auth_revocable ? "font-bold text-red-400" : "text-emerald-400"}>
+                    {result.asset_profile?.auth_revocable ? "🚨 ДА (Заморозка баланса)" : "✅ НЕТ"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">AUTH_REQUIRED:</span>
+                  <span className={result.asset_profile?.auth_required ? "font-bold text-amber-400" : "text-muted-foreground"}>
+                    {result.asset_profile?.auth_required ? "⚠️ ДА (Вайтлист)" : "НЕТ (Свободный оборот)"}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
+
+          {/* 5. SIGNALS MATRIX */}
+          {result.signals?.length > 0 && (
+            <div className="space-y-2.5 pt-2 border-t border-border/60">
+              <span className="font-bold text-xs text-foreground uppercase tracking-wide">
+                🚨 Матрица Сигналов Безопасности Soroban ({result.signals_total || result.signals.length}):
+              </span>
+              <div className="space-y-2">
+                {result.signals.map((s: any, idx: number) => {
+                  const isCrit = s.severity === "CRITICAL";
+                  const isHigh = s.severity === "HIGH";
+                  return (
+                    <div
+                      key={idx}
+                      className={`rounded-xl border p-3 space-y-1 ${
+                        isCrit
+                          ? "border-red-500/50 bg-red-500/10"
+                          : isHigh
+                          ? "border-amber-500/50 bg-amber-500/10"
+                          : "border-border bg-background"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-foreground text-xs">{s.title || s.id}</span>
+                        <span
+                          className={`rounded px-2 py-0.5 text-[9px] font-bold uppercase ${
+                            isCrit
+                              ? "bg-red-500/25 text-red-300"
+                              : isHigh
+                              ? "bg-amber-500/25 text-amber-300"
+                              : "bg-blue-500/20 text-blue-300"
+                          }`}
+                        >
+                          {s.severity}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">{s.description}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
+
 
       {result && tool === "ospec" && (
         <div className="space-y-4">
