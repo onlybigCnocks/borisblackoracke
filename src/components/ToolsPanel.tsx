@@ -1,3 +1,4 @@
+import { OspecDetectorOptions, OspecCatalogSummary, type DetectorCatalog } from "@/components/OspecDetectorCatalog";
 import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -82,6 +83,22 @@ const ToolsPanel = () => {
   const [historyItems, setHistoryItems] = useState<BorisToolHistoryItem[]>([]);
   const [historyFilter, setHistoryFilter] = useState<string>("all");
   const [loadingHistoryId, setLoadingHistoryId] = useState<number | null>(null);
+
+  const [ospecCatalog, setOspecCatalog] = useState<DetectorCatalog | null>(null);
+  useEffect(() => {
+    if (tool !== "ospec" || rank < 1) return;
+    const controller = new AbortController();
+    setOspecCatalog(null);
+    fetch(`${API_BASE}/api/tools/ospec/catalog`, { headers: authHeaders(), signal: controller.signal })
+      .then(async response => {
+        if (!response.ok) throw new Error("catalog unavailable");
+        const data = await response.json();
+        if (data.ok !== true || data.detector_catalog?.schema !== 1 || !Array.isArray(data.detector_catalog.detectors)) throw new Error("invalid catalog");
+        setOspecCatalog(data.detector_catalog);
+      })
+      .catch(() => { if (!controller.signal.aborted) setOspecCatalog(null); });
+    return () => controller.abort();
+  }, [tool, rank]);
 
   // OSPEC Telegram-style filter states
   const [ospecSeverity, setOspecSeverity] = useState<string>("");
@@ -1824,7 +1841,7 @@ const ToolsPanel = () => {
                     }`}
                   >
                     {rank >= 3
-                      ? "🥇 BLACKBOX: FULL ACCESS (246 СИГНАТУР)"
+                      ? "🥇 BLACKBOX: FULL ACCESS"
                       : rank === 2
                       ? "🥈 RAW: СЕРЕДИНКА (ПУТИ + МАСКА + LIVE)"
                       : "🥉 RADAR: БАЗОВЫЙ ОБЗОР (ОГРАНИЧЕННО)"}
@@ -2198,7 +2215,7 @@ const ToolsPanel = () => {
                     {isRu ? "📂 Семейство ключей:" : "📂 Secret Family:"}
                   </span>
                   {[
-                    { id: "ALL", labelRu: "🌐 Все (246 сигн.)", labelEn: "🌐 All (246 sigs)", minR: 1 },
+                    { id: "ALL", labelRu: `🌐 Все (${ospecCatalog?.counts.canonical_kinds ?? "—"} типов)`, labelEn: `🌐 All (${ospecCatalog?.counts.canonical_kinds ?? "—"} kinds)`, minR: 1 },
                     { id: "WHITEHAT_POS_BIZ", labelRu: "🍔 Whitehat: Рестораны / POS / SaaS [5]", labelEn: "🍔 Whitehat: POS / Restaurants / SaaS [5]", minR: 2 },
                     { id: "FINTECH_ECOMM", labelRu: "💳 Платежи / Банки / Магазины", labelEn: "💳 FinTech / E-Commerce / Banks", minR: 1 },
                     { id: "AI_VOICE_LLM", labelRu: "🤖 AI, LLM & Голосовые боты", labelEn: "🤖 AI, LLM & Voice Bots", minR: 1 },
@@ -2245,9 +2262,10 @@ const ToolsPanel = () => {
                   })}
                 </div>
 
+                <div className="text-[11px] text-muted-foreground"><OspecCatalogSummary catalog={ospecCatalog} isRu={isRu} /></div>
                 {/* Row 3: Dropdown Lists (Exact Signature Picker + Pool Selector + Repo Verticals) */}
                 <div className="grid grid-cols-1 gap-2 pt-1.5 sm:grid-cols-3 border-t border-border/50">
-                  {/* Dropdown 1: Pick any of the 246 secret signatures grouped by family */}
+                  {/* Supported canonical kinds, including never-found detectors. */}
                   <div className="flex items-center gap-1.5">
                     <span className="text-muted-foreground shrink-0">{isRu ? "🔑 Сигнатура:" : "🔑 Signature:"}</span>
                     <select
@@ -2261,80 +2279,7 @@ const ToolsPanel = () => {
                       }}
                       className="w-full rounded-lg border border-border bg-card px-2.5 py-1.5 font-mono text-[11px] text-foreground outline-none focus:border-primary"
                     >
-                      <option value="">{isRu ? "— Все 246 сигнатур (выберите из списка) —" : "— All 246 signatures (select from list) —"}</option>
-                      {result?.kind_stats?.length > 0 && (
-                        <optgroup label={isRu ? "🔥 Активные в базе (с числом находок REAL)" : "🔥 Active in DB (with REAL counts)"}>
-                          {result.kind_stats.map((ks: any) => {
-                            const sk = ks.short_kind || String(ks.kind || "").replace("secret:", "");
-                            return (
-                              <option key={sk} value={sk}>
-                                {sk} ({ks.real} REAL{ks.suspect ? ` · ${ks.suspect} SUSP` : ""})
-                              </option>
-                            );
-                          })}
-                        </optgroup>
-                      )}
-                      <optgroup label={isRu ? "🍔 Рестораны, POS-кассы и Доставка (Whitehat)" : "🍔 Restaurants, POS & Food Delivery (Whitehat)"}>
-                        <option value="toast_pos_key">toast_pos_key — Toast POS Restaurant API</option>
-                        <option value="iiko_poster_rkeeper_key">iiko_poster_rkeeper_key — iiko / Syrve / Poster POS / R-Keeper</option>
-                        <option value="clover_pos_token">clover_pos_token — Clover POS Terminal</option>
-                        <option value="lightspeed_pos_key">lightspeed_pos_key — Lightspeed Restaurant/Retail POS</option>
-                        <option value="doordash_drive_key">doordash_drive_key — DoorDash Drive API</option>
-                        <option value="ubereats_api_secret">ubereats_api_secret — UberEats / Uber Direct POS</option>
-                        <option value="delivery_platform_key">delivery_platform_key — Deliveroo / Wolt / Glovo / Stuart</option>
-                        <option value="restaurant_booking_key">restaurant_booking_key — SevenRooms / OpenTable / Resy</option>
-                      </optgroup>
-                      <optgroup label={isRu ? "💳 Платежи, Банки и E-Commerce" : "💳 FinTech, Banking & E-Commerce"}>
-                        <option value="stripe_live">stripe_live — Stripe Live Secret Key (sk_live_...)</option>
-                        <option value="stripe_whsec">stripe_whsec — Stripe Webhook Secret (whsec_...)</option>
-                        <option value="woocommerce_consumer_secret">woocommerce_consumer_secret — WooCommerce Store (cs_...)</option>
-                        <option value="shopify_token">shopify_token — Shopify Admin/Custom App (shpat_...)</option>
-                        <option value="square_access">square_access — Square POS & Payments (sq0atp...)</option>
-                        <option value="plaid_secret_key">plaid_secret_key — Plaid Banking API</option>
-                        <option value="mollie_live_key">mollie_live_key — Mollie Live Acquiring (live_...)</option>
-                        <option value="paddle_live_apikey">paddle_live_apikey — Paddle Billing (pdl_live_...)</option>
-                        <option value="lemonsqueezy_api_key">lemonsqueezy_api_key — LemonSqueezy API</option>
-                        <option value="mercury_bank_token">mercury_bank_token — Mercury Bank Production Token</option>
-                        <option value="revolut_business_key">revolut_business_key — Revolut Business (oa_prod_...)</option>
-                        <option value="wise_api_token">wise_api_token — Wise Business API</option>
-                        <option value="cis_acquiring_secret">cis_acquiring_secret — ЮKassa / CloudPayments / Tinkoff</option>
-                      </optgroup>
-                      <optgroup label={isRu ? "🤖 AI, LLM и Голосовые боты (Колл-центры)" : "🤖 AI, LLMs & Voice Agents"}>
-                        <option value="openai_key">openai_key — OpenAI API Key (sk-proj-...)</option>
-                        <option value="anthropic_key">anthropic_key — Anthropic Claude (sk-ant-...)</option>
-                        <option value="gemini_key">gemini_key — Google Gemini / Firebase (AIzaSy...)</option>
-                        <option value="voice_ai_agent_key">voice_ai_agent_key — Vapi / Retell AI / Bland AI / Cartesia</option>
-                        <option value="elevenlabs_api_key">elevenlabs_api_key — ElevenLabs Voice AI</option>
-                        <option value="deepgram_api_key">deepgram_api_key — Deepgram STT/Voice</option>
-                        <option value="livekit_api_secret">livekit_api_secret — LiveKit WebRTC / Voice</option>
-                        <option value="groq_api_key">groq_api_key — Groq Cloud (gsk_...)</option>
-                        <option value="perplexity_api_key">perplexity_api_key — Perplexity AI (pplx-...)</option>
-                        <option value="replicate_api_token">replicate_api_token — Replicate (r8_...)</option>
-                        <option value="pinecone_api_key">pinecone_api_key — Pinecone Vector DB (pcsk_...)</option>
-                        <option value="ai_search_tool_key">ai_search_tool_key — Tavily Search (tvly-...)</option>
-                      </optgroup>
-                      <optgroup label={isRu ? "☁️ Базы данных, Облака и BaaS" : "☁️ Databases, Cloud & BaaS"}>
-                        <option value="postgres_uri">postgres_uri — PostgreSQL Production URI</option>
-                        <option value="mongodb_uri">mongodb_uri — MongoDB Atlas URI (mongodb+srv://)</option>
-                        <option value="redis_uri">redis_uri — Redis URI</option>
-                        <option value="supabase_service_key">supabase_service_key — Supabase service_role Key</option>
-                        <option value="neon_api_key">neon_api_key — Neon Serverless Postgres (napi_...)</option>
-                        <option value="upstash_qstash_token">upstash_qstash_token — Upstash Redis / QStash</option>
-                        <option value="convex_deploy_key">convex_deploy_key — Convex BaaS Deploy Key</option>
-                        <option value="appwrite_api_key">appwrite_api_key — Appwrite Secret Key</option>
-                        <option value="aws_secret_access_key">aws_secret_access_key — AWS Secret Access Key</option>
-                        <option value="gcp_sa_json">gcp_sa_json — Google Cloud Service Account JSON</option>
-                      </optgroup>
-                      <optgroup label={isRu ? "📱 Почта, WhatsApp, СМС, Мобилки и Медиа" : "📱 WhatsApp, Email, SMS, Mobile OTA & Media"}>
-                        <option value="whatsapp_cloud_token">whatsapp_cloud_token — WhatsApp Business Cloud (EAA...)</option>
-                        <option value="expo_access_token">expo_access_token — Expo React Native OTA Token</option>
-                        <option value="resend_api_key">resend_api_key — Resend Email API (re_...)</option>
-                        <option value="brevo_sendinblue_key">brevo_sendinblue_key — Brevo / Sendinblue (xkeysib-...)</option>
-                        <option value="cloudinary_url">cloudinary_url — Cloudinary Media Storage (cloudinary://)</option>
-                        <option value="mapbox_secret_token">mapbox_secret_token — Mapbox Secret Token (sk.eyJ1...)</option>
-                        <option value="telegram_bot">telegram_bot — Telegram Bot Token</option>
-                        <option value="slack_token">slack_token — Slack Bot/User Token (xoxb-...)</option>
-                      </optgroup>
+                      <OspecDetectorOptions catalog={ospecCatalog} stats={result?.kind_stats} value={input1} isRu={isRu} />
                     </select>
                   </div>
 
