@@ -31,12 +31,13 @@ it("renders final API partial coverage rather than a historic clean verdict", as
 it.each(["RADAR", "RAW", "BLACKBOX"] as const)("renders collision versions with %s projection, never inventing a masked value", async tier => {
   open(fixtures.complete[tier], tier);
   const versions = await screen.findByRole("region", {name:"OSPEC rescan versions"});
-  expect(versions).toHaveTextContent("Latest returned publication version");
+  const button = screen.queryByRole("button", {name:"Finding history"});
+  if (button && button.getAttribute("aria-expanded") === "false") fireEvent.click(button);
   expect(versions).toHaveTextContent("2222222222222222222222222222222222222222");
   expect(versions).toHaveTextContent("1111111111111111111111111111111111111111");
-  expect(versions).toHaveTextContent("not guaranteed current");
-  if (tier === "RADAR") expect(versions).toHaveTextContent("No masked preview in API");
-  if (tier === "RAW") expect(versions).toHaveTextContent("Version masked preview");
+  expect(versions).not.toHaveTextContent("not guaranteed current");
+  if (tier === "RADAR") expect(versions).toHaveTextContent("Secret unavailable at this tier");
+  if (tier === "RAW") expect(versions).toHaveTextContent("Masked preview");
   if (tier === "RADAR") expect(versions).not.toHaveTextContent(".env");
   if (tier === "RAW") expect(versions).toHaveTextContent(".env:1");
 });
@@ -94,9 +95,10 @@ it.each([1,2])("enforces rank %s on BLACKBOX history versions without leaking di
   const real = fixtures.complete.BLACKBOX.findings[0].rescan_versions[0];
   const privateVersion = {...real, cls:"SUSPECT", path:"non-real-path-fixture"};
   render(<OspecRescanVersions versions={[privateVersion, real]} rank={rank} isRu={false} />);
+  fireEvent.click(screen.getByRole("button", {name:"Finding history"}));
   expect(screen.getByRole("region")).not.toHaveTextContent("non-real-path-fixture");
   expect(screen.getByRole("region")).not.toHaveTextContent("SUSPECT");
-  expect(screen.getByRole("region")).toHaveTextContent("No masked preview in API");
+  expect(screen.getByRole("region")).toHaveTextContent("Secret unavailable at this tier");
   if (rank === 1) expect(screen.getByRole("region")).not.toHaveTextContent(".env");
 });
 it("does not promote missing or contradictory coverage to complete", () => {
@@ -109,5 +111,7 @@ it("localizes coverage and versions in Russian", () => {
   render(<><OspecRescanCoverage findings={fixtures.partial.RAW.findings} isRu /><OspecRescanVersions versions={fixtures.partial.RAW.findings[0].rescan_versions} rank={2} isRu /></>);
   expandCoverage();
   expect(screen.getByRole("region", {name:"Покрытие OSPEC"})).toHaveTextContent("Этапы: 4/5");
-  expect(screen.getByRole("region", {name:"OSPEC rescan versions"})).toHaveTextContent("Маска версии");
+  const ruBtn = screen.queryByRole("button", {name:"История находки"});
+  if (ruBtn && ruBtn.getAttribute("aria-expanded") === "false") fireEvent.click(ruBtn);
+  expect(screen.getByRole("region", {name:"OSPEC rescan versions"})).toHaveTextContent("Маска");
 });

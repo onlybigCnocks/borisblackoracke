@@ -6,6 +6,10 @@ import fixtures from "./fixtures/ospec-api.json";
 vi.mock("react-i18next",()=>({useTranslation:()=>({i18n:{language:"en"}})}));
 vi.mock("@/lib/auth",async original=>({...await original<object>(),apiGetToolHistory:async()=>[]}));
 afterEach(()=>{cleanup();vi.unstubAllGlobals();localStorage.clear();sessionStorage.clear();});
+function expandHistory() {
+ for (const b of screen.queryAllByRole("button", {name:"Finding history"})) if(b.getAttribute("aria-expanded")==="false") fireEvent.click(b);
+ for (const b of screen.queryAllByRole("button", {name:"История находки"})) if(b.getAttribute("aria-expanded")==="false") fireEvent.click(b);
+}
 function open(tier="RAW") {
   localStorage.setItem("boris_auth_token","fixture");localStorage.setItem("boris_auth_user",JSON.stringify({tier}));
   const requests: any[]=[];
@@ -17,30 +21,37 @@ function open(tier="RAW") {
   render(<ToolsPanel/>);fireEvent.click(screen.getByRole("button",{name:/OSPEC \(1.1M/}));return requests;
 }
 it("pages versions with exact query/filters and independent offsets, resets on filter change",async()=>{
+
   const requests=open();
   await screen.findByRole("region",{name:"OSPEC rescan versions"});
+  expandHistory();
   const input=screen.getByPlaceholderText(/Фильтр по типу секрета/);
   fireEvent.change(input,{target:{value:"org/repo"}});fireEvent.keyDown(input,{key:"Enter"});
   await screen.findByRole("region",{name:"OSPEC rescan versions"});
+  expandHistory();
   const first=requests.at(-1);
   // Editing the input without searching must not change a version-page query.
   fireEvent.change(input,{target:{value:"org/not-searched"}});
-  fireEvent.click(screen.getByRole("button",{name:"Next versions"}));
-  await screen.findByRole("button",{name:"Previous versions"});
+  fireEvent.click(screen.getByRole("button",{name:"Next"}));
+  await screen.findByRole("button",{name:"Previous"});
   expect(requests.at(-1)).toEqual({...first,versions_offset:10});
   expect(requests.at(-1).query).toBe("org/repo");
-  expect(screen.getByRole("region",{name:"OSPEC rescan versions"})).toHaveTextContent("Versions 11–17 of 17");
-  expect(screen.getByRole("button",{name:"Next versions"})).toBeDisabled();
-  fireEvent.click(screen.getByRole("button",{name:"Previous versions"}));
+  expandHistory();
+  expect(screen.getByRole("region",{name:"OSPEC rescan versions"})).toHaveTextContent("Entries 11–17 of 17");
+  expect(screen.getByRole("button",{name:"Next"})).toBeDisabled();
+  fireEvent.click(screen.getByRole("button",{name:"Previous"}));
   await screen.findByRole("region",{name:"OSPEC rescan versions"});
+  expandHistory();
   expect(requests.at(-1)).toEqual({...first,versions_offset:0});
   fireEvent.keyDown(document.body,{key:"4"});
   await screen.findByRole("region",{name:"OSPEC rescan versions"});
+  expandHistory();
   expect(requests.at(-1)).toMatchObject({severity:"HIGH",versions_offset:0,offset:0});
 });
 it("RAW uses only API masked preview; RADAR never renders paths or previews; BLACKBOX full only",()=>{
   const version={cls:"REAL",path:"private-fixture-path",secret_full:"inert-full-value",secret_masked:"inert-mask",publication_key:"publication-fixture",published_at:"timestamp-fixture"};
   const {rerender}=render(<OspecRescanVersions versions={[version]} rank={2} isRu={false}/>);
+  expandHistory();
   expect(screen.getByRole("region")).toHaveTextContent("inert-mask");
   expect(screen.getByRole("region")).not.toHaveTextContent("inert-full-value");
   rerender(<OspecRescanVersions versions={[version]} rank={1} isRu={false}/>);
@@ -50,10 +61,10 @@ it("RAW uses only API masked preview; RADAR never renders paths or previews; BLA
   expect(screen.getByRole("region")).toHaveTextContent("inert-full-value");
 });
 it("fences a version response superseded by a new filter",async()=>{
-  open();await screen.findByRole("region",{name:"OSPEC rescan versions"});
+  open();await screen.findByRole("region",{name:"OSPEC rescan versions"});expandHistory();
   const finishes: ((value:Response)=>void)[]=[];
   vi.stubGlobal("fetch",vi.fn(()=>new Promise<Response>(resolve=>finishes.push(resolve))));
-  fireEvent.click(screen.getByRole("button",{name:"Next versions"}));
+  fireEvent.click(screen.getByRole("button",{name:"Next"}));
   expect(screen.queryByRole("region",{name:"OSPEC rescan coverage"})).not.toBeInTheDocument();
   fireEvent.keyDown(document.body,{key:"4"});
   await act(async()=>finishes[1](new Response(JSON.stringify(fixtures.failed.RAW))));
@@ -66,6 +77,7 @@ it("clears BLACKBOX publication results after a tier downgrade",async()=>{
   vi.stubGlobal("fetch",vi.fn(async url=>new Response(JSON.stringify(String(url).endsWith("/catalog")?{ok:false}:fixtures.pages["0"].BLACKBOX))));
   const {rerender}=render(<ToolsPanel/>);fireEvent.click(screen.getByRole("button",{name:/OSPEC \(1.1M/}));
   await screen.findByRole("region",{name:"OSPEC rescan versions"});
+  expandHistory();
   localStorage.setItem("boris_auth_user",JSON.stringify({tier:"RADAR"}));
   rerender(<ToolsPanel/>);
   expect(screen.queryByRole("region",{name:"OSPEC rescan coverage"})).not.toBeInTheDocument();
