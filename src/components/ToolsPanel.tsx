@@ -1,3 +1,4 @@
+import OspecPipelinePanel from "./OspecPipelinePanel";
 import { OspecRescanVersions } from "@/components/OspecRescanVersions";
 import { OspecRescanCoverage } from "@/components/OspecRescanCoverage";
 import { OspecDetectorOptions, OspecCatalogSummary, type DetectorCatalog } from "@/components/OspecDetectorCatalog";
@@ -116,7 +117,7 @@ const ToolsPanel = () => {
   const [loadingFindingId, setLoadingFindingId] = useState<number | null>(null);
   const [copiedSecretId, setCopiedSecretId] = useState<string | null>(null);
   const [openedHistoryBanner, setOpenedHistoryBanner] = useState<string | null>(null);
-  const [ospecDaemonRunning, setOspecDaemonRunning] = useState<boolean>(true);
+
   const [ospecDaemonBusy, setOspecDaemonBusy] = useState<boolean>(false);
   const [ospecDaemonMsg, setOspecDaemonMsg] = useState<string | null>(null);
   const [ospecBellOn, setOspecBellOn] = useState<boolean>(Boolean(user?.tg_meta?.ospec_alerts_enabled));
@@ -279,9 +280,7 @@ const ToolsPanel = () => {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
       if (requestId !== ospecRequestRef.current) return;
-      if (typeof data?.db_stats?.ospec_watcher_running === "boolean") {
-        setOspecDaemonRunning(data.db_stats.ospec_watcher_running);
-      }
+
       setResult(data);
       loadHistory(historyFilter);
     } catch (e: any) {
@@ -2091,115 +2090,7 @@ const ToolsPanel = () => {
                         : "🔕 TG Alerts: OFF"}
                     </span>
                   </button>
-                  <button
-                    type="button"
-                    disabled={ospecDaemonBusy}
-                    onClick={async () => {
-                      if (rank < 3) {
-                        setError(
-                          isRu
-                            ? "🔒 Управление боевыми демонами OSPEC (Авто-Скан в /dev/shm) доступно только на тарифе BLACKBOX."
-                            : "🔒 OSPEC Daemon Control requires BLACKBOX tier."
-                        );
-                        return;
-                      }
-                      setOspecDaemonBusy(true);
-                      setOspecDaemonMsg(null);
-                      try {
-                        const res = await fetch(`${API_BASE}/api/tools/ospec-daemon-control`, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json", ...authHeaders() },
-                          body: JSON.stringify({ action: "toggle_watcher" }),
-                        });
-                        const d = await res.json().catch(() => ({}));
-                        if (!res.ok) throw new Error(d.detail || `HTTP ${res.status}`);
-                        const isNowRunning = Boolean(d?.status?.ospec_watcher_running);
-                        setOspecDaemonRunning(isNowRunning);
-                        setOspecDaemonMsg(
-                          d.message ||
-                            (isNowRunning
-                              ? isRu
-                                ? "🟢 Турбо Авто-Скан OSPEC ЗАПУЩЕН (10 потоков /dev/shm + 8 ядер CPU)!"
-                                : "🟢 OSPEC Turbo Auto-Scan RUNNING!"
-                              : isRu
-                              ? "⏸ Авто-Скан OSPEC поставлен НА ПАУЗУ."
-                              : "⏸ OSPEC Auto-Scan PAUSED.")
-                        );
-                      } catch (e: any) {
-                        setError(e.message);
-                      } finally {
-                        setOspecDaemonBusy(false);
-                      }
-                    }}
-                    className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1 font-bold transition-all disabled:opacity-50 ${
-                      ospecDaemonRunning
-                        ? "border-green-500/70 bg-green-500/20 text-green-300 hover:bg-amber-500 hover:border-amber-500 hover:text-black"
-                        : "border-amber-500/70 bg-amber-500/20 text-amber-300 hover:bg-green-500 hover:border-green-500 hover:text-black"
-                    }`}
-                  >
-                    {ospecDaemonBusy ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <span
-                        className={`h-2 w-2 rounded-full ${
-                          ospecDaemonRunning ? "bg-green-400 animate-pulse" : "bg-amber-400"
-                        }`}
-                      />
-                    )}
-                    <span>
-                      {ospecDaemonBusy
-                        ? isRu
-                          ? "Переключение…"
-                          : "Switching…"
-                        : ospecDaemonRunning
-                        ? isRu
-                          ? "🟢 Авто-Скан: РАБОТАЕТ (⏸ Стоп)"
-                          : "🟢 Auto-Scan: ON (⏸ Pause)"
-                        : isRu
-                        ? "⏸ Авто-Скан: ПАУЗА (▶️ Старт)"
-                        : "⏸ Auto-Scan: PAUSED (▶️ Start)"}
-                    </span>
-                    {rank < 3 && <span className="ml-1 rounded bg-black/40 px-1 py-0.5 text-[9px]">🔒 BB</span>}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={ospecDaemonBusy}
-                    onClick={async () => {
-                      if (rank < 3) {
-                        setError(
-                          isRu
-                            ? "🔒 Запуск ручного Турбо-Скана (50 репо в /dev/shm) доступен только на тарифе BLACKBOX."
-                            : "🔒 Manual Turbo-Scan requires BLACKBOX tier."
-                        );
-                        return;
-                      }
-                      setOspecDaemonBusy(true);
-                      setOspecDaemonMsg(null);
-                      try {
-                        const res = await fetch(`${API_BASE}/api/tools/ospec-daemon-control`, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json", ...authHeaders() },
-                          body: JSON.stringify({ action: "run_batch" }),
-                        });
-                        const d = await res.json().catch(() => ({}));
-                        if (!res.ok) throw new Error(d.detail || `HTTP ${res.status}`);
-                        setOspecDaemonMsg(
-                          d.message ||
-                            (isRu
-                              ? "⚡ Запущен ручной Турбо-скан 50 репозиториев в /dev/shm!"
-                              : "⚡ Manual 50-repo Turbo scan started in /dev/shm!")
-                        );
-                      } catch (e: any) {
-                        setError(e.message);
-                      } finally {
-                        setOspecDaemonBusy(false);
-                      }
-                    }}
-                    className="rounded-lg border border-amber-500/60 bg-amber-500/15 px-2.5 py-1 font-semibold text-amber-300 transition-all hover:bg-amber-500 hover:text-black disabled:opacity-50"
-                  >
-                    ⚡ {isRu ? "Турбо-Скан (50 репо)" : "Turbo Scan (50)"}
-                    {rank < 3 && <span className="ml-1 rounded bg-black/40 px-1 py-0.5 text-[9px]">🔒 BB</span>}
-                  </button>
+                  <OspecPipelinePanel tier={user?.tier} isRu={isRu} />
                   <button
                     type="button"
                     disabled={ospecDaemonBusy}

@@ -1,3 +1,5 @@
+import OspecPipelinePanel from "./OspecPipelinePanel";
+import DiscoveryBackfillControl from "./DiscoveryBackfillControl";
 import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { useState, useEffect } from "react";
 import RadarDaemonDeck, { type ControlledRadar } from "./RadarDaemonDeck";
@@ -23,7 +25,6 @@ import {
   apiUpdateRadarSettings,
   apiEnrichDefillama,
   apiRunGithubOmniHarvest,
-  apiControlOspecDaemon,
   authHeaders,
   type BorisUser,
 } from "@/lib/auth";
@@ -48,8 +49,8 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
   const [ghSort, setGhSort] = useState<string>("newest");
   const [omniRunning, setOmniRunning] = useState<boolean>(false);
   const [omniBanner, setOmniBanner] = useState<string | null>(null);
-  const [ospecWatcherRunning, setOspecWatcherRunning] = useState<boolean>(true);
-  const [backfillRunning, setBackfillRunning] = useState<boolean>(true);
+
+
 
   const [zkMassBusy, setZkMassBusy] = useState<boolean>(false);
   const [zkMassMsg, setZkMassMsg] = useState<string | null>(null);
@@ -138,12 +139,7 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
         page: override?.p ?? page,
         per_page: override?.pp ?? perPage,
       });
-      if (typeof data?.stats?.ospec_watcher_running === "boolean") {
-        setOspecWatcherRunning(data.stats.ospec_watcher_running);
-      }
-      if (typeof data?.stats?.backfill_running === "boolean") {
-        setBackfillRunning(data.stats.backfill_running);
-      }
+
 
       setFeed(data);
     } finally {
@@ -180,29 +176,7 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
     }
   };
 
-  const handleControlDaemon = async (action: "toggle_watcher" | "toggle_backfill" | "run_batch") => {
-    if (user?.tier?.toUpperCase() !== "BLACKBOX") {
-      window.dispatchEvent(new CustomEvent("boris-open-checkout", { detail: { tier: "blackbox" } }));
-      return;
-    }
-    setOmniRunning(true);
-    setOmniBanner(null);
-    try {
-      const res = await apiControlOspecDaemon(action);
-      if (typeof res?.status?.ospec_watcher_running === "boolean") {
-        setOspecWatcherRunning(res.status.ospec_watcher_running);
-      }
-      if (typeof res?.status?.daemon_running === "boolean") {
-        setBackfillRunning(res.status.daemon_running);
-      }
-      setOmniBanner(`✅ ${res.message || "Статус демона обновлён"}`);
-      await loadFeed({ t: "github", v: ghVertical, of: ospecFilter, lang: ghLanguage, srt: ghSort, ms: minScore, p: page });
-    } catch (e: any) {
-      setOmniBanner(`⚠️ ${e.message}`);
-    } finally {
-      setOmniRunning(false);
-    }
-  };
+
 
   const handleToggleAlert = async (field: "gh" | "defi" | "expl" | "ospec") => {
     if (!user?.tg_id) return;
@@ -555,56 +529,8 @@ const RadarStreamPanel = ({ user, onOpenDossier, onPrefillScan }: Props) => {
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleControlDaemon("toggle_watcher")}
-                disabled={omniRunning}
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11px] font-bold transition-all disabled:opacity-50 ${
-                  ospecWatcherRunning
-                    ? "border-green-500/70 bg-green-500/20 text-green-300 hover:bg-amber-500 hover:text-black"
-                    : "border-amber-500/70 bg-amber-500/20 text-amber-300 hover:bg-green-500 hover:text-black"
-                }`}
-              >
-                <span className={`h-2 w-2 rounded-full ${ospecWatcherRunning ? "bg-green-400 animate-pulse" : "bg-amber-400"}`} />
-                <span>
-                  {ospecWatcherRunning
-                    ? isRu
-                      ? "🟢 Авто-Скан OSPEC: РАБОТАЕТ (⏸ Стоп)"
-                      : "🟢 OSPEC Auto-Scan: ON (⏸ Pause)"
-                    : isRu
-                    ? "⏸ Авто-Скан OSPEC: ПАУЗА (▶️ Старт)"
-                    : "⏸ OSPEC Auto-Scan: PAUSED (▶️ Start)"}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleControlDaemon("run_batch")}
-                disabled={omniRunning}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/50 bg-amber-500/15 px-3 py-1.5 text-[11px] font-bold text-amber-300 transition-all hover:bg-amber-500 hover:text-black disabled:opacity-50"
-              >
-                <span>{isRu ? "⚡ Скан 50 репо (Турбо)" : "⚡ Scan 50 Repos Now"}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleControlDaemon("toggle_backfill")}
-                disabled={omniRunning}
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11px] font-bold transition-all disabled:opacity-50 ${
-                  backfillRunning
-                    ? "border-purple-500/60 bg-purple-500/20 text-purple-300 hover:bg-purple-500 hover:text-white"
-                    : "border-border bg-background text-muted-foreground hover:border-purple-500 hover:text-purple-300"
-                }`}
-              >
-                <span className={`h-2 w-2 rounded-full ${backfillRunning ? "bg-purple-400 animate-pulse" : "bg-muted-foreground"}`} />
-                <span>
-                  {backfillRunning
-                    ? isRu
-                      ? "🚀 6M Backfill: РАБОТАЕТ (4 потока)"
-                      : "🚀 6M Backfill: ON (4 workers)"
-                    : isRu
-                    ? "⏸ 6M Backfill: СТОП (🚀 Старт)"
-                    : "⏸ 6M Backfill: OFF (🚀 Start)"}
-                </span>
-              </button>
+              <OspecPipelinePanel tier={user?.tier} isRu={isRu} />
+              <DiscoveryBackfillControl tier={user?.tier} isRu={isRu} />
               <button
                 type="button"
                 onClick={handleRunOmniHarvest}
