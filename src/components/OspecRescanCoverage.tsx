@@ -21,7 +21,7 @@ export function OspecRescanCoverage({ findings, repoCoverage, isRu }: {findings?
   const entries = [...repos];
   const totals = { complete: 0, incomplete: 0, unknown: 0 };
   entries.forEach(([,r]) => totals[verdict(r)]++);
-  const labels = isRu ? {complete:"Завершено",incomplete:"Неполное",unknown:"Нет данных"} : {complete:"Complete",incomplete:"Incomplete",unknown:"No data"};
+  const labels = isRu ? {complete:"Завершено",incomplete:"Неполный скан",unknown:"Нет данных"} : {complete:"Complete",incomplete:"Incomplete",unknown:"No data"};
   return <section aria-label={isRu ? "Покрытие OSPEC" : "OSPEC rescan coverage"} className="rounded-xl border border-border bg-card p-3 text-xs">
     <div className="flex flex-wrap items-center justify-between gap-2">
       <p><strong>{isRu ? "Покрытие OSPEC" : "OSPEC coverage"}</strong><span className="text-muted-foreground"> · {isRu ? "Завершено" : "Complete"}: {totals.complete} · {isRu ? "Неполных" : "Incomplete"}: {totals.incomplete} · {isRu ? "Без данных" : "No data"}: {totals.unknown}</span></p>
@@ -36,12 +36,12 @@ export function OspecRescanCoverage({ findings, repoCoverage, isRu }: {findings?
         const hasDetails = Boolean(c || rescan?.publication_key || rescan?.commit || rescan?.engine || rescan?.published_at);
         const metadata = [[isRu ? "Публикация" : "Publication",rescan?.publication_key],[isRu ? "Коммит" : "Commit",rescan?.commit],[isRu ? "Движок" : "Engine",rescan?.engine],[isRu ? "Опубликовано" : "Published",rescan?.published_at]];
         return <div key={repo} className="border-t border-border pt-2 min-w-0">
-          <div className="flex flex-wrap items-baseline justify-between gap-1"><span className="break-all">{repo}</span><strong className={v === "complete" ? "text-emerald-500" : v === "incomplete" ? "text-amber-500" : "text-muted-foreground"}>{labels[v]}{rescan?.status === "failed" ? (isRu ? " · Ошибка" : " · Failed") : ""}</strong></div>
+          <div className="flex flex-wrap items-baseline justify-between gap-1"><span className="break-all">{repo}</span><strong className={v === "complete" ? "text-emerald-500" : v === "incomplete" ? "text-amber-500" : "text-muted-foreground"}>{labels[v]}{rescan?.status === "failed" && !(typeof c?.succeeded === "number" && c.succeeded > 0) && !(typeof c?.finalization?.succeeded === "number" && c.finalization.succeeded > 0) ? (isRu ? " · Ошибка" : " · Failed") : ""}</strong></div>
           {hasDetails && <details className="mt-1 text-muted-foreground">
             <summary className="cursor-pointer text-primary">{isRu ? "Технические детали" : "Technical details"}</summary>
             <div className="mt-1 space-y-1 break-all">
               {metadata.filter(([,value]) => value).map(([label,value]) => <p key={label}>{label}: {value}</p>)}
-              {c && <><p>{isRu ? "Этапы" : "Stages"}: {count(c.succeeded)}/{count(c.required)} · {isRu ? "Файлы" : "Eligible files"}: {count(c.eligible)}</p>
+              {c && <><p>{isRu ? "Этапы" : "Stages"}: {count(c.succeeded)}/{count(c.required)} · {isRu ? "Файлы" : "Eligible files"}: {count(c.finalization?.succeeded)}/{count(c.eligible)}</p>
                 {c.states && <p>{isRu ? "Ожидающие этапы" : "Pending stages"}: {count(c.states.pending)} · {isRu ? "Ошибки этапов" : "Failed stages"}: {count(c.states.failed)}</p>}
                 {c.finalization && <><p>{isRu ? "Слияние" : "Merge"}: {count(c.finalization.succeeded)}/{count(c.finalization.required)}</p><p>{isRu ? "Ожидающее слияние" : "Pending merge"}: {count(c.finalization.pending)} · {isRu ? "Ошибки слияния" : "Failed merge"}: {count(c.finalization.failed)}</p></>}
               </>}
