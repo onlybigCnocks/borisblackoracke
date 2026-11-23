@@ -57,9 +57,9 @@ it("fences a version response superseded by a new filter",async()=>{
   expect(screen.queryByRole("region",{name:"OSPEC rescan coverage"})).not.toBeInTheDocument();
   fireEvent.keyDown(document.body,{key:"4"});
   await act(async()=>finishes[1](new Response(JSON.stringify(fixtures.failed.RAW))));
-  expect(await screen.findByRole("region",{name:"OSPEC rescan coverage"})).toHaveTextContent("INCOMPLETE (FAILED)");
+  expect(await screen.findByRole("region",{name:"OSPEC rescan coverage"})).toHaveTextContent("Incomplete: 1");
   await act(async()=>finishes[0](new Response(JSON.stringify(fixtures.complete.RAW))));
-  expect(screen.getByRole("region",{name:"OSPEC rescan coverage"})).toHaveTextContent("INCOMPLETE (FAILED)");
+  expect(screen.getByRole("region",{name:"OSPEC rescan coverage"})).toHaveTextContent("Incomplete: 1");
 });
 it("clears BLACKBOX publication results after a tier downgrade",async()=>{
   localStorage.setItem("boris_auth_user",JSON.stringify({tier:"BLACKBOX"}));
@@ -74,7 +74,7 @@ it("filtered empty exact repo retains independent coverage; empty global search 
   localStorage.setItem("boris_auth_user",JSON.stringify({tier:"RAW"}));
   vi.stubGlobal("fetch",vi.fn(async url=>new Response(JSON.stringify(String(url).endsWith("/catalog")?{ok:false}:fixtures.filteredZero.RAW))));
   render(<ToolsPanel/>);fireEvent.click(screen.getByRole("button",{name:/OSPEC \(1.1M/}));
-  expect(await screen.findByRole("region",{name:"OSPEC rescan coverage"})).toHaveTextContent("INCOMPLETE (FAILED)");
+  expect(await screen.findByRole("region",{name:"OSPEC rescan coverage"})).toHaveTextContent("Incomplete: 1");
   expect(fixtures.filteredZero.RAW.findings).toHaveLength(0);
   expect(fixtures.emptySearch.RAW.repo_coverage).not.toHaveProperty("https://github.com/org/empty");
 });
