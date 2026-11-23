@@ -19,11 +19,10 @@ describe('OSPEC shared pipeline control', () => {
     const fetcher = vi.fn().mockImplementationOnce(() => response({status: state()})).mockImplementationOnce(() => response({ok:true,status:state(false)})).mockImplementationOnce(() => response({status:state(false)}));
     vi.stubGlobal('fetch', fetcher);
     render(<OspecPipelinePanel tier="BLACKBOX" isRu={false} />);
-    const button = await screen.findByRole('button', { name: /Running.*Pause/ });
-    expect(screen.getByText('Publication backlog')).toBeInTheDocument();
-    expect(screen.getByText('Incomplete')).toBeInTheDocument();
+    const button = await screen.findByRole('button', { name: /Auto-Scan: ON/ });
+    expect(screen.getByText(/Scanned 3\/10/)).toBeInTheDocument();
     fireEvent.click(button);
-    await screen.findByRole('button', { name: /Paused.*Resume/ });
+    await screen.findByRole('button', { name: /Auto-Scan: PAUSED/ });
     expect(JSON.parse(fetcher.mock.calls[1][1].body).action).toBe('pause');
     expect(JSON.parse(fetcher.mock.calls[2][1].body).action).toBe('status');
   });
@@ -37,20 +36,29 @@ describe('OSPEC shared pipeline control', () => {
     vi.stubGlobal('fetch', vi.fn(() => response({detail:'Denied'}, code)));
     render(<OspecPipelinePanel tier="BLACKBOX" isRu={false} />);
     await screen.findByRole('alert');
-    expect(screen.getByRole('button', { name: /State unknown/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Auto-Scan: state unknown/ })).toBeDisabled();
   });
   it('rejects unconfirmed control and cannot double-submit', async () => {
     let finish!: (r: Response) => void;
     const fetcher = vi.fn().mockImplementationOnce(() => response({status:state()})).mockImplementationOnce(() => new Promise(r => { finish=r; }));
     vi.stubGlobal('fetch',fetcher);
     render(<OspecPipelinePanel tier="BLACKBOX" isRu={false} />);
-    const button = await screen.findByRole('button', {name:/Running.*Pause/});
+    const button = await screen.findByRole('button', {name:/Auto-Scan: ON/});
     fireEvent.click(button); fireEvent.click(button);
     expect(fetcher).toHaveBeenCalledTimes(2);
     expect(button).toBeDisabled();
     finish(new Response(JSON.stringify({ok:false,error:'Not confirmed'})));
     await screen.findByRole('alert');
-    expect(screen.getByRole('button',{name:/State unknown/})).toBeDisabled();
+    expect(screen.getByRole('button',{name:/Auto-Scan: state unknown/})).toBeDisabled();
+  });
+  it.each([true, false])('keeps the selected language and hides technical dumps: ru=%s', async isRu => {
+    vi.stubGlobal('fetch', vi.fn(() => response({status: {...state(false), heartbeat: {lease_expires: null}, limitations: ['Static detection is not credential validity.']}})));
+    const view = render(<OspecPipelinePanel tier="BLACKBOX" isRu={isRu} />);
+    await screen.findByRole('button', {name: isRu ? /Авто-Скан: ПАУЗА/ : /Auto-Scan: PAUSED/});
+    const text = view.container.textContent || '';
+    for (const hidden of ['fixture-generation', 'fixture-engine', 'Heartbeat', 'lease_expires', 'Static detection is not credential validity.', 'Publication backlog']) expect(text).not.toContain(hidden);
+    if (isRu) { expect(text).toContain('Проверено 3/10'); expect(text).not.toMatch(/Scanned|Refresh|Auto-Scan/); }
+    else { expect(text).toContain('Scanned 3/10'); expect(text).not.toMatch(/Проверено|Обновить|Авто-Скан/); }
   });
   it('discards a late status response across tier changes', async () => {
     let finish!: (r: Response) => void;
@@ -58,7 +66,7 @@ describe('OSPEC shared pipeline control', () => {
     const view=render(<OspecPipelinePanel tier="BLACKBOX" isRu={false} />);
     view.rerender(<OspecPipelinePanel tier="RAW" isRu={false} />);
     finish(new Response(JSON.stringify({status:state()})));
-    await waitFor(() => expect(screen.queryByText('fixture-generation')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText(/Scanned/)).not.toBeInTheDocument());
     expect(screen.queryByRole('button',{name:/Pause/})).not.toBeInTheDocument();
   });
 });

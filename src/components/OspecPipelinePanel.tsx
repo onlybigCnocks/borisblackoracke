@@ -47,19 +47,14 @@ export default function OspecPipelinePanel({ tier, isRu }: { tier?: string; isRu
     } catch (e) { if (id === serial.current) { setData(null); setError(e instanceof Error ? e.message : 'Control failed'); } }
     finally { window.clearTimeout(timer); if (id === serial.current) { lock.current = false; setBusy(false); } }
   }
-  if (!allowed) return <p className="text-xs text-muted-foreground">🔒 OSPEC pipeline · BLACKBOX</p>;
-  const labels: [string, string, string][] = [['total','Targets','Цели'],['completed','Completed','Завершено'],['pending','Pending','Ожидают'],['retry','Retry','Повтор'],['active','Active','Активны'],['incomplete','Incomplete','Неполные'],['outbox','Publication backlog','Ожидают публикации']];
-  return <section aria-label="OSPEC pipeline control" className="w-full rounded-xl border border-primary/35 bg-card p-3 space-y-2 font-mono text-xs">
-    <h3 className="font-bold text-primary">OSPEC · {isRu ? 'Статический конвейер' : 'Static pipeline'}</h3>
-    <div className="flex flex-wrap gap-2">
-      <button type="button" disabled={busy || !data || !!error} onClick={() => void control()} className="rounded border border-primary px-3 py-2 disabled:opacity-50">{busy ? (isRu ? 'Проверка…' : 'Checking…') : !data ? (isRu ? 'Статус неизвестен' : 'State unknown') : data.running ? (isRu ? 'Работает · Пауза' : 'Running · Pause') : data.state.toLowerCase() === 'paused' ? (isRu ? 'Пауза · Продолжить' : 'Paused · Resume') : `${data.state} · ${isRu ? 'Старт' : 'Start'}`}</button>
-      <button type="button" disabled={busy} onClick={() => void refresh()} className="rounded border px-3 py-2 disabled:opacity-50">{isRu ? 'Обновить статус' : 'Refresh status'}</button>
-    </div>
-    {error && <p role="alert" className="text-destructive">{error}</p>}
-    <dl className="flex flex-wrap gap-4">{labels.map(([key,en,ru]) => <div key={key}><dt>{isRu ? ru : en}</dt><dd className="font-bold">{typeof data?.counts?.[key] === 'number' ? data.counts[key]!.toLocaleString() : '—'}</dd></div>)}</dl>
-    <p>{isRu ? 'Поколение' : 'Generation'}: {data?.generation ?? '—'} · Engine: {data?.engine ?? '—'}</p>
-    <p>Heartbeat: {data?.heartbeat == null ? '—' : JSON.stringify(data.heartbeat)}</p>
-    <p>{isRu ? 'Сбор новых репозиториев отдельно. Неполный скан ≠ чистый. Статический анализ не проверяет живость ключей.' : 'Discovery is separate. Incomplete is not clean. Static scanning does not validate credentials.'}</p>
-    {data?.limitations?.map(text => <p key={text}>{text}</p>)}
+  if (!allowed) return <p className="text-xs text-muted-foreground">🔒 {isRu ? 'Управление OSPEC · BLACKBOX' : 'OSPEC controls · BLACKBOX'}</p>;
+  const count = (key: string) => typeof data?.counts?.[key] === 'number' ? data.counts[key]!.toLocaleString(isRu ? 'ru-RU' : 'en-US') : '—';
+  return <section aria-label="OSPEC pipeline control" className="flex flex-wrap items-center gap-2 text-xs">
+    <button type="button" disabled={busy || !data || !!error} onClick={() => void control()} className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-bold transition-all disabled:opacity-50 ${data?.running ? 'border-green-500/70 bg-green-500/20 text-green-300' : 'border-amber-500/70 bg-amber-500/20 text-amber-300'}`}>
+      <span>{busy ? (isRu ? 'Проверка…' : 'Checking…') : !data ? (isRu ? 'Авто-Скан: статус неизвестен' : 'Auto-Scan: state unknown') : data.running ? (isRu ? '🟢 Авто-Скан: РАБОТАЕТ (⏸ Стоп)' : '🟢 Auto-Scan: ON (⏸ Pause)') : data.state.toLowerCase() === 'paused' ? (isRu ? '⏸ Авто-Скан: ПАУЗА (▶ Продолжить)' : '⏸ Auto-Scan: PAUSED (▶ Resume)') : (isRu ? '▶ Авто-Скан: запуск' : '▶ Auto-Scan: start')}</span>
+    </button>
+    <button type="button" disabled={busy} onClick={() => void refresh()} className="rounded-lg border px-2.5 py-1.5 disabled:opacity-50">{isRu ? '↻ Обновить' : '↻ Refresh'}</button>
+    {data && <span className="text-muted-foreground">{isRu ? `Проверено ${count('completed')}/${count('total')} · в работе ${count('active')} · повтор ${count('retry')}` : `Scanned ${count('completed')}/${count('total')} · active ${count('active')} · retry ${count('retry')}`}</span>}
+    {error && <p role="alert" className="w-full text-destructive">{isRu ? '⚠ Не удалось подтвердить состояние OSPEC. Сбор репозиториев работает отдельно. Обновите статус.' : '⚠ OSPEC state could not be confirmed. Repository discovery is independent. Refresh status.'}</p>}
   </section>;
 }
