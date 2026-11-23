@@ -83,6 +83,10 @@ const ToolsPanel = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<any>(null);
+  // Only pool aggregates survive filter refreshes; never cache findings or secrets.
+  const ospecStatsScope = tier + ":" + JSON.stringify(authHeaders());
+  const [ospecPoolStats, setOspecPoolStats] = useState<{scope: string; data: any} | null>(null);
+  const ospecStats = ospecPoolStats?.scope === ospecStatsScope ? ospecPoolStats.data : null;
 
   const [historyItems, setHistoryItems] = useState<BorisToolHistoryItem[]>([]);
   const [historyFilter, setHistoryFilter] = useState<string>("all");
@@ -182,7 +186,8 @@ const ToolsPanel = () => {
       ospecSubmittedRef.current = null;
     }
     return () => { ospecRequestRef.current += 1; };
-  }, [rank]);
+    setOspecPoolStats(null);
+  }, [rank, ospecStatsScope]);
   useEffect(() => () => { ospecRequestRef.current += 1; }, [tool]);
 
   // Full Markdown Writeup viewer for the 1,678 Deep Exploits DB
@@ -282,6 +287,7 @@ const ToolsPanel = () => {
       if (requestId !== ospecRequestRef.current) return;
 
       setResult(data);
+      if (data.db_stats || data.kind_stats) setOspecPoolStats(prev => ({scope: ospecStatsScope, data: {db_stats: data.db_stats ?? (prev?.scope === ospecStatsScope ? prev.data.db_stats : undefined), kind_stats: data.kind_stats ?? (prev?.scope === ospecStatsScope ? prev.data.kind_stats : undefined)}}));
       loadHistory(historyFilter);
     } catch (e: any) {
       if (requestId === ospecRequestRef.current) setError(e.message || "OSPEC error");
@@ -5309,7 +5315,7 @@ const ToolsPanel = () => {
       )}
 
 
-      {result && tool === "ospec" && (
+      {ospecStats && tool === "ospec" && (
         <div className="space-y-4">
           {/* OSPEC VISUAL TELEMETRY COMMAND DECK (SVG Donut + Interactive Category Bars + Top Active Signatures) */}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 font-mono text-xs">
@@ -5325,9 +5331,9 @@ const ToolsPanel = () => {
               </div>
 
               {(() => {
-                const critCnt = Number(result.db_stats?.by_severity?.CRITICAL ?? 0);
-                const highCnt = Number(result.db_stats?.by_severity?.HIGH ?? 0);
-                const medCnt = Number(result.db_stats?.by_severity?.MEDIUM ?? 0);
+                const critCnt = Number((tool === "ospec" ? ospecStats : result)?.db_stats?.by_severity?.CRITICAL ?? 0);
+                const highCnt = Number((tool === "ospec" ? ospecStats : result)?.db_stats?.by_severity?.HIGH ?? 0);
+                const medCnt = Number((tool === "ospec" ? ospecStats : result)?.db_stats?.by_severity?.MEDIUM ?? 0);
                 const totReal = Math.max(1, critCnt + highCnt + medCnt);
                 const critPct = Math.round((critCnt / totReal) * 100);
                 const highPct = Math.round((highCnt / totReal) * 100);
@@ -5342,9 +5348,9 @@ const ToolsPanel = () => {
                         <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#10b981" strokeWidth="4.5" strokeDasharray={`${medPct} ${100 - medPct}`} strokeDashoffset={100 - critPct - highPct} />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                        <span className="text-sm font-black text-foreground">{fmt(result.db_stats?.real_findings ?? totReal, 0)}</span>
+                        <span className="text-sm font-black text-foreground">{fmt((tool === "ospec" ? ospecStats : result)?.db_stats?.real_findings ?? totReal, 0)}</span>
                         <span className="text-[9px] text-emerald-400 font-bold">REAL</span>
-                        <span className="text-[9px] text-amber-400">🔥 {fmt(result.db_stats?.live_keys ?? 0, 0)} LIVE</span>
+                        <span className="text-[9px] text-amber-400">🔥 {fmt((tool === "ospec" ? ospecStats : result)?.db_stats?.live_keys ?? 0, 0)} LIVE</span>
                       </div>
                     </div>
 
@@ -5359,7 +5365,7 @@ const ToolsPanel = () => {
                       </div>
                       <div className="flex items-center justify-between rounded border border-border bg-background px-2.5 py-1.5">
                         <span className="text-emerald-400 font-bold">🔥 LIVE Funded</span>
-                        <b>{fmt(result.db_stats?.live_keys ?? 0, 0)} keys</b>
+                        <b>{fmt(ospecStats.db_stats?.live_keys ?? 0, 0)} keys</b>
                       </div>
                     </div>
                   </div>
@@ -5367,8 +5373,8 @@ const ToolsPanel = () => {
               })()}
 
               <div className="flex items-center justify-between border-t border-border/60 pt-2 text-[10px] text-muted-foreground">
-                <span>📦 Scanned: <b className="text-foreground">{fmt(result.db_stats?.indexed_repos ?? 0, 0)} repos</b></span>
-                <span>🎯 With REAL: <b className="text-primary">{fmt(result.db_stats?.real_repos ?? 0, 0)} repos</b></span>
+                <span>📦 Scanned: <b className="text-foreground">{fmt(ospecStats.db_stats?.indexed_repos ?? 0, 0)} repos</b></span>
+                <span>🎯 With REAL: <b className="text-primary">{fmt(ospecStats.db_stats?.real_repos ?? 0, 0)} repos</b></span>
               </div>
             </div>
 
@@ -5438,7 +5444,7 @@ const ToolsPanel = () => {
               </div>
 
               <div className="flex flex-wrap gap-1.5 my-1 max-h-40 overflow-y-auto pr-1">
-                {(result.kind_stats || []).slice(0, 18).map((ks: any) => {
+                {((tool === "ospec" ? ospecStats : result)?.kind_stats || []).slice(0, 18).map((ks: any) => {
                   const sk = ks.short_kind || String(ks.kind || "").replace("secret:", "");
                   const isSel = input1 === sk;
                   return (
@@ -5463,10 +5469,10 @@ const ToolsPanel = () => {
                 })}
               </div>
 
-              {result.db_stats?.by_chain && (
+              {(tool === "ospec" ? ospecStats : result)?.db_stats?.by_chain && (
                 <div className="flex flex-wrap items-center gap-1 pt-2 border-t border-border/60 text-[9px] text-muted-foreground">
                   <span className="text-cyan-400 font-bold">⛓ Chains:</span>
-                  {Object.entries(result.db_stats.by_chain)
+                  {Object.entries((tool === "ospec" ? ospecStats : result)?.db_stats.by_chain)
                     .filter(([ch]) => ch !== "other" && ch !== "undetermined")
                     .slice(0, 6)
                     .map(([ch, cnt]: [string, any]) => (
@@ -5483,32 +5489,32 @@ const ToolsPanel = () => {
             {[
               {
                 k: isRu ? "🟢 Подтверждённые REAL" : "🟢 Verified REAL",
-                v: fmt(result.db_stats?.real_findings ?? result.db_stats?.indexed_findings, 0),
+                v: fmt((tool === "ospec" ? ospecStats : result)?.db_stats?.real_findings ?? (tool === "ospec" ? ospecStats : result)?.db_stats?.indexed_findings, 0),
                 sub: isRu
-                  ? `из ${fmt(result.db_stats?.indexed_findings, 0)} проверенных`
-                  : `of ${fmt(result.db_stats?.indexed_findings, 0)} scanned`,
+                  ? `из ${fmt((tool === "ospec" ? ospecStats : result)?.db_stats?.indexed_findings, 0)} проверенных`
+                  : `of ${fmt((tool === "ospec" ? ospecStats : result)?.db_stats?.indexed_findings, 0)} scanned`,
               },
               {
                 k: isRu ? "🔥 Живые ключи (LIVE)" : "🔥 Live Verified Keys",
-                v: fmt(result.db_stats?.live_keys ?? 0, 0),
+                v: fmt((tool === "ospec" ? ospecStats : result)?.db_stats?.live_keys ?? 0, 0),
                 sub: isRu ? "активный баланс / RPC / nonce" : "active on-chain / RPC",
               },
               {
                 k: isRu ? "📦 Просканировано репо" : "📦 Scanned Repos",
-                v: fmt(result.db_stats?.indexed_repos, 0),
+                v: fmt((tool === "ospec" ? ospecStats : result)?.db_stats?.indexed_repos, 0),
                 sub: isRu
-                  ? `${fmt(result.db_stats?.real_repos ?? 0, 0)} репо с REAL`
-                  : `${fmt(result.db_stats?.real_repos ?? 0, 0)} repos w/ REAL`,
+                  ? `${fmt((tool === "ospec" ? ospecStats : result)?.db_stats?.real_repos ?? 0, 0)} репо с REAL`
+                  : `${fmt((tool === "ospec" ? ospecStats : result)?.db_stats?.real_repos ?? 0, 0)} repos w/ REAL`,
               },
               {
                 k: "🔴 Critical (REAL)",
-                v: fmt(result.db_stats?.by_severity?.CRITICAL ?? 0, 0),
+                v: fmt((tool === "ospec" ? ospecStats : result)?.db_stats?.by_severity?.CRITICAL ?? 0, 0),
                 sub: isRu ? "приватники / seed / prod" : "privkeys / seeds / prod",
               },
               {
                 k: "🟠 High (REAL)",
-                v: fmt(result.db_stats?.by_severity?.HIGH ?? 0, 0),
-                sub: isRu ? `Радар: ${fmt(result.db_stats?.radar_total ?? 0, 0)} репо` : `Radar: ${fmt(result.db_stats?.radar_total ?? 0, 0)} repos`,
+                v: fmt(ospecStats.db_stats?.by_severity?.HIGH ?? 0, 0),
+                sub: isRu ? `Радар: ${fmt(ospecStats.db_stats?.radar_total ?? 0, 0)} репо` : `Radar: ${fmt(ospecStats.db_stats?.radar_total ?? 0, 0)} repos`,
               },
             ].map((c, i) => (
               <div key={i} className="rounded-xl border border-border bg-card p-4">
@@ -5519,6 +5525,11 @@ const ToolsPanel = () => {
             ))}
           </div>
 
+        </div>
+      )}
+
+      {result && tool === "ospec" && (
+        <div className="space-y-4">
           <OspecRescanCoverage findings={result.findings} repoCoverage={result.repo_coverage} isRu={isRu} />
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">

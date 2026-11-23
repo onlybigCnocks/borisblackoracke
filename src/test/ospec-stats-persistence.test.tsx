@@ -1,0 +1,20 @@
+import {afterEach, it, expect, vi} from 'vitest';
+import {render, screen, fireEvent, cleanup, act} from '@testing-library/react';
+import ToolsPanel from '../components/ToolsPanel';
+vi.mock('react-i18next',()=>({useTranslation:()=>({i18n:{language:'en'}})}));
+vi.mock('@/lib/auth',async original=>({...await original<object>(),apiGetToolHistory:async()=>[]}));
+afterEach(()=>{cleanup();vi.unstubAllGlobals();localStorage.clear();});
+it('keeps pool statistics visible while a new findings filter loads',async()=>{
+ localStorage.setItem('boris_auth_user',JSON.stringify({tier:'BLACKBOX'}));localStorage.setItem('boris_auth_token','fixture');
+ const payload={ok:true,findings:[],repo_coverage:{},kind_stats:[{short_kind:'fixture',real:7}],db_stats:{real_findings:7,by_severity:{CRITICAL:3,HIGH:4}},total_groups:0};
+ vi.stubGlobal('fetch',vi.fn(async()=>new Response(JSON.stringify(payload))));
+ render(<ToolsPanel/>);fireEvent.click(screen.getByRole('button',{name:/OSPEC \(1.1M/}));
+ await screen.findByText(/Verified REAL Secret Pool Topology/);
+ let finish:(value:Response)=>void=()=>{};
+ vi.stubGlobal('fetch',vi.fn(()=>new Promise<Response>(resolve=>finish=resolve)));
+ fireEvent.keyDown(document.body,{key:'3'});
+ expect(screen.getByText(/Verified REAL Secret Pool Topology/)).toBeInTheDocument();
+ expect(screen.queryByRole('region',{name:'OSPEC rescan coverage'})).not.toBeInTheDocument();
+ await act(async()=>finish(new Response(JSON.stringify(payload))));
+ expect(screen.getByText(/Verified REAL Secret Pool Topology/)).toBeInTheDocument();
+});
