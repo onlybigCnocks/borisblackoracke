@@ -1,0 +1,5262 @@
+{
+  "missing": {
+    "RADAR": {
+      "viewer_tier": "RADAR",
+      "query": "org/repo",
+      "filter_mode": "repo:org/repo",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 10,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {},
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 1,
+          "repo_url": "https://github.com/org/repo",
+          "ticker": "org/repo",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 0,
+          "gh_url": "https://github.com/org/repo",
+          "found_at": "",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "\ud83d\udd12 [RAW: \u043c\u0430\u0441\u043a\u0430 \u00b7 BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u0441\u0435\u043a\u0440\u0435\u0442]",
+          "secret_full": null,
+          "rescan": null,
+          "rescan_versions": [],
+          "rescan_versions_page": {
+            "total": 0,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    },
+    "RAW": {
+      "viewer_tier": "RAW",
+      "query": "org/repo",
+      "filter_mode": "repo:org/repo",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 25,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {},
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 1,
+          "repo_url": "https://github.com/org/repo",
+          "ticker": "org/repo",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 1,
+          "gh_url": "synthetic-link",
+          "found_at": "",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "MASKED \ud83d\udd12 [BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u043a\u043b\u044e\u0447]",
+          "secret_full": null,
+          "rescan": null,
+          "rescan_versions": [],
+          "rescan_versions_page": {
+            "total": 0,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    },
+    "BLACKBOX": {
+      "viewer_tier": "BLACKBOX",
+      "query": "org/repo",
+      "filter_mode": "repo:org/repo",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 40,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {},
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 1,
+          "repo_url": "https://github.com/org/repo",
+          "ticker": "org/repo",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 1,
+          "gh_url": "synthetic-link",
+          "found_at": "",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "",
+          "secret_full": "",
+          "rescan": null,
+          "rescan_versions": [],
+          "rescan_versions_page": {
+            "total": 0,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    }
+  },
+  "partial": {
+    "RADAR": {
+      "viewer_tier": "RADAR",
+      "query": "org/repo",
+      "filter_mode": "repo:org/repo",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 10,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/repo": {
+          "status": "partial",
+          "coverage": {
+            "complete": false,
+            "required": 5,
+            "succeeded": 4,
+            "eligible": 1,
+            "states": {
+              "succeeded": 4,
+              "failed": 1
+            },
+            "finalization": {
+              "required": 1,
+              "succeeded": 0,
+              "failed": 1,
+              "pending": 0
+            }
+          },
+          "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+          "commit": "1111111111111111111111111111111111111111",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:31.992332+00:00"
+        }
+      },
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 1,
+          "repo_url": "https://github.com/org/repo",
+          "ticker": "org/repo",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 0,
+          "gh_url": "https://github.com/org/repo",
+          "found_at": "2026-11-23T01:34:31.992332+00:00",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "\ud83d\udd12 [RAW: \u043c\u0430\u0441\u043a\u0430 \u00b7 BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u0441\u0435\u043a\u0440\u0435\u0442]",
+          "secret_full": null,
+          "rescan": {
+            "status": "partial",
+            "coverage": {
+              "complete": false,
+              "required": 5,
+              "succeeded": 4,
+              "eligible": 1,
+              "states": {
+                "succeeded": 4,
+                "failed": 1
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 0,
+                "failed": 1,
+                "pending": 0
+              }
+            },
+            "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+            "commit": "1111111111111111111111111111111111111111",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:31.992332+00:00"
+          },
+          "rescan_versions": [
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+              "published_at": "2026-11-23T01:34:31.992332+00:00",
+              "path": null,
+              "line": 0,
+              "secret_masked": null,
+              "secret_full": null,
+              "state": "partial",
+              "commit": "1111111111111111111111111111111111111111",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ],
+          "rescan_versions_page": {
+            "total": 1,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    },
+    "RAW": {
+      "viewer_tier": "RAW",
+      "query": "org/repo",
+      "filter_mode": "repo:org/repo",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 25,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/repo": {
+          "status": "partial",
+          "coverage": {
+            "complete": false,
+            "required": 5,
+            "succeeded": 4,
+            "eligible": 1,
+            "states": {
+              "succeeded": 4,
+              "failed": 1
+            },
+            "finalization": {
+              "required": 1,
+              "succeeded": 0,
+              "failed": 1,
+              "pending": 0
+            }
+          },
+          "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+          "commit": "1111111111111111111111111111111111111111",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:31.992332+00:00"
+        }
+      },
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 1,
+          "repo_url": "https://github.com/org/repo",
+          "ticker": "org/repo",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 1,
+          "gh_url": "synthetic-link",
+          "found_at": "2026-11-23T01:34:31.992332+00:00",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "MASKED \ud83d\udd12 [BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u043a\u043b\u044e\u0447]",
+          "secret_full": null,
+          "rescan": {
+            "status": "partial",
+            "coverage": {
+              "complete": false,
+              "required": 5,
+              "succeeded": 4,
+              "eligible": 1,
+              "states": {
+                "succeeded": 4,
+                "failed": 1
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 0,
+                "failed": 1,
+                "pending": 0
+              }
+            },
+            "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+            "commit": "1111111111111111111111111111111111111111",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:31.992332+00:00"
+          },
+          "rescan_versions": [
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+              "published_at": "2026-11-23T01:34:31.992332+00:00",
+              "path": ".env",
+              "line": 1,
+              "secret_masked": "",
+              "secret_full": null,
+              "state": "partial",
+              "commit": "1111111111111111111111111111111111111111",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ],
+          "rescan_versions_page": {
+            "total": 1,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    },
+    "BLACKBOX": {
+      "viewer_tier": "BLACKBOX",
+      "query": "org/repo",
+      "filter_mode": "repo:org/repo",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 40,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/repo": {
+          "status": "partial",
+          "coverage": {
+            "complete": false,
+            "required": 5,
+            "succeeded": 4,
+            "eligible": 1,
+            "states": {
+              "succeeded": 4,
+              "failed": 1
+            },
+            "finalization": {
+              "required": 1,
+              "succeeded": 0,
+              "failed": 1,
+              "pending": 0
+            }
+          },
+          "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+          "commit": "1111111111111111111111111111111111111111",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:31.992332+00:00"
+        }
+      },
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 1,
+          "repo_url": "https://github.com/org/repo",
+          "ticker": "org/repo",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 1,
+          "gh_url": "synthetic-link",
+          "found_at": "2026-11-23T01:34:31.992332+00:00",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "",
+          "secret_full": "",
+          "rescan": {
+            "status": "partial",
+            "coverage": {
+              "complete": false,
+              "required": 5,
+              "succeeded": 4,
+              "eligible": 1,
+              "states": {
+                "succeeded": 4,
+                "failed": 1
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 0,
+                "failed": 1,
+                "pending": 0
+              }
+            },
+            "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+            "commit": "1111111111111111111111111111111111111111",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:31.992332+00:00"
+          },
+          "rescan_versions": [
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+              "published_at": "2026-11-23T01:34:31.992332+00:00",
+              "path": ".env",
+              "line": 1,
+              "secret_masked": null,
+              "secret_full": "",
+              "state": "partial",
+              "commit": "1111111111111111111111111111111111111111",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ],
+          "rescan_versions_page": {
+            "total": 1,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    }
+  },
+  "complete": {
+    "RADAR": {
+      "viewer_tier": "RADAR",
+      "query": "org/repo",
+      "filter_mode": "repo:org/repo",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 10,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/repo": {
+          "status": "complete",
+          "coverage": {
+            "complete": true,
+            "required": 5,
+            "succeeded": 5,
+            "eligible": 1,
+            "states": {
+              "succeeded": 5
+            },
+            "finalization": {
+              "required": 1,
+              "succeeded": 1,
+              "failed": 0,
+              "pending": 0
+            }
+          },
+          "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+          "commit": "2222222222222222222222222222222222222222",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.157241+00:00"
+        }
+      },
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 1,
+          "repo_url": "https://github.com/org/repo",
+          "ticker": "org/repo",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 0,
+          "gh_url": "https://github.com/org/repo",
+          "found_at": "2026-11-23T01:34:32.157241+00:00",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "\ud83d\udd12 [RAW: \u043c\u0430\u0441\u043a\u0430 \u00b7 BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u0441\u0435\u043a\u0440\u0435\u0442]",
+          "secret_full": null,
+          "rescan": {
+            "status": "complete",
+            "coverage": {
+              "complete": true,
+              "required": 5,
+              "succeeded": 5,
+              "eligible": 1,
+              "states": {
+                "succeeded": 5
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 1,
+                "failed": 0,
+                "pending": 0
+              }
+            },
+            "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+            "commit": "2222222222222222222222222222222222222222",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:32.157241+00:00"
+          },
+          "rescan_versions": [
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+              "published_at": "2026-11-23T01:34:32.157241+00:00",
+              "path": null,
+              "line": 0,
+              "secret_masked": null,
+              "secret_full": null,
+              "state": "complete",
+              "commit": "2222222222222222222222222222222222222222",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+              "published_at": "2026-11-23T01:34:31.992332+00:00",
+              "path": null,
+              "line": 0,
+              "secret_masked": null,
+              "secret_full": null,
+              "state": "partial",
+              "commit": "1111111111111111111111111111111111111111",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ],
+          "rescan_versions_page": {
+            "total": 2,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    },
+    "RAW": {
+      "viewer_tier": "RAW",
+      "query": "org/repo",
+      "filter_mode": "repo:org/repo",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 25,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/repo": {
+          "status": "complete",
+          "coverage": {
+            "complete": true,
+            "required": 5,
+            "succeeded": 5,
+            "eligible": 1,
+            "states": {
+              "succeeded": 5
+            },
+            "finalization": {
+              "required": 1,
+              "succeeded": 1,
+              "failed": 0,
+              "pending": 0
+            }
+          },
+          "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+          "commit": "2222222222222222222222222222222222222222",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.157241+00:00"
+        }
+      },
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 1,
+          "repo_url": "https://github.com/org/repo",
+          "ticker": "org/repo",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 1,
+          "gh_url": "synthetic-link",
+          "found_at": "2026-11-23T01:34:32.157241+00:00",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "MASKED \ud83d\udd12 [BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u043a\u043b\u044e\u0447]",
+          "secret_full": null,
+          "rescan": {
+            "status": "complete",
+            "coverage": {
+              "complete": true,
+              "required": 5,
+              "succeeded": 5,
+              "eligible": 1,
+              "states": {
+                "succeeded": 5
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 1,
+                "failed": 0,
+                "pending": 0
+              }
+            },
+            "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+            "commit": "2222222222222222222222222222222222222222",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:32.157241+00:00"
+          },
+          "rescan_versions": [
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+              "published_at": "2026-11-23T01:34:32.157241+00:00",
+              "path": ".env",
+              "line": 1,
+              "secret_masked": "",
+              "secret_full": null,
+              "state": "complete",
+              "commit": "2222222222222222222222222222222222222222",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+              "published_at": "2026-11-23T01:34:31.992332+00:00",
+              "path": ".env",
+              "line": 1,
+              "secret_masked": "",
+              "secret_full": null,
+              "state": "partial",
+              "commit": "1111111111111111111111111111111111111111",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ],
+          "rescan_versions_page": {
+            "total": 2,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    },
+    "BLACKBOX": {
+      "viewer_tier": "BLACKBOX",
+      "query": "org/repo",
+      "filter_mode": "repo:org/repo",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 40,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/repo": {
+          "status": "complete",
+          "coverage": {
+            "complete": true,
+            "required": 5,
+            "succeeded": 5,
+            "eligible": 1,
+            "states": {
+              "succeeded": 5
+            },
+            "finalization": {
+              "required": 1,
+              "succeeded": 1,
+              "failed": 0,
+              "pending": 0
+            }
+          },
+          "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+          "commit": "2222222222222222222222222222222222222222",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.157241+00:00"
+        }
+      },
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 1,
+          "repo_url": "https://github.com/org/repo",
+          "ticker": "org/repo",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 1,
+          "gh_url": "synthetic-link",
+          "found_at": "2026-11-23T01:34:32.157241+00:00",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "",
+          "secret_full": "",
+          "rescan": {
+            "status": "complete",
+            "coverage": {
+              "complete": true,
+              "required": 5,
+              "succeeded": 5,
+              "eligible": 1,
+              "states": {
+                "succeeded": 5
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 1,
+                "failed": 0,
+                "pending": 0
+              }
+            },
+            "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+            "commit": "2222222222222222222222222222222222222222",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:32.157241+00:00"
+          },
+          "rescan_versions": [
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+              "published_at": "2026-11-23T01:34:32.157241+00:00",
+              "path": ".env",
+              "line": 1,
+              "secret_masked": null,
+              "secret_full": "",
+              "state": "complete",
+              "commit": "2222222222222222222222222222222222222222",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+              "published_at": "2026-11-23T01:34:31.992332+00:00",
+              "path": ".env",
+              "line": 1,
+              "secret_masked": null,
+              "secret_full": "",
+              "state": "partial",
+              "commit": "1111111111111111111111111111111111111111",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ],
+          "rescan_versions_page": {
+            "total": 2,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    }
+  },
+  "failed": {
+    "RADAR": {
+      "viewer_tier": "RADAR",
+      "query": "org/repo",
+      "filter_mode": "repo:org/repo",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 10,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/repo": {
+          "status": "failed",
+          "coverage": {
+            "complete": false,
+            "required": 0,
+            "succeeded": 0,
+            "eligible": 0,
+            "states": {
+              "succeeded": 4,
+              "failed": 1
+            },
+            "finalization": {
+              "required": 0,
+              "succeeded": 0,
+              "failed": 1,
+              "pending": 0
+            }
+          },
+          "publication_key": "e7b0301b9d6a89d3f67968c18755392bbfe676c671e006f2a3932138015d3e95",
+          "commit": "3333333333333333333333333333333333333333",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.319699+00:00"
+        }
+      },
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 1,
+          "repo_url": "https://github.com/org/repo",
+          "ticker": "org/repo",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 0,
+          "gh_url": "https://github.com/org/repo",
+          "found_at": "2026-11-23T01:34:32.157241+00:00",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "\ud83d\udd12 [RAW: \u043c\u0430\u0441\u043a\u0430 \u00b7 BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u0441\u0435\u043a\u0440\u0435\u0442]",
+          "secret_full": null,
+          "rescan": {
+            "status": "failed",
+            "coverage": {
+              "complete": false,
+              "required": 0,
+              "succeeded": 0,
+              "eligible": 0,
+              "states": {
+                "succeeded": 4,
+                "failed": 1
+              },
+              "finalization": {
+                "required": 0,
+                "succeeded": 0,
+                "failed": 1,
+                "pending": 0
+              }
+            },
+            "publication_key": "e7b0301b9d6a89d3f67968c18755392bbfe676c671e006f2a3932138015d3e95",
+            "commit": "3333333333333333333333333333333333333333",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:32.319699+00:00"
+          },
+          "rescan_versions": [
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+              "published_at": "2026-11-23T01:34:32.157241+00:00",
+              "path": null,
+              "line": 0,
+              "secret_masked": null,
+              "secret_full": null,
+              "state": "complete",
+              "commit": "2222222222222222222222222222222222222222",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+              "published_at": "2026-11-23T01:34:31.992332+00:00",
+              "path": null,
+              "line": 0,
+              "secret_masked": null,
+              "secret_full": null,
+              "state": "partial",
+              "commit": "1111111111111111111111111111111111111111",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ],
+          "rescan_versions_page": {
+            "total": 2,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    },
+    "RAW": {
+      "viewer_tier": "RAW",
+      "query": "org/repo",
+      "filter_mode": "repo:org/repo",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 25,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/repo": {
+          "status": "failed",
+          "coverage": {
+            "complete": false,
+            "required": 0,
+            "succeeded": 0,
+            "eligible": 0,
+            "states": {
+              "succeeded": 4,
+              "failed": 1
+            },
+            "finalization": {
+              "required": 0,
+              "succeeded": 0,
+              "failed": 1,
+              "pending": 0
+            }
+          },
+          "publication_key": "e7b0301b9d6a89d3f67968c18755392bbfe676c671e006f2a3932138015d3e95",
+          "commit": "3333333333333333333333333333333333333333",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.319699+00:00"
+        }
+      },
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 1,
+          "repo_url": "https://github.com/org/repo",
+          "ticker": "org/repo",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 1,
+          "gh_url": "synthetic-link",
+          "found_at": "2026-11-23T01:34:32.157241+00:00",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "MASKED \ud83d\udd12 [BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u043a\u043b\u044e\u0447]",
+          "secret_full": null,
+          "rescan": {
+            "status": "failed",
+            "coverage": {
+              "complete": false,
+              "required": 0,
+              "succeeded": 0,
+              "eligible": 0,
+              "states": {
+                "succeeded": 4,
+                "failed": 1
+              },
+              "finalization": {
+                "required": 0,
+                "succeeded": 0,
+                "failed": 1,
+                "pending": 0
+              }
+            },
+            "publication_key": "e7b0301b9d6a89d3f67968c18755392bbfe676c671e006f2a3932138015d3e95",
+            "commit": "3333333333333333333333333333333333333333",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:32.319699+00:00"
+          },
+          "rescan_versions": [
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+              "published_at": "2026-11-23T01:34:32.157241+00:00",
+              "path": ".env",
+              "line": 1,
+              "secret_masked": "",
+              "secret_full": null,
+              "state": "complete",
+              "commit": "2222222222222222222222222222222222222222",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+              "published_at": "2026-11-23T01:34:31.992332+00:00",
+              "path": ".env",
+              "line": 1,
+              "secret_masked": "",
+              "secret_full": null,
+              "state": "partial",
+              "commit": "1111111111111111111111111111111111111111",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ],
+          "rescan_versions_page": {
+            "total": 2,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    },
+    "BLACKBOX": {
+      "viewer_tier": "BLACKBOX",
+      "query": "org/repo",
+      "filter_mode": "repo:org/repo",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 40,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/repo": {
+          "status": "failed",
+          "coverage": {
+            "complete": false,
+            "required": 0,
+            "succeeded": 0,
+            "eligible": 0,
+            "states": {
+              "succeeded": 4,
+              "failed": 1
+            },
+            "finalization": {
+              "required": 0,
+              "succeeded": 0,
+              "failed": 1,
+              "pending": 0
+            }
+          },
+          "publication_key": "e7b0301b9d6a89d3f67968c18755392bbfe676c671e006f2a3932138015d3e95",
+          "commit": "3333333333333333333333333333333333333333",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.319699+00:00"
+        }
+      },
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 1,
+          "repo_url": "https://github.com/org/repo",
+          "ticker": "org/repo",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 1,
+          "gh_url": "synthetic-link",
+          "found_at": "2026-11-23T01:34:32.157241+00:00",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "",
+          "secret_full": "",
+          "rescan": {
+            "status": "failed",
+            "coverage": {
+              "complete": false,
+              "required": 0,
+              "succeeded": 0,
+              "eligible": 0,
+              "states": {
+                "succeeded": 4,
+                "failed": 1
+              },
+              "finalization": {
+                "required": 0,
+                "succeeded": 0,
+                "failed": 1,
+                "pending": 0
+              }
+            },
+            "publication_key": "e7b0301b9d6a89d3f67968c18755392bbfe676c671e006f2a3932138015d3e95",
+            "commit": "3333333333333333333333333333333333333333",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:32.319699+00:00"
+          },
+          "rescan_versions": [
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+              "published_at": "2026-11-23T01:34:32.157241+00:00",
+              "path": ".env",
+              "line": 1,
+              "secret_masked": null,
+              "secret_full": "",
+              "state": "complete",
+              "commit": "2222222222222222222222222222222222222222",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+              "published_at": "2026-11-23T01:34:31.992332+00:00",
+              "path": ".env",
+              "line": 1,
+              "secret_masked": null,
+              "secret_full": "",
+              "state": "partial",
+              "commit": "1111111111111111111111111111111111111111",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ],
+          "rescan_versions_page": {
+            "total": 2,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    }
+  },
+  "zero": {
+    "RADAR": {
+      "viewer_tier": "RADAR",
+      "query": "org/empty",
+      "filter_mode": "repo:org/empty",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 10,
+      "total_groups": 0,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/empty": {
+          "status": "complete",
+          "coverage": {
+            "complete": true,
+            "required": 0,
+            "succeeded": 0,
+            "eligible": 0,
+            "states": {
+              "succeeded": 5
+            },
+            "finalization": {
+              "required": 0,
+              "succeeded": 0,
+              "failed": 0,
+              "pending": 0
+            }
+          },
+          "publication_key": "e44919a1b47b75862b3461c50ffb803e17f184b85bdd62f1b0be8d3e4252a280",
+          "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.479846+00:00"
+        }
+      },
+      "findings_returned": 0,
+      "findings": []
+    },
+    "RAW": {
+      "viewer_tier": "RAW",
+      "query": "org/empty",
+      "filter_mode": "repo:org/empty",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 25,
+      "total_groups": 0,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/empty": {
+          "status": "complete",
+          "coverage": {
+            "complete": true,
+            "required": 0,
+            "succeeded": 0,
+            "eligible": 0,
+            "states": {
+              "succeeded": 5
+            },
+            "finalization": {
+              "required": 0,
+              "succeeded": 0,
+              "failed": 0,
+              "pending": 0
+            }
+          },
+          "publication_key": "e44919a1b47b75862b3461c50ffb803e17f184b85bdd62f1b0be8d3e4252a280",
+          "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.479846+00:00"
+        }
+      },
+      "findings_returned": 0,
+      "findings": []
+    },
+    "BLACKBOX": {
+      "viewer_tier": "BLACKBOX",
+      "query": "org/empty",
+      "filter_mode": "repo:org/empty",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 40,
+      "total_groups": 0,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/empty": {
+          "status": "complete",
+          "coverage": {
+            "complete": true,
+            "required": 0,
+            "succeeded": 0,
+            "eligible": 0,
+            "states": {
+              "succeeded": 5
+            },
+            "finalization": {
+              "required": 0,
+              "succeeded": 0,
+              "failed": 0,
+              "pending": 0
+            }
+          },
+          "publication_key": "e44919a1b47b75862b3461c50ffb803e17f184b85bdd62f1b0be8d3e4252a280",
+          "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.479846+00:00"
+        }
+      },
+      "findings_returned": 0,
+      "findings": []
+    }
+  },
+  "emptySearch": {
+    "RADAR": {
+      "viewer_tier": "RADAR",
+      "query": "",
+      "filter_mode": "recent",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 10,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/repo": {
+          "status": "failed",
+          "coverage": {
+            "complete": false,
+            "required": 0,
+            "succeeded": 0,
+            "eligible": 0,
+            "states": {
+              "succeeded": 4,
+              "failed": 1
+            },
+            "finalization": {
+              "required": 0,
+              "succeeded": 0,
+              "failed": 1,
+              "pending": 0
+            }
+          },
+          "publication_key": "e7b0301b9d6a89d3f67968c18755392bbfe676c671e006f2a3932138015d3e95",
+          "commit": "3333333333333333333333333333333333333333",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.319699+00:00"
+        }
+      },
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 1,
+          "repo_url": "https://github.com/org/repo",
+          "ticker": "org/repo",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 0,
+          "gh_url": "https://github.com/org/repo",
+          "found_at": "2026-11-23T01:34:32.157241+00:00",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "\ud83d\udd12 [RAW: \u043c\u0430\u0441\u043a\u0430 \u00b7 BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u0441\u0435\u043a\u0440\u0435\u0442]",
+          "secret_full": null,
+          "rescan": {
+            "status": "failed",
+            "coverage": {
+              "complete": false,
+              "required": 0,
+              "succeeded": 0,
+              "eligible": 0,
+              "states": {
+                "succeeded": 4,
+                "failed": 1
+              },
+              "finalization": {
+                "required": 0,
+                "succeeded": 0,
+                "failed": 1,
+                "pending": 0
+              }
+            },
+            "publication_key": "e7b0301b9d6a89d3f67968c18755392bbfe676c671e006f2a3932138015d3e95",
+            "commit": "3333333333333333333333333333333333333333",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:32.319699+00:00"
+          },
+          "rescan_versions": [
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+              "published_at": "2026-11-23T01:34:32.157241+00:00",
+              "path": null,
+              "line": 0,
+              "secret_masked": null,
+              "secret_full": null,
+              "state": "complete",
+              "commit": "2222222222222222222222222222222222222222",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+              "published_at": "2026-11-23T01:34:31.992332+00:00",
+              "path": null,
+              "line": 0,
+              "secret_masked": null,
+              "secret_full": null,
+              "state": "partial",
+              "commit": "1111111111111111111111111111111111111111",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ],
+          "rescan_versions_page": {
+            "total": 2,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    },
+    "RAW": {
+      "viewer_tier": "RAW",
+      "query": "",
+      "filter_mode": "recent",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 25,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/repo": {
+          "status": "failed",
+          "coverage": {
+            "complete": false,
+            "required": 0,
+            "succeeded": 0,
+            "eligible": 0,
+            "states": {
+              "succeeded": 4,
+              "failed": 1
+            },
+            "finalization": {
+              "required": 0,
+              "succeeded": 0,
+              "failed": 1,
+              "pending": 0
+            }
+          },
+          "publication_key": "e7b0301b9d6a89d3f67968c18755392bbfe676c671e006f2a3932138015d3e95",
+          "commit": "3333333333333333333333333333333333333333",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.319699+00:00"
+        }
+      },
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 1,
+          "repo_url": "https://github.com/org/repo",
+          "ticker": "org/repo",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 1,
+          "gh_url": "synthetic-link",
+          "found_at": "2026-11-23T01:34:32.157241+00:00",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "MASKED \ud83d\udd12 [BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u043a\u043b\u044e\u0447]",
+          "secret_full": null,
+          "rescan": {
+            "status": "failed",
+            "coverage": {
+              "complete": false,
+              "required": 0,
+              "succeeded": 0,
+              "eligible": 0,
+              "states": {
+                "succeeded": 4,
+                "failed": 1
+              },
+              "finalization": {
+                "required": 0,
+                "succeeded": 0,
+                "failed": 1,
+                "pending": 0
+              }
+            },
+            "publication_key": "e7b0301b9d6a89d3f67968c18755392bbfe676c671e006f2a3932138015d3e95",
+            "commit": "3333333333333333333333333333333333333333",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:32.319699+00:00"
+          },
+          "rescan_versions": [
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+              "published_at": "2026-11-23T01:34:32.157241+00:00",
+              "path": ".env",
+              "line": 1,
+              "secret_masked": "",
+              "secret_full": null,
+              "state": "complete",
+              "commit": "2222222222222222222222222222222222222222",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+              "published_at": "2026-11-23T01:34:31.992332+00:00",
+              "path": ".env",
+              "line": 1,
+              "secret_masked": "",
+              "secret_full": null,
+              "state": "partial",
+              "commit": "1111111111111111111111111111111111111111",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ],
+          "rescan_versions_page": {
+            "total": 2,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    },
+    "BLACKBOX": {
+      "viewer_tier": "BLACKBOX",
+      "query": "",
+      "filter_mode": "recent",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 40,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/repo": {
+          "status": "failed",
+          "coverage": {
+            "complete": false,
+            "required": 0,
+            "succeeded": 0,
+            "eligible": 0,
+            "states": {
+              "succeeded": 4,
+              "failed": 1
+            },
+            "finalization": {
+              "required": 0,
+              "succeeded": 0,
+              "failed": 1,
+              "pending": 0
+            }
+          },
+          "publication_key": "e7b0301b9d6a89d3f67968c18755392bbfe676c671e006f2a3932138015d3e95",
+          "commit": "3333333333333333333333333333333333333333",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.319699+00:00"
+        }
+      },
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 1,
+          "repo_url": "https://github.com/org/repo",
+          "ticker": "org/repo",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 1,
+          "gh_url": "synthetic-link",
+          "found_at": "2026-11-23T01:34:32.157241+00:00",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "",
+          "secret_full": "",
+          "rescan": {
+            "status": "failed",
+            "coverage": {
+              "complete": false,
+              "required": 0,
+              "succeeded": 0,
+              "eligible": 0,
+              "states": {
+                "succeeded": 4,
+                "failed": 1
+              },
+              "finalization": {
+                "required": 0,
+                "succeeded": 0,
+                "failed": 1,
+                "pending": 0
+              }
+            },
+            "publication_key": "e7b0301b9d6a89d3f67968c18755392bbfe676c671e006f2a3932138015d3e95",
+            "commit": "3333333333333333333333333333333333333333",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:32.319699+00:00"
+          },
+          "rescan_versions": [
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+              "published_at": "2026-11-23T01:34:32.157241+00:00",
+              "path": ".env",
+              "line": 1,
+              "secret_masked": null,
+              "secret_full": "",
+              "state": "complete",
+              "commit": "2222222222222222222222222222222222222222",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 1,
+              "ordinal": 0,
+              "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+              "published_at": "2026-11-23T01:34:31.992332+00:00",
+              "path": ".env",
+              "line": 1,
+              "secret_masked": null,
+              "secret_full": "",
+              "state": "partial",
+              "commit": "1111111111111111111111111111111111111111",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ],
+          "rescan_versions_page": {
+            "total": 2,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    }
+  },
+  "filteredZero": {
+    "RADAR": {
+      "viewer_tier": "RADAR",
+      "query": "org/repo",
+      "filter_mode": "repo:org/repo",
+      "severity_filter": "CRITICAL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 10,
+      "total_groups": 0,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/repo": {
+          "status": "failed",
+          "coverage": {
+            "complete": false,
+            "required": 0,
+            "succeeded": 0,
+            "eligible": 0,
+            "states": {
+              "succeeded": 4,
+              "failed": 1
+            },
+            "finalization": {
+              "required": 0,
+              "succeeded": 0,
+              "failed": 1,
+              "pending": 0
+            }
+          },
+          "publication_key": "e7b0301b9d6a89d3f67968c18755392bbfe676c671e006f2a3932138015d3e95",
+          "commit": "3333333333333333333333333333333333333333",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.319699+00:00"
+        }
+      },
+      "findings_returned": 0,
+      "findings": []
+    },
+    "RAW": {
+      "viewer_tier": "RAW",
+      "query": "org/repo",
+      "filter_mode": "repo:org/repo",
+      "severity_filter": "CRITICAL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 25,
+      "total_groups": 0,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/repo": {
+          "status": "failed",
+          "coverage": {
+            "complete": false,
+            "required": 0,
+            "succeeded": 0,
+            "eligible": 0,
+            "states": {
+              "succeeded": 4,
+              "failed": 1
+            },
+            "finalization": {
+              "required": 0,
+              "succeeded": 0,
+              "failed": 1,
+              "pending": 0
+            }
+          },
+          "publication_key": "e7b0301b9d6a89d3f67968c18755392bbfe676c671e006f2a3932138015d3e95",
+          "commit": "3333333333333333333333333333333333333333",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.319699+00:00"
+        }
+      },
+      "findings_returned": 0,
+      "findings": []
+    },
+    "BLACKBOX": {
+      "viewer_tier": "BLACKBOX",
+      "query": "org/repo",
+      "filter_mode": "repo:org/repo",
+      "severity_filter": "CRITICAL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 40,
+      "total_groups": 0,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 1
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/repo": {
+          "status": "failed",
+          "coverage": {
+            "complete": false,
+            "required": 0,
+            "succeeded": 0,
+            "eligible": 0,
+            "states": {
+              "succeeded": 4,
+              "failed": 1
+            },
+            "finalization": {
+              "required": 0,
+              "succeeded": 0,
+              "failed": 1,
+              "pending": 0
+            }
+          },
+          "publication_key": "e7b0301b9d6a89d3f67968c18755392bbfe676c671e006f2a3932138015d3e95",
+          "commit": "3333333333333333333333333333333333333333",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.319699+00:00"
+        }
+      },
+      "findings_returned": 0,
+      "findings": []
+    }
+  },
+  "currentReal": {
+    "RADAR": {
+      "viewer_tier": "RADAR",
+      "query": "org/current",
+      "filter_mode": "repo:org/current",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 10,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 2
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/current": {
+          "status": "complete",
+          "coverage": {
+            "complete": true,
+            "required": 5,
+            "succeeded": 5,
+            "eligible": 1,
+            "states": {
+              "succeeded": 5
+            },
+            "finalization": {
+              "required": 1,
+              "succeeded": 1,
+              "failed": 0,
+              "pending": 0
+            }
+          },
+          "publication_key": "76efac037b5d1eda88e5b9a8ea746e7d2da313b77650fd1cf921907560805c61",
+          "commit": "5555555555555555555555555555555555555555",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.945602+00:00"
+        }
+      },
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 4,
+          "repo_url": "https://github.com/org/current",
+          "ticker": "org/current",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 0,
+          "gh_url": "https://github.com/org/current",
+          "found_at": "2026-11-23T01:34:32.945602+00:00",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "\ud83d\udd12 [RAW: \u043c\u0430\u0441\u043a\u0430 \u00b7 BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u0441\u0435\u043a\u0440\u0435\u0442]",
+          "secret_full": null,
+          "rescan": {
+            "status": "complete",
+            "coverage": {
+              "complete": true,
+              "required": 5,
+              "succeeded": 5,
+              "eligible": 1,
+              "states": {
+                "succeeded": 5
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 1,
+                "failed": 0,
+                "pending": 0
+              }
+            },
+            "publication_key": "76efac037b5d1eda88e5b9a8ea746e7d2da313b77650fd1cf921907560805c61",
+            "commit": "5555555555555555555555555555555555555555",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:32.945602+00:00"
+          },
+          "rescan_versions": [
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 4,
+              "ordinal": 0,
+              "publication_key": "76efac037b5d1eda88e5b9a8ea746e7d2da313b77650fd1cf921907560805c61",
+              "published_at": "2026-11-23T01:34:32.945602+00:00",
+              "path": null,
+              "line": 0,
+              "secret_masked": null,
+              "secret_full": null,
+              "state": "complete",
+              "commit": "5555555555555555555555555555555555555555",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ],
+          "rescan_versions_page": {
+            "total": 1,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    },
+    "RAW": {
+      "viewer_tier": "RAW",
+      "query": "org/current",
+      "filter_mode": "repo:org/current",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 25,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 2
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/current": {
+          "status": "complete",
+          "coverage": {
+            "complete": true,
+            "required": 5,
+            "succeeded": 5,
+            "eligible": 1,
+            "states": {
+              "succeeded": 5
+            },
+            "finalization": {
+              "required": 1,
+              "succeeded": 1,
+              "failed": 0,
+              "pending": 0
+            }
+          },
+          "publication_key": "76efac037b5d1eda88e5b9a8ea746e7d2da313b77650fd1cf921907560805c61",
+          "commit": "5555555555555555555555555555555555555555",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.945602+00:00"
+        }
+      },
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 4,
+          "repo_url": "https://github.com/org/current",
+          "ticker": "org/current",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 1,
+          "gh_url": "synthetic-link",
+          "found_at": "2026-11-23T01:34:32.945602+00:00",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "MASKED \ud83d\udd12 [BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u043a\u043b\u044e\u0447]",
+          "secret_full": null,
+          "rescan": {
+            "status": "complete",
+            "coverage": {
+              "complete": true,
+              "required": 5,
+              "succeeded": 5,
+              "eligible": 1,
+              "states": {
+                "succeeded": 5
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 1,
+                "failed": 0,
+                "pending": 0
+              }
+            },
+            "publication_key": "76efac037b5d1eda88e5b9a8ea746e7d2da313b77650fd1cf921907560805c61",
+            "commit": "5555555555555555555555555555555555555555",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:32.945602+00:00"
+          },
+          "rescan_versions": [
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 4,
+              "ordinal": 0,
+              "publication_key": "76efac037b5d1eda88e5b9a8ea746e7d2da313b77650fd1cf921907560805c61",
+              "published_at": "2026-11-23T01:34:32.945602+00:00",
+              "path": ".env",
+              "line": 1,
+              "secret_masked": "",
+              "secret_full": null,
+              "state": "complete",
+              "commit": "5555555555555555555555555555555555555555",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ],
+          "rescan_versions_page": {
+            "total": 1,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    },
+    "BLACKBOX": {
+      "viewer_tier": "BLACKBOX",
+      "query": "org/current",
+      "filter_mode": "repo:org/current",
+      "severity_filter": "ALL",
+      "vertical_filter": "ALL",
+      "category_filter": "ALL",
+      "cls_filter": "REAL",
+      "only_real": true,
+      "only_live": false,
+      "offset": 0,
+      "limit": 40,
+      "total_groups": 1,
+      "total_signatures_active": 1,
+      "detector_catalog": {
+        "counts": {
+          "canonical_kinds": 1
+        }
+      },
+      "category_counts": {},
+      "db_stats": {
+        "indexed_repos": 0,
+        "real_repos": 0,
+        "indexed_findings": 0,
+        "real_findings": 0,
+        "live_keys": 0,
+        "radar_total": 0,
+        "radar_pending": 0,
+        "by_severity": {},
+        "by_chain": {},
+        "checkers_active": [
+          "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+          "BTC xprv BIP44/49/84 & WIF",
+          "NEAR ed25519 RPC",
+          "Solana ed25519 RPC",
+          "ETH Keystore v3 Extractor & Cracker",
+          "PEM Curve Classifier (secp256k1/Ed25519)",
+          "45+ SaaS/AI API Live Probes"
+        ],
+        "by_vertical": {
+          "WEB3_DEFI": 2
+        },
+        "omni_stats": {},
+        "ospec_watcher_running": false,
+        "backfill_running": false
+      },
+      "kind_stats": [],
+      "repo_coverage": {
+        "https://github.com/org/current": {
+          "status": "complete",
+          "coverage": {
+            "complete": true,
+            "required": 5,
+            "succeeded": 5,
+            "eligible": 1,
+            "states": {
+              "succeeded": 5
+            },
+            "finalization": {
+              "required": 1,
+              "succeeded": 1,
+              "failed": 0,
+              "pending": 0
+            }
+          },
+          "publication_key": "76efac037b5d1eda88e5b9a8ea746e7d2da313b77650fd1cf921907560805c61",
+          "commit": "5555555555555555555555555555555555555555",
+          "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "published_at": "2026-11-23T01:34:32.945602+00:00"
+        }
+      },
+      "findings_returned": 1,
+      "findings": [
+        {
+          "id": 4,
+          "repo_url": "https://github.com/org/current",
+          "ticker": "org/current",
+          "severity": "HIGH",
+          "kind": "example",
+          "category": "ALL",
+          "cls": "REAL",
+          "hits": 1,
+          "path": ".env",
+          "line": 1,
+          "gh_url": "synthetic-link",
+          "found_at": "2026-11-23T01:34:32.945602+00:00",
+          "derived_addr": "",
+          "derived_chain": "",
+          "is_live": false,
+          "balance_eth": null,
+          "nonce": null,
+          "vertical": "WEB3_DEFI",
+          "secret_masked": "",
+          "secret_full": "",
+          "rescan": {
+            "status": "complete",
+            "coverage": {
+              "complete": true,
+              "required": 5,
+              "succeeded": 5,
+              "eligible": 1,
+              "states": {
+                "succeeded": 5
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 1,
+                "failed": 0,
+                "pending": 0
+              }
+            },
+            "publication_key": "76efac037b5d1eda88e5b9a8ea746e7d2da313b77650fd1cf921907560805c61",
+            "commit": "5555555555555555555555555555555555555555",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:32.945602+00:00"
+          },
+          "rescan_versions": [
+            {
+              "kind": "secret:example",
+              "cls": "REAL",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 4,
+              "ordinal": 0,
+              "publication_key": "76efac037b5d1eda88e5b9a8ea746e7d2da313b77650fd1cf921907560805c61",
+              "published_at": "2026-11-23T01:34:32.945602+00:00",
+              "path": ".env",
+              "line": 1,
+              "secret_masked": null,
+              "secret_full": "",
+              "state": "complete",
+              "commit": "5555555555555555555555555555555555555555",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            {
+              "kind": "secret:example",
+              "cls": "TEST",
+              "confidence": 0.9,
+              "severity": "HIGH",
+              "finding_id": 4,
+              "ordinal": 0,
+              "publication_key": "0be8091c05f5f194454529a2444c9ab08fc854ed36f3a94d3b06fa60edd67562",
+              "published_at": "2026-11-23T01:34:32.940959+00:00",
+              "path": ".env",
+              "line": 1,
+              "secret_masked": null,
+              "secret_full": "",
+              "state": "complete",
+              "commit": "4444444444444444444444444444444444444444",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            }
+          ],
+          "rescan_versions_page": {
+            "total": 2,
+            "offset": 0,
+            "limit": 10,
+            "has_more": false
+          }
+        }
+      ]
+    }
+  },
+  "pages": {
+    "0": {
+      "RADAR": {
+        "viewer_tier": "RADAR",
+        "query": "org/repo",
+        "filter_mode": "repo:org/repo",
+        "severity_filter": "ALL",
+        "vertical_filter": "ALL",
+        "category_filter": "ALL",
+        "cls_filter": "REAL",
+        "only_real": true,
+        "only_live": false,
+        "offset": 0,
+        "limit": 10,
+        "total_groups": 1,
+        "total_signatures_active": 1,
+        "detector_catalog": {
+          "counts": {
+            "canonical_kinds": 1
+          }
+        },
+        "category_counts": {},
+        "db_stats": {
+          "indexed_repos": 0,
+          "real_repos": 0,
+          "indexed_findings": 0,
+          "real_findings": 0,
+          "live_keys": 0,
+          "radar_total": 0,
+          "radar_pending": 0,
+          "by_severity": {},
+          "by_chain": {},
+          "checkers_active": [
+            "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+            "BTC xprv BIP44/49/84 & WIF",
+            "NEAR ed25519 RPC",
+            "Solana ed25519 RPC",
+            "ETH Keystore v3 Extractor & Cracker",
+            "PEM Curve Classifier (secp256k1/Ed25519)",
+            "45+ SaaS/AI API Live Probes"
+          ],
+          "by_vertical": {
+            "WEB3_DEFI": 2
+          },
+          "omni_stats": {},
+          "ospec_watcher_running": false,
+          "backfill_running": false
+        },
+        "kind_stats": [],
+        "repo_coverage": {
+          "https://github.com/org/repo": {
+            "status": "complete",
+            "coverage": {
+              "complete": true,
+              "required": 5,
+              "succeeded": 5,
+              "eligible": 1,
+              "states": {
+                "succeeded": 5
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 1,
+                "failed": 0,
+                "pending": 0
+              }
+            },
+            "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+            "commit": "00000000000000000000000000000000000003e7",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:33.187766+00:00"
+          }
+        },
+        "findings_returned": 1,
+        "findings": [
+          {
+            "id": 1,
+            "repo_url": "https://github.com/org/repo",
+            "ticker": "org/repo",
+            "severity": "HIGH",
+            "kind": "example",
+            "category": "ALL",
+            "cls": "REAL",
+            "hits": 1,
+            "path": ".env",
+            "line": 0,
+            "gh_url": "https://github.com/org/repo",
+            "found_at": "2026-11-23T01:34:33.187766+00:00",
+            "derived_addr": "",
+            "derived_chain": "",
+            "is_live": false,
+            "balance_eth": null,
+            "nonce": null,
+            "vertical": "WEB3_DEFI",
+            "secret_masked": "\ud83d\udd12 [RAW: \u043c\u0430\u0441\u043a\u0430 \u00b7 BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u0441\u0435\u043a\u0440\u0435\u0442]",
+            "secret_full": null,
+            "rescan": {
+              "status": "complete",
+              "coverage": {
+                "complete": true,
+                "required": 5,
+                "succeeded": 5,
+                "eligible": 1,
+                "states": {
+                  "succeeded": 5
+                },
+                "finalization": {
+                  "required": 1,
+                  "succeeded": 1,
+                  "failed": 0,
+                  "pending": 0
+                }
+              },
+              "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+              "commit": "00000000000000000000000000000000000003e7",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "published_at": "2026-11-23T01:34:33.187766+00:00"
+            },
+            "rescan_versions": [
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+                "published_at": "2026-11-23T01:34:33.187766+00:00",
+                "path": null,
+                "line": 0,
+                "secret_masked": null,
+                "secret_full": null,
+                "state": "complete",
+                "commit": "00000000000000000000000000000000000003e7",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "87c1dace1228d0276682107abdc4e5f50327dda145122e50250b0e5fe5d8ac2d",
+                "published_at": "2026-11-23T01:34:33.152573+00:00",
+                "path": null,
+                "line": 0,
+                "secret_masked": null,
+                "secret_full": null,
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000017",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "4d4962632262fea2842b5dcac9f768d8b461b93927f32be1a954176d51587d94",
+                "published_at": "2026-11-23T01:34:33.143803+00:00",
+                "path": null,
+                "line": 0,
+                "secret_masked": null,
+                "secret_full": null,
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000016",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "648edfdb469e96d292bb50919cd0ee8894d7a2f5d5bda170d9530e9f7594e2eb",
+                "published_at": "2026-11-23T01:34:33.141011+00:00",
+                "path": null,
+                "line": 0,
+                "secret_masked": null,
+                "secret_full": null,
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000015",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "388217ebf024cca830d06e9877143fd65e325aeaf26d3aa8a4716a4e4fce40fc",
+                "published_at": "2026-11-23T01:34:33.137950+00:00",
+                "path": null,
+                "line": 0,
+                "secret_masked": null,
+                "secret_full": null,
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000014",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "f48c62440af6e24759e1a7ca87adf109ec2077944e193af8fa15782ef6e1d176",
+                "published_at": "2026-11-23T01:34:33.134869+00:00",
+                "path": null,
+                "line": 0,
+                "secret_masked": null,
+                "secret_full": null,
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000013",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "7ed29faaa7735fb88c04428fc6b2db9e466d47e80a3777426728099054b160db",
+                "published_at": "2026-11-23T01:34:33.132021+00:00",
+                "path": null,
+                "line": 0,
+                "secret_masked": null,
+                "secret_full": null,
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000012",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "e451ff570d006e1cf3d13c280eb656c0114dd2037e45ef9dae55dcde6d67be41",
+                "published_at": "2026-11-23T01:34:33.128991+00:00",
+                "path": null,
+                "line": 0,
+                "secret_masked": null,
+                "secret_full": null,
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000011",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "e62baa1dc9f0331abc4aa86d37f6911f58b1d0f4e5bf2e78bf62419cfe5cf6af",
+                "published_at": "2026-11-23T01:34:33.126284+00:00",
+                "path": null,
+                "line": 0,
+                "secret_masked": null,
+                "secret_full": null,
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000010",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "04487636f325cb8b3cbcb082c5f931982d0bd782de40d266658afd46ad6d8d04",
+                "published_at": "2026-11-23T01:34:33.123034+00:00",
+                "path": null,
+                "line": 0,
+                "secret_masked": null,
+                "secret_full": null,
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000f",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              }
+            ],
+            "rescan_versions_page": {
+              "total": 17,
+              "offset": 0,
+              "limit": 10,
+              "has_more": true
+            }
+          }
+        ]
+      },
+      "RAW": {
+        "viewer_tier": "RAW",
+        "query": "org/repo",
+        "filter_mode": "repo:org/repo",
+        "severity_filter": "ALL",
+        "vertical_filter": "ALL",
+        "category_filter": "ALL",
+        "cls_filter": "REAL",
+        "only_real": true,
+        "only_live": false,
+        "offset": 0,
+        "limit": 25,
+        "total_groups": 1,
+        "total_signatures_active": 1,
+        "detector_catalog": {
+          "counts": {
+            "canonical_kinds": 1
+          }
+        },
+        "category_counts": {},
+        "db_stats": {
+          "indexed_repos": 0,
+          "real_repos": 0,
+          "indexed_findings": 0,
+          "real_findings": 0,
+          "live_keys": 0,
+          "radar_total": 0,
+          "radar_pending": 0,
+          "by_severity": {},
+          "by_chain": {},
+          "checkers_active": [
+            "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+            "BTC xprv BIP44/49/84 & WIF",
+            "NEAR ed25519 RPC",
+            "Solana ed25519 RPC",
+            "ETH Keystore v3 Extractor & Cracker",
+            "PEM Curve Classifier (secp256k1/Ed25519)",
+            "45+ SaaS/AI API Live Probes"
+          ],
+          "by_vertical": {
+            "WEB3_DEFI": 2
+          },
+          "omni_stats": {},
+          "ospec_watcher_running": false,
+          "backfill_running": false
+        },
+        "kind_stats": [],
+        "repo_coverage": {
+          "https://github.com/org/repo": {
+            "status": "complete",
+            "coverage": {
+              "complete": true,
+              "required": 5,
+              "succeeded": 5,
+              "eligible": 1,
+              "states": {
+                "succeeded": 5
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 1,
+                "failed": 0,
+                "pending": 0
+              }
+            },
+            "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+            "commit": "00000000000000000000000000000000000003e7",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:33.187766+00:00"
+          }
+        },
+        "findings_returned": 1,
+        "findings": [
+          {
+            "id": 1,
+            "repo_url": "https://github.com/org/repo",
+            "ticker": "org/repo",
+            "severity": "HIGH",
+            "kind": "example",
+            "category": "ALL",
+            "cls": "REAL",
+            "hits": 1,
+            "path": ".env",
+            "line": 1,
+            "gh_url": "synthetic-link",
+            "found_at": "2026-11-23T01:34:33.187766+00:00",
+            "derived_addr": "",
+            "derived_chain": "",
+            "is_live": false,
+            "balance_eth": null,
+            "nonce": null,
+            "vertical": "WEB3_DEFI",
+            "secret_masked": "MASKED \ud83d\udd12 [BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u043a\u043b\u044e\u0447]",
+            "secret_full": null,
+            "rescan": {
+              "status": "complete",
+              "coverage": {
+                "complete": true,
+                "required": 5,
+                "succeeded": 5,
+                "eligible": 1,
+                "states": {
+                  "succeeded": 5
+                },
+                "finalization": {
+                  "required": 1,
+                  "succeeded": 1,
+                  "failed": 0,
+                  "pending": 0
+                }
+              },
+              "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+              "commit": "00000000000000000000000000000000000003e7",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "published_at": "2026-11-23T01:34:33.187766+00:00"
+            },
+            "rescan_versions": [
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+                "published_at": "2026-11-23T01:34:33.187766+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": "",
+                "secret_full": null,
+                "state": "complete",
+                "commit": "00000000000000000000000000000000000003e7",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "87c1dace1228d0276682107abdc4e5f50327dda145122e50250b0e5fe5d8ac2d",
+                "published_at": "2026-11-23T01:34:33.152573+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": "",
+                "secret_full": null,
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000017",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "4d4962632262fea2842b5dcac9f768d8b461b93927f32be1a954176d51587d94",
+                "published_at": "2026-11-23T01:34:33.143803+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": "",
+                "secret_full": null,
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000016",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "648edfdb469e96d292bb50919cd0ee8894d7a2f5d5bda170d9530e9f7594e2eb",
+                "published_at": "2026-11-23T01:34:33.141011+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": "",
+                "secret_full": null,
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000015",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "388217ebf024cca830d06e9877143fd65e325aeaf26d3aa8a4716a4e4fce40fc",
+                "published_at": "2026-11-23T01:34:33.137950+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": "",
+                "secret_full": null,
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000014",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "f48c62440af6e24759e1a7ca87adf109ec2077944e193af8fa15782ef6e1d176",
+                "published_at": "2026-11-23T01:34:33.134869+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": "",
+                "secret_full": null,
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000013",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "7ed29faaa7735fb88c04428fc6b2db9e466d47e80a3777426728099054b160db",
+                "published_at": "2026-11-23T01:34:33.132021+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": "",
+                "secret_full": null,
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000012",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "e451ff570d006e1cf3d13c280eb656c0114dd2037e45ef9dae55dcde6d67be41",
+                "published_at": "2026-11-23T01:34:33.128991+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": "",
+                "secret_full": null,
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000011",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "e62baa1dc9f0331abc4aa86d37f6911f58b1d0f4e5bf2e78bf62419cfe5cf6af",
+                "published_at": "2026-11-23T01:34:33.126284+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": "",
+                "secret_full": null,
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000010",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "04487636f325cb8b3cbcb082c5f931982d0bd782de40d266658afd46ad6d8d04",
+                "published_at": "2026-11-23T01:34:33.123034+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": "",
+                "secret_full": null,
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000f",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              }
+            ],
+            "rescan_versions_page": {
+              "total": 17,
+              "offset": 0,
+              "limit": 10,
+              "has_more": true
+            }
+          }
+        ]
+      },
+      "BLACKBOX": {
+        "viewer_tier": "BLACKBOX",
+        "query": "org/repo",
+        "filter_mode": "repo:org/repo",
+        "severity_filter": "ALL",
+        "vertical_filter": "ALL",
+        "category_filter": "ALL",
+        "cls_filter": "REAL",
+        "only_real": true,
+        "only_live": false,
+        "offset": 0,
+        "limit": 40,
+        "total_groups": 1,
+        "total_signatures_active": 1,
+        "detector_catalog": {
+          "counts": {
+            "canonical_kinds": 1
+          }
+        },
+        "category_counts": {},
+        "db_stats": {
+          "indexed_repos": 0,
+          "real_repos": 0,
+          "indexed_findings": 0,
+          "real_findings": 0,
+          "live_keys": 0,
+          "radar_total": 0,
+          "radar_pending": 0,
+          "by_severity": {},
+          "by_chain": {},
+          "checkers_active": [
+            "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+            "BTC xprv BIP44/49/84 & WIF",
+            "NEAR ed25519 RPC",
+            "Solana ed25519 RPC",
+            "ETH Keystore v3 Extractor & Cracker",
+            "PEM Curve Classifier (secp256k1/Ed25519)",
+            "45+ SaaS/AI API Live Probes"
+          ],
+          "by_vertical": {
+            "WEB3_DEFI": 2
+          },
+          "omni_stats": {},
+          "ospec_watcher_running": false,
+          "backfill_running": false
+        },
+        "kind_stats": [],
+        "repo_coverage": {
+          "https://github.com/org/repo": {
+            "status": "complete",
+            "coverage": {
+              "complete": true,
+              "required": 5,
+              "succeeded": 5,
+              "eligible": 1,
+              "states": {
+                "succeeded": 5
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 1,
+                "failed": 0,
+                "pending": 0
+              }
+            },
+            "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+            "commit": "00000000000000000000000000000000000003e7",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:33.187766+00:00"
+          }
+        },
+        "findings_returned": 1,
+        "findings": [
+          {
+            "id": 1,
+            "repo_url": "https://github.com/org/repo",
+            "ticker": "org/repo",
+            "severity": "HIGH",
+            "kind": "example",
+            "category": "ALL",
+            "cls": "REAL",
+            "hits": 1,
+            "path": ".env",
+            "line": 1,
+            "gh_url": "synthetic-link",
+            "found_at": "2026-11-23T01:34:33.187766+00:00",
+            "derived_addr": "",
+            "derived_chain": "",
+            "is_live": false,
+            "balance_eth": null,
+            "nonce": null,
+            "vertical": "WEB3_DEFI",
+            "secret_masked": "",
+            "secret_full": "",
+            "rescan": {
+              "status": "complete",
+              "coverage": {
+                "complete": true,
+                "required": 5,
+                "succeeded": 5,
+                "eligible": 1,
+                "states": {
+                  "succeeded": 5
+                },
+                "finalization": {
+                  "required": 1,
+                  "succeeded": 1,
+                  "failed": 0,
+                  "pending": 0
+                }
+              },
+              "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+              "commit": "00000000000000000000000000000000000003e7",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "published_at": "2026-11-23T01:34:33.187766+00:00"
+            },
+            "rescan_versions": [
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+                "published_at": "2026-11-23T01:34:33.187766+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "00000000000000000000000000000000000003e7",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "TEST",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "289a1682aaf4a90b52213305c6d9e943b6ae0addeeec1eb0e6f7e5c9b039de13",
+                "published_at": "2026-11-23T01:34:33.184642+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000006e",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "TEST",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "4708256df35d228b21dc294f3fe08eac6666c7d611bb236cc934f3ba22391dea",
+                "published_at": "2026-11-23T01:34:33.181907+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000006d",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "TEST",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "1a53194ccd6e055d7773ba772809e02a18bc2a06f84f6d46161651bf5d65d82e",
+                "published_at": "2026-11-23T01:34:33.178865+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000006c",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "TEST",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "8a9ed845992a82f851d3b769e21eb1d55289fff5aa866dcaa19c9451ebeb5d83",
+                "published_at": "2026-11-23T01:34:33.176217+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000006b",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "TEST",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "55cd6f5e35c8b9dfe7dbf0259d70bc87bcd73cdfdb028ae2b425b05fdcacbf73",
+                "published_at": "2026-11-23T01:34:33.173456+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000006a",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "TEST",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "6fd3be02c75cf1d065590ecc3dcb8aa24a001988fc95d8163421a96b5b2f8eb3",
+                "published_at": "2026-11-23T01:34:33.170347+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000069",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "TEST",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "16f7b719d0e84941fcd5e94735ca07b51986a87533ec7329f0c030794d39ca4d",
+                "published_at": "2026-11-23T01:34:33.167615+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000068",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "TEST",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "ec1f97fd7196f80253d5f289416310f1eef99dc334fe61d16e60c0ddcaa24684",
+                "published_at": "2026-11-23T01:34:33.164268+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000067",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "TEST",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "5e77daf865b8462544de231a101a424ad54f6a8a04cfd7f7a7fb5bbac4ddfcbe",
+                "published_at": "2026-11-23T01:34:33.161545+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000066",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              }
+            ],
+            "rescan_versions_page": {
+              "total": 28,
+              "offset": 0,
+              "limit": 10,
+              "has_more": true
+            }
+          }
+        ]
+      }
+    },
+    "10": {
+      "RADAR": {
+        "viewer_tier": "RADAR",
+        "query": "org/repo",
+        "filter_mode": "repo:org/repo",
+        "severity_filter": "ALL",
+        "vertical_filter": "ALL",
+        "category_filter": "ALL",
+        "cls_filter": "REAL",
+        "only_real": true,
+        "only_live": false,
+        "offset": 0,
+        "limit": 10,
+        "total_groups": 1,
+        "total_signatures_active": 1,
+        "detector_catalog": {
+          "counts": {
+            "canonical_kinds": 1
+          }
+        },
+        "category_counts": {},
+        "db_stats": {
+          "indexed_repos": 0,
+          "real_repos": 0,
+          "indexed_findings": 0,
+          "real_findings": 0,
+          "live_keys": 0,
+          "radar_total": 0,
+          "radar_pending": 0,
+          "by_severity": {},
+          "by_chain": {},
+          "checkers_active": [
+            "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+            "BTC xprv BIP44/49/84 & WIF",
+            "NEAR ed25519 RPC",
+            "Solana ed25519 RPC",
+            "ETH Keystore v3 Extractor & Cracker",
+            "PEM Curve Classifier (secp256k1/Ed25519)",
+            "45+ SaaS/AI API Live Probes"
+          ],
+          "by_vertical": {
+            "WEB3_DEFI": 2
+          },
+          "omni_stats": {},
+          "ospec_watcher_running": false,
+          "backfill_running": false
+        },
+        "kind_stats": [],
+        "repo_coverage": {
+          "https://github.com/org/repo": {
+            "status": "complete",
+            "coverage": {
+              "complete": true,
+              "required": 5,
+              "succeeded": 5,
+              "eligible": 1,
+              "states": {
+                "succeeded": 5
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 1,
+                "failed": 0,
+                "pending": 0
+              }
+            },
+            "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+            "commit": "00000000000000000000000000000000000003e7",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:33.187766+00:00"
+          }
+        },
+        "findings_returned": 1,
+        "findings": [
+          {
+            "id": 1,
+            "repo_url": "https://github.com/org/repo",
+            "ticker": "org/repo",
+            "severity": "HIGH",
+            "kind": "example",
+            "category": "ALL",
+            "cls": "REAL",
+            "hits": 1,
+            "path": ".env",
+            "line": 0,
+            "gh_url": "https://github.com/org/repo",
+            "found_at": "2026-11-23T01:34:33.187766+00:00",
+            "derived_addr": "",
+            "derived_chain": "",
+            "is_live": false,
+            "balance_eth": null,
+            "nonce": null,
+            "vertical": "WEB3_DEFI",
+            "secret_masked": "\ud83d\udd12 [RAW: \u043c\u0430\u0441\u043a\u0430 \u00b7 BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u0441\u0435\u043a\u0440\u0435\u0442]",
+            "secret_full": null,
+            "rescan": {
+              "status": "complete",
+              "coverage": {
+                "complete": true,
+                "required": 5,
+                "succeeded": 5,
+                "eligible": 1,
+                "states": {
+                  "succeeded": 5
+                },
+                "finalization": {
+                  "required": 1,
+                  "succeeded": 1,
+                  "failed": 0,
+                  "pending": 0
+                }
+              },
+              "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+              "commit": "00000000000000000000000000000000000003e7",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "published_at": "2026-11-23T01:34:33.187766+00:00"
+            },
+            "rescan_versions": [
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "b0a0f5e1c428cb915f8404f585c513571f76020073c1beb6969ded13ae3491e5",
+                "published_at": "2026-11-23T01:34:33.120358+00:00",
+                "path": null,
+                "line": 0,
+                "secret_masked": null,
+                "secret_full": null,
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000e",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "20e19ce2d642f4717e4854f2b8b1467dc0d313a4ca6815ff4e3acaf0c19397bc",
+                "published_at": "2026-11-23T01:34:33.117600+00:00",
+                "path": null,
+                "line": 0,
+                "secret_masked": null,
+                "secret_full": null,
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000d",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "b75af0a86af0c01a58eff851050aa9cefc6d91cfb215d08f3f1d1bd316704198",
+                "published_at": "2026-11-23T01:34:33.114518+00:00",
+                "path": null,
+                "line": 0,
+                "secret_masked": null,
+                "secret_full": null,
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000c",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "0d122f2bbcd6358ee71eca5de006932f82a9b92fb5aca2bcc7feb3b135e02f88",
+                "published_at": "2026-11-23T01:34:33.111688+00:00",
+                "path": null,
+                "line": 0,
+                "secret_masked": null,
+                "secret_full": null,
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000b",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "5337ecd16cd762a2b6c963900dfabb164c2c3faff49cc7c687b403b88456e0bb",
+                "published_at": "2026-11-23T01:34:33.107289+00:00",
+                "path": null,
+                "line": 0,
+                "secret_masked": null,
+                "secret_full": null,
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000a",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+                "published_at": "2026-11-23T01:34:32.157241+00:00",
+                "path": null,
+                "line": 0,
+                "secret_masked": null,
+                "secret_full": null,
+                "state": "complete",
+                "commit": "2222222222222222222222222222222222222222",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+                "published_at": "2026-11-23T01:34:31.992332+00:00",
+                "path": null,
+                "line": 0,
+                "secret_masked": null,
+                "secret_full": null,
+                "state": "partial",
+                "commit": "1111111111111111111111111111111111111111",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              }
+            ],
+            "rescan_versions_page": {
+              "total": 17,
+              "offset": 10,
+              "limit": 10,
+              "has_more": false
+            }
+          }
+        ]
+      },
+      "RAW": {
+        "viewer_tier": "RAW",
+        "query": "org/repo",
+        "filter_mode": "repo:org/repo",
+        "severity_filter": "ALL",
+        "vertical_filter": "ALL",
+        "category_filter": "ALL",
+        "cls_filter": "REAL",
+        "only_real": true,
+        "only_live": false,
+        "offset": 0,
+        "limit": 25,
+        "total_groups": 1,
+        "total_signatures_active": 1,
+        "detector_catalog": {
+          "counts": {
+            "canonical_kinds": 1
+          }
+        },
+        "category_counts": {},
+        "db_stats": {
+          "indexed_repos": 0,
+          "real_repos": 0,
+          "indexed_findings": 0,
+          "real_findings": 0,
+          "live_keys": 0,
+          "radar_total": 0,
+          "radar_pending": 0,
+          "by_severity": {},
+          "by_chain": {},
+          "checkers_active": [
+            "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+            "BTC xprv BIP44/49/84 & WIF",
+            "NEAR ed25519 RPC",
+            "Solana ed25519 RPC",
+            "ETH Keystore v3 Extractor & Cracker",
+            "PEM Curve Classifier (secp256k1/Ed25519)",
+            "45+ SaaS/AI API Live Probes"
+          ],
+          "by_vertical": {
+            "WEB3_DEFI": 2
+          },
+          "omni_stats": {},
+          "ospec_watcher_running": false,
+          "backfill_running": false
+        },
+        "kind_stats": [],
+        "repo_coverage": {
+          "https://github.com/org/repo": {
+            "status": "complete",
+            "coverage": {
+              "complete": true,
+              "required": 5,
+              "succeeded": 5,
+              "eligible": 1,
+              "states": {
+                "succeeded": 5
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 1,
+                "failed": 0,
+                "pending": 0
+              }
+            },
+            "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+            "commit": "00000000000000000000000000000000000003e7",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:33.187766+00:00"
+          }
+        },
+        "findings_returned": 1,
+        "findings": [
+          {
+            "id": 1,
+            "repo_url": "https://github.com/org/repo",
+            "ticker": "org/repo",
+            "severity": "HIGH",
+            "kind": "example",
+            "category": "ALL",
+            "cls": "REAL",
+            "hits": 1,
+            "path": ".env",
+            "line": 1,
+            "gh_url": "synthetic-link",
+            "found_at": "2026-11-23T01:34:33.187766+00:00",
+            "derived_addr": "",
+            "derived_chain": "",
+            "is_live": false,
+            "balance_eth": null,
+            "nonce": null,
+            "vertical": "WEB3_DEFI",
+            "secret_masked": "MASKED \ud83d\udd12 [BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u043a\u043b\u044e\u0447]",
+            "secret_full": null,
+            "rescan": {
+              "status": "complete",
+              "coverage": {
+                "complete": true,
+                "required": 5,
+                "succeeded": 5,
+                "eligible": 1,
+                "states": {
+                  "succeeded": 5
+                },
+                "finalization": {
+                  "required": 1,
+                  "succeeded": 1,
+                  "failed": 0,
+                  "pending": 0
+                }
+              },
+              "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+              "commit": "00000000000000000000000000000000000003e7",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "published_at": "2026-11-23T01:34:33.187766+00:00"
+            },
+            "rescan_versions": [
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "b0a0f5e1c428cb915f8404f585c513571f76020073c1beb6969ded13ae3491e5",
+                "published_at": "2026-11-23T01:34:33.120358+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": "",
+                "secret_full": null,
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000e",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "20e19ce2d642f4717e4854f2b8b1467dc0d313a4ca6815ff4e3acaf0c19397bc",
+                "published_at": "2026-11-23T01:34:33.117600+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": "",
+                "secret_full": null,
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000d",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "b75af0a86af0c01a58eff851050aa9cefc6d91cfb215d08f3f1d1bd316704198",
+                "published_at": "2026-11-23T01:34:33.114518+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": "",
+                "secret_full": null,
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000c",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "0d122f2bbcd6358ee71eca5de006932f82a9b92fb5aca2bcc7feb3b135e02f88",
+                "published_at": "2026-11-23T01:34:33.111688+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": "",
+                "secret_full": null,
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000b",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "5337ecd16cd762a2b6c963900dfabb164c2c3faff49cc7c687b403b88456e0bb",
+                "published_at": "2026-11-23T01:34:33.107289+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": "",
+                "secret_full": null,
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000a",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+                "published_at": "2026-11-23T01:34:32.157241+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": "",
+                "secret_full": null,
+                "state": "complete",
+                "commit": "2222222222222222222222222222222222222222",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+                "published_at": "2026-11-23T01:34:31.992332+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": "",
+                "secret_full": null,
+                "state": "partial",
+                "commit": "1111111111111111111111111111111111111111",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              }
+            ],
+            "rescan_versions_page": {
+              "total": 17,
+              "offset": 10,
+              "limit": 10,
+              "has_more": false
+            }
+          }
+        ]
+      },
+      "BLACKBOX": {
+        "viewer_tier": "BLACKBOX",
+        "query": "org/repo",
+        "filter_mode": "repo:org/repo",
+        "severity_filter": "ALL",
+        "vertical_filter": "ALL",
+        "category_filter": "ALL",
+        "cls_filter": "REAL",
+        "only_real": true,
+        "only_live": false,
+        "offset": 0,
+        "limit": 40,
+        "total_groups": 1,
+        "total_signatures_active": 1,
+        "detector_catalog": {
+          "counts": {
+            "canonical_kinds": 1
+          }
+        },
+        "category_counts": {},
+        "db_stats": {
+          "indexed_repos": 0,
+          "real_repos": 0,
+          "indexed_findings": 0,
+          "real_findings": 0,
+          "live_keys": 0,
+          "radar_total": 0,
+          "radar_pending": 0,
+          "by_severity": {},
+          "by_chain": {},
+          "checkers_active": [
+            "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+            "BTC xprv BIP44/49/84 & WIF",
+            "NEAR ed25519 RPC",
+            "Solana ed25519 RPC",
+            "ETH Keystore v3 Extractor & Cracker",
+            "PEM Curve Classifier (secp256k1/Ed25519)",
+            "45+ SaaS/AI API Live Probes"
+          ],
+          "by_vertical": {
+            "WEB3_DEFI": 2
+          },
+          "omni_stats": {},
+          "ospec_watcher_running": false,
+          "backfill_running": false
+        },
+        "kind_stats": [],
+        "repo_coverage": {
+          "https://github.com/org/repo": {
+            "status": "complete",
+            "coverage": {
+              "complete": true,
+              "required": 5,
+              "succeeded": 5,
+              "eligible": 1,
+              "states": {
+                "succeeded": 5
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 1,
+                "failed": 0,
+                "pending": 0
+              }
+            },
+            "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+            "commit": "00000000000000000000000000000000000003e7",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:33.187766+00:00"
+          }
+        },
+        "findings_returned": 1,
+        "findings": [
+          {
+            "id": 1,
+            "repo_url": "https://github.com/org/repo",
+            "ticker": "org/repo",
+            "severity": "HIGH",
+            "kind": "example",
+            "category": "ALL",
+            "cls": "REAL",
+            "hits": 1,
+            "path": ".env",
+            "line": 1,
+            "gh_url": "synthetic-link",
+            "found_at": "2026-11-23T01:34:33.187766+00:00",
+            "derived_addr": "",
+            "derived_chain": "",
+            "is_live": false,
+            "balance_eth": null,
+            "nonce": null,
+            "vertical": "WEB3_DEFI",
+            "secret_masked": "",
+            "secret_full": "",
+            "rescan": {
+              "status": "complete",
+              "coverage": {
+                "complete": true,
+                "required": 5,
+                "succeeded": 5,
+                "eligible": 1,
+                "states": {
+                  "succeeded": 5
+                },
+                "finalization": {
+                  "required": 1,
+                  "succeeded": 1,
+                  "failed": 0,
+                  "pending": 0
+                }
+              },
+              "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+              "commit": "00000000000000000000000000000000000003e7",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "published_at": "2026-11-23T01:34:33.187766+00:00"
+            },
+            "rescan_versions": [
+              {
+                "kind": "secret:example",
+                "cls": "TEST",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "4b79834a955c744f68a516537cfdf278a2cca7906d653ab1b2cf1cf98941fb40",
+                "published_at": "2026-11-23T01:34:33.158758+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000065",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "TEST",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "a295b94d544e99cef72ab497b6c0dcfd8b06cc8e9460084e7aa3f59a130e2107",
+                "published_at": "2026-11-23T01:34:33.155496+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000064",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "87c1dace1228d0276682107abdc4e5f50327dda145122e50250b0e5fe5d8ac2d",
+                "published_at": "2026-11-23T01:34:33.152573+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000017",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "4d4962632262fea2842b5dcac9f768d8b461b93927f32be1a954176d51587d94",
+                "published_at": "2026-11-23T01:34:33.143803+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000016",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "648edfdb469e96d292bb50919cd0ee8894d7a2f5d5bda170d9530e9f7594e2eb",
+                "published_at": "2026-11-23T01:34:33.141011+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000015",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "388217ebf024cca830d06e9877143fd65e325aeaf26d3aa8a4716a4e4fce40fc",
+                "published_at": "2026-11-23T01:34:33.137950+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000014",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "f48c62440af6e24759e1a7ca87adf109ec2077944e193af8fa15782ef6e1d176",
+                "published_at": "2026-11-23T01:34:33.134869+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000013",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "7ed29faaa7735fb88c04428fc6b2db9e466d47e80a3777426728099054b160db",
+                "published_at": "2026-11-23T01:34:33.132021+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000012",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "e451ff570d006e1cf3d13c280eb656c0114dd2037e45ef9dae55dcde6d67be41",
+                "published_at": "2026-11-23T01:34:33.128991+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000011",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "e62baa1dc9f0331abc4aa86d37f6911f58b1d0f4e5bf2e78bf62419cfe5cf6af",
+                "published_at": "2026-11-23T01:34:33.126284+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "0000000000000000000000000000000000000010",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              }
+            ],
+            "rescan_versions_page": {
+              "total": 28,
+              "offset": 10,
+              "limit": 10,
+              "has_more": true
+            }
+          }
+        ]
+      }
+    },
+    "20": {
+      "RADAR": {
+        "viewer_tier": "RADAR",
+        "query": "org/repo",
+        "filter_mode": "repo:org/repo",
+        "severity_filter": "ALL",
+        "vertical_filter": "ALL",
+        "category_filter": "ALL",
+        "cls_filter": "REAL",
+        "only_real": true,
+        "only_live": false,
+        "offset": 0,
+        "limit": 10,
+        "total_groups": 1,
+        "total_signatures_active": 1,
+        "detector_catalog": {
+          "counts": {
+            "canonical_kinds": 1
+          }
+        },
+        "category_counts": {},
+        "db_stats": {
+          "indexed_repos": 0,
+          "real_repos": 0,
+          "indexed_findings": 0,
+          "real_findings": 0,
+          "live_keys": 0,
+          "radar_total": 0,
+          "radar_pending": 0,
+          "by_severity": {},
+          "by_chain": {},
+          "checkers_active": [
+            "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+            "BTC xprv BIP44/49/84 & WIF",
+            "NEAR ed25519 RPC",
+            "Solana ed25519 RPC",
+            "ETH Keystore v3 Extractor & Cracker",
+            "PEM Curve Classifier (secp256k1/Ed25519)",
+            "45+ SaaS/AI API Live Probes"
+          ],
+          "by_vertical": {
+            "WEB3_DEFI": 2
+          },
+          "omni_stats": {},
+          "ospec_watcher_running": false,
+          "backfill_running": false
+        },
+        "kind_stats": [],
+        "repo_coverage": {
+          "https://github.com/org/repo": {
+            "status": "complete",
+            "coverage": {
+              "complete": true,
+              "required": 5,
+              "succeeded": 5,
+              "eligible": 1,
+              "states": {
+                "succeeded": 5
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 1,
+                "failed": 0,
+                "pending": 0
+              }
+            },
+            "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+            "commit": "00000000000000000000000000000000000003e7",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:33.187766+00:00"
+          }
+        },
+        "findings_returned": 1,
+        "findings": [
+          {
+            "id": 1,
+            "repo_url": "https://github.com/org/repo",
+            "ticker": "org/repo",
+            "severity": "HIGH",
+            "kind": "example",
+            "category": "ALL",
+            "cls": "REAL",
+            "hits": 1,
+            "path": ".env",
+            "line": 0,
+            "gh_url": "https://github.com/org/repo",
+            "found_at": "2026-11-23T01:34:33.187766+00:00",
+            "derived_addr": "",
+            "derived_chain": "",
+            "is_live": false,
+            "balance_eth": null,
+            "nonce": null,
+            "vertical": "WEB3_DEFI",
+            "secret_masked": "\ud83d\udd12 [RAW: \u043c\u0430\u0441\u043a\u0430 \u00b7 BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u0441\u0435\u043a\u0440\u0435\u0442]",
+            "secret_full": null,
+            "rescan": {
+              "status": "complete",
+              "coverage": {
+                "complete": true,
+                "required": 5,
+                "succeeded": 5,
+                "eligible": 1,
+                "states": {
+                  "succeeded": 5
+                },
+                "finalization": {
+                  "required": 1,
+                  "succeeded": 1,
+                  "failed": 0,
+                  "pending": 0
+                }
+              },
+              "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+              "commit": "00000000000000000000000000000000000003e7",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "published_at": "2026-11-23T01:34:33.187766+00:00"
+            },
+            "rescan_versions": [],
+            "rescan_versions_page": {
+              "total": 17,
+              "offset": 20,
+              "limit": 10,
+              "has_more": false
+            }
+          }
+        ]
+      },
+      "RAW": {
+        "viewer_tier": "RAW",
+        "query": "org/repo",
+        "filter_mode": "repo:org/repo",
+        "severity_filter": "ALL",
+        "vertical_filter": "ALL",
+        "category_filter": "ALL",
+        "cls_filter": "REAL",
+        "only_real": true,
+        "only_live": false,
+        "offset": 0,
+        "limit": 25,
+        "total_groups": 1,
+        "total_signatures_active": 1,
+        "detector_catalog": {
+          "counts": {
+            "canonical_kinds": 1
+          }
+        },
+        "category_counts": {},
+        "db_stats": {
+          "indexed_repos": 0,
+          "real_repos": 0,
+          "indexed_findings": 0,
+          "real_findings": 0,
+          "live_keys": 0,
+          "radar_total": 0,
+          "radar_pending": 0,
+          "by_severity": {},
+          "by_chain": {},
+          "checkers_active": [
+            "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+            "BTC xprv BIP44/49/84 & WIF",
+            "NEAR ed25519 RPC",
+            "Solana ed25519 RPC",
+            "ETH Keystore v3 Extractor & Cracker",
+            "PEM Curve Classifier (secp256k1/Ed25519)",
+            "45+ SaaS/AI API Live Probes"
+          ],
+          "by_vertical": {
+            "WEB3_DEFI": 2
+          },
+          "omni_stats": {},
+          "ospec_watcher_running": false,
+          "backfill_running": false
+        },
+        "kind_stats": [],
+        "repo_coverage": {
+          "https://github.com/org/repo": {
+            "status": "complete",
+            "coverage": {
+              "complete": true,
+              "required": 5,
+              "succeeded": 5,
+              "eligible": 1,
+              "states": {
+                "succeeded": 5
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 1,
+                "failed": 0,
+                "pending": 0
+              }
+            },
+            "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+            "commit": "00000000000000000000000000000000000003e7",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:33.187766+00:00"
+          }
+        },
+        "findings_returned": 1,
+        "findings": [
+          {
+            "id": 1,
+            "repo_url": "https://github.com/org/repo",
+            "ticker": "org/repo",
+            "severity": "HIGH",
+            "kind": "example",
+            "category": "ALL",
+            "cls": "REAL",
+            "hits": 1,
+            "path": ".env",
+            "line": 1,
+            "gh_url": "synthetic-link",
+            "found_at": "2026-11-23T01:34:33.187766+00:00",
+            "derived_addr": "",
+            "derived_chain": "",
+            "is_live": false,
+            "balance_eth": null,
+            "nonce": null,
+            "vertical": "WEB3_DEFI",
+            "secret_masked": "MASKED \ud83d\udd12 [BLACKBOX: \u043f\u043e\u043b\u043d\u044b\u0439 \u043a\u043b\u044e\u0447]",
+            "secret_full": null,
+            "rescan": {
+              "status": "complete",
+              "coverage": {
+                "complete": true,
+                "required": 5,
+                "succeeded": 5,
+                "eligible": 1,
+                "states": {
+                  "succeeded": 5
+                },
+                "finalization": {
+                  "required": 1,
+                  "succeeded": 1,
+                  "failed": 0,
+                  "pending": 0
+                }
+              },
+              "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+              "commit": "00000000000000000000000000000000000003e7",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "published_at": "2026-11-23T01:34:33.187766+00:00"
+            },
+            "rescan_versions": [],
+            "rescan_versions_page": {
+              "total": 17,
+              "offset": 20,
+              "limit": 10,
+              "has_more": false
+            }
+          }
+        ]
+      },
+      "BLACKBOX": {
+        "viewer_tier": "BLACKBOX",
+        "query": "org/repo",
+        "filter_mode": "repo:org/repo",
+        "severity_filter": "ALL",
+        "vertical_filter": "ALL",
+        "category_filter": "ALL",
+        "cls_filter": "REAL",
+        "only_real": true,
+        "only_live": false,
+        "offset": 0,
+        "limit": 40,
+        "total_groups": 1,
+        "total_signatures_active": 1,
+        "detector_catalog": {
+          "counts": {
+            "canonical_kinds": 1
+          }
+        },
+        "category_counts": {},
+        "db_stats": {
+          "indexed_repos": 0,
+          "real_repos": 0,
+          "indexed_findings": 0,
+          "real_findings": 0,
+          "live_keys": 0,
+          "radar_total": 0,
+          "radar_pending": 0,
+          "by_severity": {},
+          "by_chain": {},
+          "checkers_active": [
+            "EVM 6-Chain RPC (ETH/BSC/Base/Arb/Poly)",
+            "BTC xprv BIP44/49/84 & WIF",
+            "NEAR ed25519 RPC",
+            "Solana ed25519 RPC",
+            "ETH Keystore v3 Extractor & Cracker",
+            "PEM Curve Classifier (secp256k1/Ed25519)",
+            "45+ SaaS/AI API Live Probes"
+          ],
+          "by_vertical": {
+            "WEB3_DEFI": 2
+          },
+          "omni_stats": {},
+          "ospec_watcher_running": false,
+          "backfill_running": false
+        },
+        "kind_stats": [],
+        "repo_coverage": {
+          "https://github.com/org/repo": {
+            "status": "complete",
+            "coverage": {
+              "complete": true,
+              "required": 5,
+              "succeeded": 5,
+              "eligible": 1,
+              "states": {
+                "succeeded": 5
+              },
+              "finalization": {
+                "required": 1,
+                "succeeded": 1,
+                "failed": 0,
+                "pending": 0
+              }
+            },
+            "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+            "commit": "00000000000000000000000000000000000003e7",
+            "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "published_at": "2026-11-23T01:34:33.187766+00:00"
+          }
+        },
+        "findings_returned": 1,
+        "findings": [
+          {
+            "id": 1,
+            "repo_url": "https://github.com/org/repo",
+            "ticker": "org/repo",
+            "severity": "HIGH",
+            "kind": "example",
+            "category": "ALL",
+            "cls": "REAL",
+            "hits": 1,
+            "path": ".env",
+            "line": 1,
+            "gh_url": "synthetic-link",
+            "found_at": "2026-11-23T01:34:33.187766+00:00",
+            "derived_addr": "",
+            "derived_chain": "",
+            "is_live": false,
+            "balance_eth": null,
+            "nonce": null,
+            "vertical": "WEB3_DEFI",
+            "secret_masked": "",
+            "secret_full": "",
+            "rescan": {
+              "status": "complete",
+              "coverage": {
+                "complete": true,
+                "required": 5,
+                "succeeded": 5,
+                "eligible": 1,
+                "states": {
+                  "succeeded": 5
+                },
+                "finalization": {
+                  "required": 1,
+                  "succeeded": 1,
+                  "failed": 0,
+                  "pending": 0
+                }
+              },
+              "publication_key": "bfc1835093b4ba790d325de639f90d9f9387dc8508f0dd22cb152ee899548e6a",
+              "commit": "00000000000000000000000000000000000003e7",
+              "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+              "published_at": "2026-11-23T01:34:33.187766+00:00"
+            },
+            "rescan_versions": [
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "04487636f325cb8b3cbcb082c5f931982d0bd782de40d266658afd46ad6d8d04",
+                "published_at": "2026-11-23T01:34:33.123034+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000f",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "b0a0f5e1c428cb915f8404f585c513571f76020073c1beb6969ded13ae3491e5",
+                "published_at": "2026-11-23T01:34:33.120358+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000e",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "20e19ce2d642f4717e4854f2b8b1467dc0d313a4ca6815ff4e3acaf0c19397bc",
+                "published_at": "2026-11-23T01:34:33.117600+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000d",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "b75af0a86af0c01a58eff851050aa9cefc6d91cfb215d08f3f1d1bd316704198",
+                "published_at": "2026-11-23T01:34:33.114518+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000c",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "0d122f2bbcd6358ee71eca5de006932f82a9b92fb5aca2bcc7feb3b135e02f88",
+                "published_at": "2026-11-23T01:34:33.111688+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000b",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "5337ecd16cd762a2b6c963900dfabb164c2c3faff49cc7c687b403b88456e0bb",
+                "published_at": "2026-11-23T01:34:33.107289+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "000000000000000000000000000000000000000a",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "ee8ff7aaff9f60b0e007c73078afb25c9ca78ca181b51f70e4432b974b56f164",
+                "published_at": "2026-11-23T01:34:32.157241+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "complete",
+                "commit": "2222222222222222222222222222222222222222",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              {
+                "kind": "secret:example",
+                "cls": "REAL",
+                "confidence": 0.9,
+                "severity": "HIGH",
+                "finding_id": 1,
+                "ordinal": 0,
+                "publication_key": "cd641890f8d19b76f51db73d1ef9a3a802c41927830c1a22f1d68e5f829e8e17",
+                "published_at": "2026-11-23T01:34:31.992332+00:00",
+                "path": ".env",
+                "line": 1,
+                "secret_masked": null,
+                "secret_full": "",
+                "state": "partial",
+                "commit": "1111111111111111111111111111111111111111",
+                "engine": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              }
+            ],
+            "rescan_versions_page": {
+              "total": 28,
+              "offset": 20,
+              "limit": 10,
+              "has_more": false
+            }
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,4 +1,7 @@
+import { OspecRescanVersions } from "@/components/OspecRescanVersions";
+import { OspecRescanCoverage } from "@/components/OspecRescanCoverage";
 import { OspecDetectorOptions, OspecCatalogSummary, type DetectorCatalog } from "@/components/OspecDetectorCatalog";
+import { bridgePublicLinks } from "@/lib/bridge-links";
 import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -121,11 +124,65 @@ const ToolsPanel = () => {
   const [zkShowcaseTab, setZkShowcaseTab] = useState<"active_tvl" | "benchmarks">("active_tvl");
   const [zkActiveContracts, setZkActiveContracts] = useState<any[]>([]);
   const [zkActiveLoading, setZkActiveLoading] = useState<boolean>(false);
+  const [bridgeHarvestStatus, setBridgeHarvestStatus] = useState<any>(null);
   const [bridgeViewTab, setBridgeViewTab] = useState<"contracts" | "protocols" | "hacks">("contracts");
   const [bridgeRiskFilter, setBridgeRiskFilter] = useState<string>("all");
   const [bridgeOffset, setBridgeOffset] = useState<number>(0);
   const [bridgeLimit, setBridgeLimit] = useState<number>(50);
+  const bridgeRequestRef = useRef(0);
+  useEffect(() => {
+    if (tool !== "bridges") setLoading(false);
+    return () => { bridgeRequestRef.current += 1; };
+  }, [tool]);
+
+  const runBridges = async (opts: { tab?: typeof bridgeViewTab; q?: string; chain?: string; risk?: string; offset?: number; limit?: number } = {}) => {
+    const tab = opts.tab ?? bridgeViewTab;
+    const offset = opts.offset ?? 0;
+    const limit = opts.limit ?? bridgeLimit;
+    const q = opts.q ?? input1.trim();
+    const requestId = ++bridgeRequestRef.current;
+    setBridgeViewTab(tab);
+    setBridgeOffset(offset);
+    setBridgeLimit(limit);
+    setError(null);
+    setResult(null);
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/tools/bridges`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ q, chain: opts.chain ?? chain, view_tab: tab,
+          risk_filter: opts.risk ?? bridgeRiskFilter, offset, limit }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.ok === false || data.success === false || data.error) {
+        throw new Error(typeof data.detail === "string" ? data.detail : typeof data.error === "string" ? data.error : `Ошибка каталога (HTTP ${res.status})`);
+      }
+      if (requestId !== bridgeRequestRef.current) return;
+      setResult({ ...data, view_tab: tab, bridge_query: q });
+      setBridgeOffset(Number.isInteger(data.offset) && data.offset >= 0 ? data.offset : offset);
+      setBridgeLimit(Number.isInteger(data.limit) && data.limit > 0 ? data.limit : limit);
+    } catch (e: any) {
+      if (requestId === bridgeRequestRef.current) setError(e.message || "Не удалось загрузить каталог мостов");
+    } finally {
+      if (requestId === bridgeRequestRef.current) setLoading(false);
+    }
+  };
+  const bridgeTotal = typeof result?.total_matching === "number" && result.total_matching >= 0 ? result.total_matching : null;
   const ospecSearchInputRef = useRef<HTMLInputElement | null>(null);
+  const ospecRequestRef = useRef(0);
+  const ospecSubmittedRef = useRef<any>(null);
+  useEffect(() => {
+    if (tool === "ospec") {
+      setResult(null);
+      setLoading(false);
+      setFindingDetail({});
+      setExpandedFindingId(null);
+      ospecSubmittedRef.current = null;
+    }
+    return () => { ospecRequestRef.current += 1; };
+  }, [rank]);
+  useEffect(() => () => { ospecRequestRef.current += 1; }, [tool]);
 
   // Full Markdown Writeup viewer for the 1,678 Deep Exploits DB
   const [expandedWriteupSlug, setExpandedWriteupSlug] = useState<string | null>(null);
@@ -192,8 +249,10 @@ const ToolsPanel = () => {
     real?: boolean;
     live?: boolean;
     offset?: number;
+    versionsOffset?: number;
   }) => {
     if (rank < 1) return;
+    const requestId = ++ospecRequestRef.current;
     const qVal = opts?.q !== undefined ? opts.q : input1.trim();
     const sevVal = opts?.sev !== undefined ? opts.sev : ospecSeverity;
     const vertVal = opts?.vert !== undefined ? opts.vert : ospecVertical;
@@ -202,8 +261,12 @@ const ToolsPanel = () => {
     const realVal = opts?.real !== undefined ? opts.real : ospecOnlyReal;
     const liveVal = opts?.live !== undefined ? opts.live : ospecOnlyLive;
     const offsetVal = opts?.offset !== undefined ? opts.offset : 0;
+    const versionsOffset = opts?.versionsOffset ?? 0;
+    const searchBody = {query:qVal, severity:sevVal, vertical:vertVal, category:catVal, cls_filter:clsVal, only_real:realVal, only_live:liveVal, offset:offsetVal, versions_offset:versionsOffset};
+    ospecSubmittedRef.current = searchBody;
     setOspecOffset(offsetVal);
 
+    setResult(null); // Never present the previous query's coverage as a new rescan verdict.
     setError(null);
     setOpenedHistoryBanner(null);
     setLoading(true);
@@ -211,29 +274,28 @@ const ToolsPanel = () => {
       const res = await fetch(`${API_BASE}/api/tools/ospec`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({
-          query: qVal,
-          severity: sevVal,
-          vertical: vertVal,
-          category: catVal,
-          cls_filter: clsVal,
-          only_real: realVal,
-          only_live: liveVal,
-          offset: offsetVal,
-        }),
+        body: JSON.stringify(searchBody),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+      if (requestId !== ospecRequestRef.current) return;
       if (typeof data?.db_stats?.ospec_watcher_running === "boolean") {
         setOspecDaemonRunning(data.db_stats.ospec_watcher_running);
       }
       setResult(data);
       loadHistory(historyFilter);
     } catch (e: any) {
-      setError(e.message || "OSPEC error");
+      if (requestId === ospecRequestRef.current) setError(e.message || "OSPEC error");
     } finally {
-      setLoading(false);
+      if (requestId === ospecRequestRef.current) setLoading(false);
     }
+  };
+
+  const pageOspecVersions = (versionsOffset: number) => {
+    const s = ospecSubmittedRef.current;
+    if (!s || loading) return;
+    runOspecWithFilters({q:s.query, sev:s.severity, vert:s.vertical, cat:s.category,
+      cls:s.cls_filter, real:s.only_real, live:s.only_live, offset:s.offset, versionsOffset});
   };
 
   // Keyboard hotkeys for OSPEC when active and not typing in an input/select
@@ -426,7 +488,7 @@ const ToolsPanel = () => {
     minRank: number;
     placeholder: string;
   }> = [
-    { id: "bridges", labelRu: "Cross-Chain Мосты & Валидаторы (5.6K)", labelEn: "Bridge Radar v2.0 (5.6K Vaults)", icon: Network, minRank: 0, placeholder: "0x... адрес хранилища ИЛИ поиск: Wormhole, LayerZero, Stargate, Across, CCTP, Ronin" },
+    { id: "bridges", labelRu: "Cross-Chain Мосты & Валидаторы", labelEn: "Bridge Radar v2.0", icon: Network, minRank: 0, placeholder: "0x... адрес хранилища ИЛИ поиск: Wormhole, LayerZero, Stargate, Across, CCTP, Ronin" },
     { id: "holders", labelRu: "Холдеры и киты", labelEn: "Holders & Whales", icon: Users, minRank: 0, placeholder: "0xA0b86991...B48" },
     { id: "market", labelRu: "Рынок и деривативы", labelEn: "Market & Derivatives", icon: TrendingUp, minRank: 0, placeholder: "BTC / ETH / SOL / PEPE" },
     { id: "funds", labelRu: "Потоки средств 14д", labelEn: "Funds Flow 14d", icon: ArrowLeftRight, minRank: 1, placeholder: "0xA0b86991...B48" },
@@ -629,6 +691,7 @@ const ToolsPanel = () => {
   };
 
   const run = async () => {
+    if (tool === "bridges") { await runBridges(); return; }
     const valErr = validateToolInput(tool, input1);
     if (valErr) {
       setError(valErr);
@@ -649,17 +712,7 @@ const ToolsPanel = () => {
     try {
       let path = "";
       let body: any = {};
-      if (tool === "bridges") {
-        path = "/api/tools/bridges";
-        body = {
-          q: input1.trim(),
-          chain,
-          view_tab: bridgeViewTab,
-          risk_filter: bridgeRiskFilter,
-          offset: bridgeOffset,
-          limit: bridgeLimit,
-        };
-      } else if (tool === "holders") {
+      if (tool === "holders") {
         path = "/api/tools/holders";
         body = { address: input1.trim(), chain };
       } else if (tool === "funds") {
@@ -968,13 +1021,17 @@ const ToolsPanel = () => {
                         🌉 Cross-Chain Bridge Radar v2.0
                       </span>
                       <span className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-xs font-bold text-emerald-300">
-                        💰 5,731 Контрактов · $65.3B TVL
+                        {isRu ? "Развёртывания контрактов" : "Contract deployments"}: {result?.stats?.total_contracts ?? "—"} · {isRu ? "TVL каталога" : "Catalog TVL"}: {result?.stats?.global_bridge_tvl_usd == null ? "—" : `$${Number(result.stats.global_bridge_tvl_usd).toLocaleString()}`}
                       </span>
                       <span className="rounded border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-[11px] font-bold text-red-400">
-                        💥 110 Взломов ($54.9B)
+                        💥 {isRu ? "Взломов в базе" : "Recorded exploits"}: {result?.stats?.bridge_hacks_count ?? "—"}
                       </span>
                     </div>
 
+                    {bridgeHarvestStatus && <div role="status" className="text-xs text-muted-foreground">
+                      {bridgeHarvestStatus.ok === true ? "Выбранные снимки обработаны; мировое покрытие не подтверждено." : "Продолжение требуется. Курсоры сохранены; следующий запуск продолжит источники."}
+                      {bridgeHarvestStatus.sources?.map((s: any) => <p key={s.source}>{s.source}: {s.status} · {s.cursor ?? "—"}/{s.total ?? "—"}</p>)}
+                    </div>}
                     {/* PROMINENT RADAR CONVEYOR BUTTON (BLACKBOX ONLY) */}
                     <div className="flex flex-wrap items-center gap-2">
                       <button
@@ -983,27 +1040,36 @@ const ToolsPanel = () => {
                           if (rank < 3) {
                             setError(
                               isRu
-                                ? "🔒 Запуск мультичейн радар-конвейера мостов (DefiLlama + Blockscout + Ankr) доступен эксклюзивно на тарифе BLACKBOX."
+                                ? "🔒 Сбор данных каталога мостов доступен на тарифе BLACKBOX."
                                 : "🔒 Multichain Radar Conveyor requires BLACKBOX tier."
                             );
                             return;
                           }
+                          const requestId = ++bridgeRequestRef.current;
                           setError(null);
                           setLoading(true);
                           try {
                             const res = await fetch(`${API_BASE}/api/tools/bridges/harvest`, {
                               method: "POST",
                               headers: { "Content-Type": "application/json", ...authHeaders() },
+                              body: JSON.stringify({ resume: true }),
                             });
-                            if (!res.ok) {
-                              const d = await res.json().catch(() => ({}));
-                              throw new Error(d.detail || `HTTP ${res.status}`);
+                            const data = await res.json().catch(() => ({}));
+                            if (requestId !== bridgeRequestRef.current) return;
+                            if ([409, 504].includes(res.status) && Array.isArray(data.sources) && data.ok === false) {
+                              setBridgeHarvestStatus(data);
+                              await runBridges({ offset: 0 });
+                              return;
                             }
-                            await run();
+                            if (!res.ok || data.ok !== true || data.success === false || data.error) {
+                              throw new Error(typeof data.detail === "string" ? data.detail : typeof data.error === "string" ? data.error : `Не удалось подтвердить сбор (HTTP ${res.status})`);
+                            }
+                            setBridgeHarvestStatus(data);
+                            await runBridges({ offset: 0 });
                           } catch (e: any) {
-                            setError(e.message || "Harvest failed");
+                            if (requestId === bridgeRequestRef.current) setError(e.message || "Не удалось выполнить сбор");
                           } finally {
-                            setLoading(false);
+                            if (requestId === bridgeRequestRef.current) setLoading(false);
                           }
                         }}
                         disabled={loading}
@@ -1014,12 +1080,12 @@ const ToolsPanel = () => {
                         }`}
                         title={
                           rank >= 3
-                            ? "Запустить конвейер поиска и сбора мостов по всем сетям (DefiLlama + Blockscout + Ankr)"
+                            ? "Запустить сбор данных каталога мостов из подключённых источников"
                             : "Требуется тариф BLACKBOX"
                         }
                       >
                         {loading ? <Loader2 size={13} className="animate-spin" /> : <span>🛰️</span>}
-                        <span>{isRu ? "Запустить Радар-Конвейер (Все сети)" : "Run Multichain Radar Conveyor"}</span>
+                        <span>{bridgeHarvestStatus?.ok === false ? (isRu ? "Продолжить сбор" : "Continue harvest") : (isRu ? "Запустить Радар-Конвейер" : "Run Multichain Radar Conveyor")}</span>
                         {rank < 3 && <Lock size={12} className="text-muted-foreground" />}
                       </button>
 
@@ -1039,8 +1105,7 @@ const ToolsPanel = () => {
                     <button
                       type="button"
                       onClick={() => {
-                        setBridgeViewTab("contracts");
-                        setBridgeOffset(0);
+                        void runBridges({ tab: "contracts", offset: 0 });
                       }}
                       className={`rounded-lg border px-3 py-1.5 font-bold transition-all ${
                         bridgeViewTab === "contracts"
@@ -1048,14 +1113,13 @@ const ToolsPanel = () => {
                           : "border-border bg-background text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      🏛️ {isRu ? "Все Контракты и Хранилища" : "All Bridge Vaults"} ({result?.stats?.total_contracts || 5731})
+                      🏛️ {isRu ? "Развёртывания контрактов" : "Contract deployments"} ({result?.stats?.total_contracts ?? "—"})
                     </button>
 
                     <button
                       type="button"
                       onClick={() => {
-                        setBridgeViewTab("protocols");
-                        setBridgeOffset(0);
+                        void runBridges({ tab: "protocols", offset: 0 });
                       }}
                       className={`rounded-lg border px-3 py-1.5 font-bold transition-all ${
                         bridgeViewTab === "protocols"
@@ -1063,14 +1127,13 @@ const ToolsPanel = () => {
                           : "border-border bg-background text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      🌐 {isRu ? "Все Известные Мосты и Протоколы" : "All Cross-Chain Protocols"} ({result?.stats?.total_protocols || 375})
+                      🌐 {isRu ? "Каталог протоколов" : "Protocol catalog"} ({result?.stats?.total_protocols ?? "—"})
                     </button>
 
                     <button
                       type="button"
                       onClick={() => {
-                        setBridgeViewTab("hacks");
-                        setBridgeOffset(0);
+                        void runBridges({ tab: "hacks", offset: 0 });
                       }}
                       className={`rounded-lg border px-3 py-1.5 font-bold transition-all ${
                         bridgeViewTab === "hacks"
@@ -1078,7 +1141,7 @@ const ToolsPanel = () => {
                           : "border-border bg-background text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      💥 {isRu ? "База Взломов Мостов" : "Bridge Exploits KB"} ({result?.stats?.bridge_hacks_count || 110})
+                      💥 {isRu ? "База Взломов Мостов" : "Bridge Exploits KB"} ({result?.stats?.bridge_hacks_count ?? "—"})
                     </button>
                   </div>
 
@@ -1093,16 +1156,7 @@ const ToolsPanel = () => {
                             type="button"
                             onClick={() => {
                               setChain(chKey);
-                              setBridgeOffset(0);
-                              fetch(
-                                `${API_BASE}/api/tools/bridges?q=${encodeURIComponent(
-                                  input1.trim()
-                                )}&chain=${chKey}&risk=${bridgeRiskFilter}&offset=0&limit=${bridgeLimit}`,
-                                { headers: { ...authHeaders() } }
-                              )
-                                .then((r) => r.json())
-                                .then((d) => setResult(d))
-                                .catch(() => {});
+                              void runBridges({ chain: chKey, offset: 0 });
                             }}
                             className={`rounded-md border px-2.5 py-0.5 uppercase transition-all ${
                               chain === chKey
@@ -1124,22 +1178,16 @@ const ToolsPanel = () => {
                           { id: "audited", label: isRu ? "📋 Аудиты" : "📋 Audited" },
                           { id: "proxies", label: isRu ? "🔗 Прокси" : "🔗 Proxies" },
                           { id: "drain", label: isRu ? "🚨 Drain" : "🚨 Drain" },
+                          { id: "unknown", label: isRu ? "Не измерено" : "Unknown" },
                         ].map((rf) => (
                           <button
                             key={rf.id}
+                            disabled={result?.capabilities?.risk_filters === false && rf.id !== "all"}
+                            title={result?.capabilities?.risk_filters === false ? "Risk measurements unavailable for registry inventory" : undefined}
                             type="button"
                             onClick={() => {
                               setBridgeRiskFilter(rf.id);
-                              setBridgeOffset(0);
-                              fetch(
-                                `${API_BASE}/api/tools/bridges?q=${encodeURIComponent(
-                                  input1.trim()
-                                )}&chain=${chain}&risk=${rf.id}&offset=0&limit=${bridgeLimit}`,
-                                { headers: { ...authHeaders() } }
-                              )
-                                .then((r) => r.json())
-                                .then((d) => setResult(d))
-                                .catch(() => {});
+                              void runBridges({ risk: rf.id, offset: 0 });
                             }}
                             className={`rounded-md border px-2 py-0.5 transition-all ${
                               bridgeRiskFilter === rf.id
@@ -5580,6 +5628,7 @@ const ToolsPanel = () => {
             ))}
           </div>
 
+          <OspecRescanCoverage findings={result.findings} repoCoverage={result.repo_coverage} isRu={isRu} />
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <p className="font-mono text-[11px] uppercase tracking-wider text-primary font-bold">
@@ -5749,6 +5798,7 @@ const ToolsPanel = () => {
                         </div>
                       </div>
 
+                      <OspecRescanVersions versions={f.rescan_versions} page={f.rescan_versions_page} onPage={pageOspecVersions} rank={rank} isRu={isRu} />
                       <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px]">
                         <a
                           href={f.repo_url}
@@ -6888,6 +6938,31 @@ const ToolsPanel = () => {
             {/* 15. CROSS-CHAIN BRIDGE RADAR v2.0 RENDER */}
       {result && tool === "bridges" && (
         <div className="rounded-xl border border-border bg-card p-5 space-y-6 font-mono text-xs">
+          <div className="flex flex-wrap items-center gap-3" aria-label="Пагинация каталога мостов">
+            <span>Найдено: {bridgeTotal ?? "—"}</span>
+            <button type="button" disabled={loading || bridgeOffset === 0} onClick={() => void runBridges({ q: result.bridge_query, offset: Math.max(0, bridgeOffset - bridgeLimit) })}>← {isRu ? "Назад" : "Prev"}</button>
+            <span>{bridgeTotal === null ? "—" : bridgeTotal === 0 ? "0 / 0" : `${Math.floor(bridgeOffset / bridgeLimit) + 1} / ${Math.ceil(bridgeTotal / bridgeLimit)}`}</span>
+            <button type="button" disabled={loading || bridgeTotal === null || bridgeOffset + bridgeLimit >= bridgeTotal} onClick={() => void runBridges({ q: result.bridge_query, offset: bridgeOffset + bridgeLimit })}>{isRu ? "Вперёд" : "Next"} →</button>
+            <select aria-label="Записей на странице" value={bridgeLimit} disabled={loading} onChange={e => void runBridges({ q: result.bridge_query, limit: Number(e.target.value), offset: 0 })} className="rounded border border-border bg-background px-2 py-1">
+              {Array.from(new Set([20, 50, 100, 200, bridgeLimit])).sort((a, b) => a - b).map(size => <option key={size} value={size}>{size} / стр.</option>)}
+            </select>
+          </div>
+          <p className="text-muted-foreground">Каталог протоколов и развёртывания контрактов — разные наборы данных. Полнота покрытия не подтверждена.</p>
+          {result.coverage && (
+            <div className="rounded border border-border p-3 space-y-1" aria-label="Покрытие каталога">
+              <p>Записей с сохранённым байткодом: {result.coverage.contracts_with_recorded_bytecode ?? "—"}</p>
+              <p>Без сохранённого байткода: {result.coverage.contracts_without_recorded_bytecode ?? "—"}</p>
+              <p>Подтверждённых контрактов мостов: {result.coverage.verified_bridge_contracts ?? "—"}</p>
+              <p className="text-muted-foreground">Сохранённый байткод не подтверждает назначение контракта и его текущее состояние.</p>
+              {result.schema_version === "bridge_registry_v1" && <p>Реестр источников: риск и TVL неизвестны; аналитический снимок не подключён.</p>}
+              {result.schema_version === "bridge_registry_composite_v2" && <p>Аналитика — сохранённый снимок: риск, TVL, сигнатуры и инциденты не являются свежей проверкой. Новые адреса без измерений имеют статус unknown, а не безопасны.</p>}
+              {result.observations && <p>Наблюдения балансов: {result.observations.count} · {result.observations.status} · {result.observations.latest_at ?? "—"}. Баланс счёта не является TVL моста.</p>}
+              {result.capabilities?.risk_filters === false && <p>Фильтры риска недоступны без измерений.</p>}
+              {Array.isArray(result.coverage.by_source_role_chain) && <details><summary>Источники по сетям · сохранённое покрытие</summary>{result.coverage.by_source_role_chain.map((s: any, i: number) => <p key={i}>{s.chain} · {s.source} · {s.role}: {s.deployments} · {result.coverage.sources?.find((x: any) => x.source === s.source)?.checked_at ?? "—"}</p>)}</details>}
+              <p>Explorer discovery: ethereum, base, optimism. Остальные сети: explorer unsupported; официальный каталог может содержать их адреса. EVM balance не подтверждает назначение моста.</p>
+              {Array.isArray(result.coverage.sources) && result.coverage.sources.map((s: any) => <p key={s.source}>{s.source}: {s.status} · {s.cursor} / {s.total ?? "—"} · {s.checked_at ?? "—"}</p>)}
+            </div>
+          )}
           {/* Live Multichain Probe Result (if queried by 0x address) */}
           {result.live_probed_target && (
             <div className="rounded-xl border border-emerald-500/60 bg-emerald-500/10 p-4 space-y-3">
@@ -6919,85 +6994,10 @@ const ToolsPanel = () => {
                     🏛️ Хранилища и Контракты Мостов:
                   </span>
                   <span className="rounded-md border border-primary/40 bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
-                    Найдено: {(result.total_matching || result.bridges?.length || 0).toLocaleString()}
+                    Развёртывания в выборке: {bridgeTotal ?? "—"}
                   </span>
                 </div>
 
-                {/* Pagination Controls */}
-                <div className="flex items-center gap-2 text-[11px]">
-                  <button
-                    type="button"
-                    disabled={bridgeOffset === 0 || loading}
-                    onClick={() => {
-                      const nextOff = Math.max(0, bridgeOffset - bridgeLimit);
-                      setBridgeOffset(nextOff);
-                      fetch(
-                        `${API_BASE}/api/tools/bridges?q=${encodeURIComponent(
-                          input1.trim()
-                        )}&chain=${chain}&risk=${bridgeRiskFilter}&offset=${nextOff}&limit=${bridgeLimit}`,
-                        { headers: { ...authHeaders() } }
-                      )
-                        .then((r) => r.json())
-                        .then((d) => setResult(d))
-                        .catch(() => {});
-                    }}
-                    className="rounded border border-border bg-background px-2.5 py-1 text-muted-foreground hover:text-foreground disabled:opacity-40"
-                  >
-                    ← {isRu ? "Назад" : "Prev"}
-                  </button>
-
-                  <span className="text-muted-foreground">
-                    {Math.floor(bridgeOffset / bridgeLimit) + 1} /{" "}
-                    {Math.ceil((result.total_matching || result.bridges?.length || 1) / bridgeLimit) || 1}
-                  </span>
-
-                  <button
-                    type="button"
-                    disabled={
-                      bridgeOffset + bridgeLimit >= (result.total_matching || result.bridges?.length || 0) ||
-                      loading
-                    }
-                    onClick={() => {
-                      const nextOff = bridgeOffset + bridgeLimit;
-                      setBridgeOffset(nextOff);
-                      fetch(
-                        `${API_BASE}/api/tools/bridges?q=${encodeURIComponent(
-                          input1.trim()
-                        )}&chain=${chain}&risk=${bridgeRiskFilter}&offset=${nextOff}&limit=${bridgeLimit}`,
-                        { headers: { ...authHeaders() } }
-                      )
-                        .then((r) => r.json())
-                        .then((d) => setResult(d))
-                        .catch(() => {});
-                    }}
-                    className="rounded border border-border bg-background px-2.5 py-1 text-muted-foreground hover:text-foreground disabled:opacity-40"
-                  >
-                    {isRu ? "Вперёд" : "Next"} →
-                  </button>
-
-                  <select
-                    value={bridgeLimit}
-                    onChange={(e) => {
-                      const nl = Number(e.target.value);
-                      setBridgeLimit(nl);
-                      setBridgeOffset(0);
-                      fetch(
-                        `${API_BASE}/api/tools/bridges?q=${encodeURIComponent(
-                          input1.trim()
-                        )}&chain=${chain}&risk=${bridgeRiskFilter}&offset=0&limit=${nl}`,
-                        { headers: { ...authHeaders() } }
-                      )
-                        .then((r) => r.json())
-                        .then((d) => setResult(d))
-                        .catch(() => {});
-                    }}
-                    className="rounded border border-border bg-background px-2 py-1 text-[11px] text-foreground"
-                  >
-                    <option value={50}>50 / стр.</option>
-                    <option value={100}>100 / стр.</option>
-                    <option value={200}>200 / стр.</option>
-                  </select>
-                </div>
               </div>
 
               {/* Cards Grid */}
@@ -7023,7 +7023,7 @@ const ToolsPanel = () => {
                           </span>
                           <span className="font-bold text-foreground text-xs">{b.name}</span>
                           <code className="text-[11px] text-muted-foreground">{b.address}</code>
-                          <AddToWatchlistButton target={b.address || ""} kind="contract" chain={b.chain} label={b.name} />
+                          {(!b.family || b.family === "evm") && <AddToWatchlistButton target={b.address || ""} kind="contract" chain={b.chain} label={b.name} />}
                           <button
                             type="button"
                             onClick={() => {
@@ -7042,14 +7042,24 @@ const ToolsPanel = () => {
                           </button>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
+                          {bridgePublicLinks(b).map(link => <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer" title={link.title} className="rounded border border-border px-2 py-0.5 text-[10px]">{link.label}</a>)}
+                          {Array.isArray(b.archived_reports) && b.archived_reports.filter((r: any) => r.chain === b.chain && r.address?.toLowerCase() === b.address?.toLowerCase() && /^[A-Za-z0-9_-]{1,128}$/.test(r.task_id || "") && r.source === "scan_archive").map((r: any) => <a key={r.task_id} href={`/report/${encodeURIComponent(r.task_id)}`} className="rounded border border-border px-2 py-0.5 text-[10px]" title="Stored report: exact canonical chain/address; tier projection preserved">Archived report</a>)}
+                          <button type="button" disabled={b.family !== "evm" || b.chain !== "ethereum" || !/^0x[0-9a-fA-F]{40}$/.test(b.address || "")}
+                            title={b.chain === "ethereum" ? "Prefill only; explicit submission uses existing authentication and quotas" : "Existing scanner prefill has no explicit network field; disabled to avoid incorrect chain"}
+                            onClick={() => {
+                              localStorage.setItem("boris_prefill_target", b.address);
+                              window.dispatchEvent(new CustomEvent("boris-prefill-target", { detail: { target: b.address } }));
+                              document.getElementById("demo-scanner")?.scrollIntoView({ behavior: "smooth" });
+                            }} className="rounded border border-border px-2 py-0.5 text-[10px] disabled:opacity-40">New scan</button>
                           <button
                             type="button"
                             onClick={() => {
                               setTool("funds");
                               setInput1(b.address);
-                              setChain(b.chain || "ethereum");
+                              setChain(b.chain);
                             }}
                             className="rounded border border-cyan-500/40 bg-cyan-500/15 px-2 py-0.5 text-[10px] font-bold text-cyan-300 hover:bg-cyan-500/30 transition-colors"
+                            disabled={b.family !== "evm" || !/^0x[0-9a-fA-F]{40}$/.test(b.address || "") || !["ethereum", "bsc", "polygon", "arbitrum", "base", "optimism"].includes(b.chain)}
                             title="Просмотреть 14-дневные потоки средств хранилища"
                           >
                             💸 Funds Flow
@@ -7059,23 +7069,24 @@ const ToolsPanel = () => {
                             onClick={() => {
                               setTool("proxy");
                               setInput1(b.address);
-                              setChain(b.chain || "ethereum");
+                              setChain(b.chain);
                             }}
                             className="rounded border border-blue-500/40 bg-blue-500/15 px-2 py-0.5 text-[10px] font-bold text-blue-300 hover:bg-blue-500/30 transition-colors"
+                            disabled={b.family !== "evm" || !/^0x[0-9a-fA-F]{40}$/.test(b.address || "") || !["ethereum", "bsc", "polygon", "arbitrum", "base", "optimism"].includes(b.chain)}
                             title="Инспектировать EIP-1967 слоты админа и имплементации"
                           >
                             🔗 Proxy & Slots
                           </button>
                           <span
                             className={`rounded-md border px-2.5 py-0.5 text-[11px] font-bold ${
-                              isCrit
+                              b.risk_score == null ? "border-border text-muted-foreground" : isCrit
                                 ? "border-red-500 bg-red-500/20 text-red-300"
                                 : isHigh
                                 ? "border-amber-500 bg-amber-500/20 text-amber-300"
                                 : "border-green-500 bg-green-500/20 text-green-300"
                             }`}
                           >
-                            РИСК: {b.risk_score}/100 ({b.risk_level})
+                            РИСК: {b.risk_score ?? "—"}/100 ({b.risk_level}) · {b.analytics_provenance?.status === "stored_snapshot" ? "сохранённый снимок" : "не измерено"}
                           </span>
                           {b.audit_grade && (
                             <span className="rounded-md border border-purple-500/40 bg-purple-500/15 px-2 py-0.5 text-[10px] font-bold text-purple-300">
@@ -7089,10 +7100,7 @@ const ToolsPanel = () => {
                         <div className="rounded bg-background p-2 border border-border">
                           <div className="text-[10px] text-muted-foreground">Залочено (TVL)</div>
                           <div className="font-bold text-foreground text-sm">
-                            ${Number(b.tvl_usd || 0).toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
+                            {b.tvl_usd == null ? "—" : `$${Number(b.tvl_usd).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
                           </div>
                         </div>
                         <div className="rounded bg-background p-2 border border-border">
@@ -7102,7 +7110,7 @@ const ToolsPanel = () => {
                         <div className="rounded bg-background p-2 border border-border">
                           <div className="text-[10px] text-muted-foreground">Нативный Баланс</div>
                           <div className="font-semibold text-foreground">
-                            {b.native_balance || 0} {b.chain?.toUpperCase()}
+                            {b.native_balance ?? "—"} {b.chain?.toUpperCase()}
                           </div>
                         </div>
                         <div className="rounded bg-background p-2 border border-border">
@@ -7173,15 +7181,15 @@ const ToolsPanel = () => {
             </div>
           )}
 
-          {/* TAB 2: ALL 375 KNOWN CROSS-CHAIN PROTOCOLS CATALOG */}
+          {/* TAB 2: PROTOCOL CATALOG */}
           {bridgeViewTab === "protocols" && (
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5">
                 <span className="font-bold text-xs text-foreground uppercase tracking-wide">
-                  🌐 Каталог Всех Известных Кросс-Чейн Протоколов ({result.protocols?.length || 375}):
+                  🌐 Каталог протоколов ({result.stats?.total_protocols ?? "—"}):
                 </span>
                 <span className="text-[11px] text-emerald-400 font-bold">
-                  Глобальный капитал мостов: ${((result.stats?.global_bridge_tvl_usd || 65370000000) / 1e9).toFixed(2)}B USD
+                  TVL каталога: {result.stats?.global_bridge_tvl_usd == null ? "—" : `$${Number(result.stats.global_bridge_tvl_usd).toLocaleString()}`}
                 </span>
               </div>
 
@@ -7191,7 +7199,7 @@ const ToolsPanel = () => {
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-bold text-foreground text-xs truncate">{p.name}</span>
                       <span className="rounded bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
-                        ${Number(p.tvl_usd || 0) >= 1e9 ? `${(p.tvl_usd / 1e9).toFixed(2)}B` : Number(p.tvl_usd || 0) >= 1e6 ? `${(p.tvl_usd / 1e6).toFixed(1)}M` : `${Number(p.tvl_usd || 0).toLocaleString()}`}
+                        {p.tvl_usd == null ? "—" : `$${Number(p.tvl_usd).toLocaleString()}`}
                       </span>
                     </div>
 
@@ -7219,9 +7227,7 @@ const ToolsPanel = () => {
                         type="button"
                         onClick={() => {
                           setInput1(p.name);
-                          setBridgeViewTab("contracts");
-                          setBridgeOffset(0);
-                          run();
+                          void runBridges({ tab: "contracts", q: p.name, offset: 0 });
                         }}
                         className="rounded border border-primary/40 bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary hover:bg-primary/20 transition-colors"
                       >
@@ -7244,15 +7250,15 @@ const ToolsPanel = () => {
             </div>
           )}
 
-          {/* TAB 3: COMPLETE 110 HISTORICAL BRIDGE HACKS KB */}
+          {/* TAB 3: RECORDED BRIDGE HACKS */}
           {bridgeViewTab === "hacks" && (
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5">
                 <span className="font-bold text-xs text-foreground uppercase tracking-wide">
-                  💥 База Взломов Мостов (110 Эксплойтов с Foundry PoC):
+                  💥 База Взломов Мостов ({result.stats?.bridge_hacks_count ?? "—"}):
                 </span>
                 <span className="text-[11px] text-red-400 font-bold">
-                  Общий ущерб: ${((result.stats?.bridge_hacks_total_loss_usd || 54911774029) / 1e9).toFixed(1)}B USD
+                  Учтённый ущерб: {result.stats?.bridge_hacks_total_loss_usd == null ? "—" : `$${Number(result.stats.bridge_hacks_total_loss_usd).toLocaleString()}`}
                 </span>
               </div>
 
