@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { authHeaders } from '@/lib/auth';
+import OspecSizeQueues from './OspecSizeQueues';
 const API = import.meta.env.VITE_API_URL || 'https://api.black-oracle.com';
-type Status = { ok: boolean; running: boolean; state: string; generation?: string; engine?: string; counts?: Record<string, number | null>; heartbeat?: unknown; scope?: string; limitations?: string[] };
+type Status = { size_queues?: { counts?: { lane: string; state: string; count: number }[] }; ok: boolean; running: boolean; state: string; generation?: string; engine?: string; counts?: Record<string, number | null>; heartbeat?: unknown; scope?: string; limitations?: string[] };
 
 export default function OspecPipelinePanel({ tier, isRu }: { tier?: string; isRu: boolean }) {
   const allowed = tier?.toUpperCase() === 'BLACKBOX';
@@ -56,6 +57,7 @@ export default function OspecPipelinePanel({ tier, isRu }: { tier?: string; isRu
     <button type="button" disabled={busy} onClick={() => void refresh()} className="rounded-lg border px-2.5 py-1.5 disabled:opacity-50">{isRu ? '↻ Обновить' : '↻ Refresh'}</button>
     {data && <span className="text-muted-foreground">{isRu ? `Проверено ${count('completed')}/${count('total')} · в работе ${count('active')} · повтор ${count('retry')}` : `Scanned ${count('completed')}/${count('total')} · active ${count('active')} · retry ${count('retry')}`}</span>}
     {data && Number(data.counts?.previous_engine_completed || 0) > 0 && <span className="text-muted-foreground">{isRu ? `Из них предыдущей версией: ${count('previous_engine_completed')}` : `Including previous engine: ${count('previous_engine_completed')}`}</span>}
+    {data && <OspecSizeQueues data={data.size_queues} isRu={isRu} />}
     {error && <p role="alert" className="w-full text-destructive">{isRu ? '⚠ Не удалось подтвердить состояние OSPEC. Сбор репозиториев работает отдельно. Обновите статус.' : '⚠ OSPEC state could not be confirmed. Repository discovery is independent. Refresh status.'}</p>}
   </section>;
 }
