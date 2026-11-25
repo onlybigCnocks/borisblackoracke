@@ -7405,7 +7405,7 @@ const ToolsPanel = () => {
                     {item.summary} · {new Date(item.created_at * 1000).toLocaleString()}
                   </p>
                 </div>
-                <AddToWatchlistButton target={item.target} chain={item.chain} monitor_holders={item.tool === "holders"} />
+                <AddToWatchlistButton target={item.target} chain={item.chain} monitor_holders={item.tool === "holders"} allowChooseTarget />
                 <button
                   onClick={() => handleOpenHistoryItem(item)}
                   disabled={loadingHistoryId === item.id}

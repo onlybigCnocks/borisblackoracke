@@ -6,6 +6,15 @@ const locale = vi.hoisted(() => ({ language: "en" }));
 vi.mock("react-i18next", () => ({ useTranslation: () => ({ i18n: locale }) }));
 beforeEach(() => { localStorage.setItem("boris_auth_token", "test-only"); localStorage.setItem("boris_auth_user", JSON.stringify({ tier: "RADAR" })); });
 afterEach(() => { cleanup(); localStorage.clear(); vi.unstubAllGlobals(); });
+it("lets history searches choose a real monitoring target without submitting the search", () => {
+ const fetcher = vi.fn(); vi.stubGlobal("fetch", fetcher);
+ render(<AddToWatchlistButton target="CRITICAL" allowChooseTarget />);
+ fireEvent.click(screen.getByRole("button", { name: "Choose monitoring target" }));
+ expect(screen.getByLabelText("GitHub repository")).toHaveValue("");
+ expect(screen.getByRole("button", { name: "Add to watchlist" })).toBeDisabled();
+ expect(fetcher).not.toHaveBeenCalled();
+});
+
 it("opens a prefilled repo dialog and saves using authenticated API with readback", async () => {
  const fetcher = vi.fn().mockImplementation(async () => new Response(JSON.stringify({ watchlist: [{ id: 1, target: "aave/aave-v3-core", kind: "repo", chain: "" }], events: [] })));
  vi.stubGlobal("fetch", fetcher);

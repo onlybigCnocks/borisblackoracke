@@ -35,15 +35,16 @@ export function WatchlistForm({ initial = { target: "" }, onSaved }: { initial?:
   <button type="submit" disabled={busy || !valid} className={`${watchControl} btn-action`}>{busy ? (ru ? "Сохранение…" : "Saving…") : (ru ? "Добавить в мониторинг" : "Add to watchlist")}</button>
  </form>;
 }
-export function AddToWatchlistButton(props: WatchTarget) {
+export function AddToWatchlistButton(props: WatchTarget & { allowChooseTarget?: boolean }) {
  const { i18n } = useTranslation(); const ru = i18n.language.startsWith("ru");
  const [open, setOpen] = useState(false); const [saved, setSaved] = useState(false);
  useEffect(() => { setSaved(false); setOpen(false); }, [props.target, props.chain]);
  const [allowed, setAllowed] = useState(canWatch); useWatchAuth(useCallback(() => setAllowed(canWatch()), []));
  const supported = !!watchKind(props.target || "") && (!props.kind || props.kind === watchKind(props.target));
- const lock = !allowed ? "🔒 RADAR+" : !supported ? (ru ? "Не поддерживается" : "Unsupported target") : "";
+ const choose = !supported && !!props.allowChooseTarget;
+ const lock = !allowed ? "🔒 RADAR+" : !supported && !choose ? (ru ? "Мониторинг: нужен репозиторий или контракт" : "Unsupported monitoring target") : "";
  return <Dialog open={open && allowed} onOpenChange={setOpen}>
-  <DialogTrigger asChild><button type="button" disabled={!!lock} title={lock || props.target} className={watchControl}>{lock || (saved ? (ru ? "Отслеживается" : "Watching") : (ru ? "+ Следить" : "+ Watch"))}</button></DialogTrigger>
-  <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto"><DialogTitle>{ru ? "Мониторинг" : "Watchlist"}</DialogTitle><DialogDescription>{ru ? "Проверки без полного сканирования." : "Checks without a full scan."}</DialogDescription><WatchlistForm initial={props} onSaved={() => { setSaved(true); setOpen(false); }} /></DialogContent>
+  <DialogTrigger asChild><button type="button" disabled={!!lock} title={lock || props.target} className={watchControl}>{lock || (choose ? (ru ? "Выбрать цель мониторинга" : "Choose monitoring target") : saved ? (ru ? "Отслеживается" : "Watching") : (ru ? "+ Следить" : "+ Watch"))}</button></DialogTrigger>
+  <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto"><DialogTitle>{ru ? "Мониторинг" : "Watchlist"}</DialogTitle><DialogDescription>{ru ? "Проверки без полного сканирования." : "Checks without a full scan."}</DialogDescription><WatchlistForm initial={choose ? { target: "" } : props} onSaved={() => { setSaved(true); setOpen(false); }} /></DialogContent>
  </Dialog>;
 }
