@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { authHeaders } from '@/lib/auth';
 import OspecSizeQueues from './OspecSizeQueues';
+import OspecDeferredPanel from './OspecDeferredPanel';
 const API = import.meta.env.VITE_API_URL || 'https://api.black-oracle.com';
 type Status = { size_queues?: { counts?: { lane: string; state: string; count: number }[] }; ok: boolean; running: boolean; state: string; generation?: string; engine?: string; counts?: Record<string, number | null>; heartbeat?: unknown; scope?: string; limitations?: string[] };
 
@@ -60,6 +61,7 @@ export default function OspecPipelinePanel({ tier, isRu }: { tier?: string; isRu
     {data && Number(data.counts?.previous_engine_completed || 0) > 0 && <span className="text-muted-foreground">{isRu ? `Из них предыдущей версией: ${count('previous_engine_completed')}` : `Including previous engine: ${count('previous_engine_completed')}`}</span>}
     </div>
     <OspecSizeQueues data={data?.size_queues} isRu={isRu} />
+    <OspecDeferredPanel isRu={isRu} />
     {error && <p role="alert" className="w-full text-destructive">{isRu ? '⚠ Не удалось подтвердить состояние OSPEC. Сбор репозиториев работает отдельно. Обновите статус.' : '⚠ OSPEC state could not be confirmed. Repository discovery is independent. Refresh status.'}</p>}
   </section>;
 }
