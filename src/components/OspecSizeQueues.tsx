@@ -1,6 +1,6 @@
 type Row = { lane: string; state: string; count: number };
 export default function OspecSizeQueues({ data, isRu }: { data?: { counts?: Row[] }; isRu: boolean }) {
-  if (!data?.counts) return null;
+  if (!data?.counts) return <div className="w-full rounded-xl border border-amber-500/40 p-3" aria-label="OSPEC size queues"><h4 className="font-semibold">{isRu ? 'Очереди анализа · 60% / 25% / 15%' : 'Analysis queues · 60% / 25% / 15%'}</h4><p className="text-muted-foreground">{isRu ? 'Счётчики очередей не получены. Обновите статус; значения не подставляются.' : 'Queue counts unavailable. Refresh status; no values are assumed.'}</p></div>;
   const lanes = [
     { key: 'fast', title: isRu ? 'Быстрые' : 'Fast', range: '≤300', weight: 60, color: 'border-emerald-500/40' },
     { key: 'medium', title: isRu ? 'Средние' : 'Medium', range: '301–700', weight: 25, color: 'border-amber-500/40' },

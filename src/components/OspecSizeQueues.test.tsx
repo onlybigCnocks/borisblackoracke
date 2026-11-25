@@ -15,6 +15,7 @@ describe('OSPEC size queue panel', () => {
   });
   it('does not invent zero queues when data is absent', () => {
     const { container } = render(<OspecSizeQueues isRu />);
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByText(/Счётчики очередей не получены/)).toBeInTheDocument();
+    expect(container.textContent).not.toContain('Ожидают: 0');
   });
 });
